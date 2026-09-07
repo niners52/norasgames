@@ -122,11 +122,36 @@
   }
   .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
+  /* ---------- decorate tray ---------- */
+  .tray {
+    position:fixed; left:16px; top:70px; z-index:11; width:min(430px, calc(100vw - 32px));
+    background:rgba(4,22,56,.85); border:1px solid rgba(140,220,255,.35);
+    border-radius:18px; padding:14px 16px; backdrop-filter:blur(8px);
+    box-shadow:0 10px 40px rgba(0,60,140,.45);
+    transform:translateY(-140%); transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .tray.show { transform:translateY(0); }
+  .tray-title { font-weight:800; font-size:1rem; color:#bff3ff; margin-bottom:2px; }
+  .tray-tip { font-size:.8rem; color:rgba(200,240,255,.75); margin-bottom:10px; min-height:1.2em; }
+  .tray-items { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .deco {
+    display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
+    width:60px; padding:6px 2px; border-radius:12px; border:2px solid rgba(140,220,255,.25);
+    background:rgba(255,255,255,.06); font-size:.66rem; font-weight:800; color:#bfefff;
+    transition:transform .15s, border-color .15s, background .15s;
+  }
+  .deco span { font-size:1.5rem; line-height:1; }
+  .deco:hover { transform:scale(1.06); background:rgba(255,255,255,.12); }
+  .deco.pick { border-color:#fff; background:rgba(255,120,220,.25); transform:scale(1.08); }
+  .tray .row { display:flex; gap:8px; }
+  .tray .row button { flex:1; font-size:.85rem; padding:8px 6px; }
+
   @media (max-width:600px) {
     .topbar { flex-direction:column; align-items:flex-start; }
     .buttons { justify-content:flex-start; }
     .hint { top:120px; font-size:.8rem; }
     .card { left:16px; right:16px; width:auto; }
+    .tray { left:16px; right:16px; width:auto; top:118px; }
   }
 </style>
 </head>
@@ -137,6 +162,7 @@
   <div class="title">🦑 Glass Squid Aquarium</div>
   <div class="buttons">
     <button id="btn-hatch">🥚 Hatch a friend</button>
+    <button id="btn-deco">🏰 Decorate</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -156,6 +182,16 @@
     <button id="btn-pet">💖 Pet</button>
     <button id="btn-snack">🍤 Snack</button>
     <button id="btn-bye">👋 Release</button>
+  </div>
+</div>
+
+<div class="tray" id="tray">
+  <div class="tray-title">🏰 Decorate your tank</div>
+  <div class="tray-tip" id="tray-tip">Pick something, then tap the sand!</div>
+  <div class="tray-items" id="tray-items"></div>
+  <div class="row">
+    <button id="tray-clear">🧹 Clear all</button>
+    <button id="tray-done">✅ Done</button>
   </div>
 </div>
 
@@ -239,6 +275,20 @@ function blip(freq, dur = .12, type = "sine", vol = .12) {
 let squids = [], foods = [], eggs = [], sparkles = [], bubbles = [], weeds = [];
 let night = false, selected = null, lastTime = performance.now(), frame = 0;
 
+/* ---------- decorations you can place on the sand ---------- */
+const DECOS = {
+  chest:   { name: "Treasure",  emoji: "💰", hues: [45] },
+  castle:  { name: "Castle",    emoji: "🏰", hues: [45] },
+  coral:   { name: "Coral",     emoji: "🌺", hues: [340, 20, 300] },
+  anemone: { name: "Anemone",   emoji: "🌸", hues: [320, 150, 30] },
+  star:    { name: "Starfish",  emoji: "⭐", hues: [25, 330, 50] },
+  clam:    { name: "Clam",      emoji: "🦪", hues: [330, 200, 40] },
+  ship:    { name: "Shipwreck", emoji: "⛵", hues: [30] },
+  crystal: { name: "Crystals",  emoji: "💎", hues: [270, 190, 320, 45] },
+  remove:  { name: "Remove",    emoji: "🧹", hues: [] },
+};
+let decos = [], decorating = false, placing = null;
+
 function makeSquid(o = {}) {
   return {
     id: o.id || Math.random().toString(36).slice(2),
@@ -259,7 +309,7 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, savedAt: Date.now(),
+      night, decos, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -272,6 +322,7 @@ function load() {
     const away = clamp((Date.now() - (d.savedAt || Date.now())) / 3600000, 0, 6); // hours, max 6
     squids = d.squids.map(s => makeSquid({ ...s, hunger: clamp(s.hunger + away * 8, 0, 85), happy: clamp(s.happy - away * 5, 20, 100) }));
     night = !!d.night;
+    decos = Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
 }
@@ -624,6 +675,9 @@ function drawBackground() {
     ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.stroke();
   }
 
+  /* decorations */
+  for (const d of decos) drawDeco(d);
+
   /* bubbles */
   for (const b of bubbles) {
     b.y -= b.vy; b.wob += .03;
@@ -631,6 +685,172 @@ function drawBackground() {
     ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 6, b.y, b.r, 0, TAU);
     ctx.strokeStyle = "rgba(220,245,255,.45)"; ctx.lineWidth = 1; ctx.stroke();
   }
+}
+
+/* ---------- decoration drawing ---------- */
+function rr(x, y, w, h, rad) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, rad); else ctx.rect(x, y, w, h);
+}
+function starterDecos() {
+  return [
+    { kind: "chest", xf: .18, scale: 1, phase: 0, hue: 45 },
+    { kind: "coral", xf: .62, scale: 1.1, phase: 2, hue: 340 },
+    { kind: "star",  xf: .85, scale: 1, phase: 4, hue: 25 },
+  ];
+}
+function drawDeco(d) {
+  const x = d.xf * W, y = SAND() + 6, t = frame / 60 + d.phase;
+  const nightGlow = night ? 1 : .5;
+  ctx.save(); ctx.translate(x, y); ctx.scale(d.scale, d.scale);
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  switch (d.kind) {
+
+    case "chest": {
+      const open = (Math.sin(t * .8) + 1) / 2;
+      if (open > .2) {
+        const g = ctx.createRadialGradient(0, -24, 0, 0, -24, 55);
+        g.addColorStop(0, `rgba(255,220,90,${.45 * open * nightGlow})`); g.addColorStop(1, "rgba(255,220,90,0)");
+        ctx.fillStyle = g; ctx.fillRect(-55, -80, 110, 86);
+      }
+      ctx.fillStyle = "#8a5a2b"; ctx.strokeStyle = "#5a3a18"; ctx.lineWidth = 2;
+      rr(-30, -28, 60, 28, 4); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#e0b040"; ctx.fillRect(-30, -20, 60, 4); ctx.fillRect(-4, -28, 8, 28);
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = "#ffd75e"; ctx.beginPath(); ctx.ellipse(-16 + i * 8, -30 - (i % 2) * 4 - open * 3, 5, 3, 0, 0, TAU); ctx.fill();
+      }
+      ctx.save(); ctx.translate(-30, -28); ctx.rotate(-open * 1.1);
+      ctx.fillStyle = "#9a6632"; rr(0, -14, 60, 14, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#e0b040"; ctx.fillRect(0, -6, 60, 3);
+      ctx.restore();
+      if (open > .5) for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(-10 + i * 10, -44 - ((t * 25 + i * 20) % 60), 3, 0, TAU); ctx.stroke();
+      }
+      break;
+    }
+
+    case "castle": {
+      const sand = "#f0d9a0", dark = "#c9ad70";
+      ctx.fillStyle = sand; ctx.strokeStyle = dark; ctx.lineWidth = 2;
+      ctx.fillRect(-34, -40, 68, 40); ctx.strokeRect(-34, -40, 68, 40);
+      for (const bx of [-24, -8, 8, 24]) { ctx.fillRect(bx - 4, -48, 8, 8); ctx.strokeRect(bx - 4, -48, 8, 8); }
+      for (const tx of [-30, 30]) {
+        ctx.fillStyle = sand; ctx.fillRect(tx - 10, -66, 20, 66); ctx.strokeRect(tx - 10, -66, 20, 66);
+        ctx.fillStyle = "#ff6fae"; ctx.beginPath(); ctx.moveTo(tx - 13, -66); ctx.lineTo(tx, -88); ctx.lineTo(tx + 13, -66); ctx.closePath(); ctx.fill(); ctx.stroke();
+      }
+      ctx.fillStyle = "#6b4a2b"; ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-8, -18); ctx.arc(0, -18, 8, Math.PI, TAU); ctx.lineTo(8, 0); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = night ? "#ffe680" : "#5b8fc9";
+      for (const tx of [-30, 30]) ctx.fillRect(tx - 3, -52, 6, 9);
+      ctx.fillRect(-3, -33, 6, 8);
+      ctx.strokeStyle = "#555"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, -48); ctx.lineTo(0, -72); ctx.stroke();
+      ctx.fillStyle = "#4fd1ff"; ctx.beginPath(); ctx.moveTo(0, -72); ctx.lineTo(15 + Math.sin(t * 4) * 3, -67); ctx.lineTo(0, -62); ctx.closePath(); ctx.fill();
+      break;
+    }
+
+    case "coral": {
+      const hue = d.hue;
+      const branch = (x0, y0, ang, len, depth) => {
+        const x1 = x0 + Math.cos(ang) * len, y1 = y0 + Math.sin(ang) * len;
+        ctx.lineWidth = depth * 2.2; ctx.strokeStyle = `hsl(${hue},85%,${52 + depth * 4}%)`;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        if (depth > 1) {
+          const sway = Math.sin(t * 1.5 + depth) * .08;
+          branch(x1, y1, ang - .55 + sway, len * .72, depth - 1);
+          branch(x1, y1, ang + .5 + sway, len * .72, depth - 1);
+        } else { ctx.fillStyle = `hsl(${hue},100%,82%)`; ctx.beginPath(); ctx.arc(x1, y1, 2.5, 0, TAU); ctx.fill(); }
+      };
+      branch(0, 0, -Math.PI / 2, 26, 4);
+      const h2 = (hue + 40) % 360;
+      ctx.fillStyle = `hsl(${h2},70%,60%)`; ctx.beginPath(); ctx.arc(30, -2, 15, Math.PI, TAU); ctx.fill();
+      ctx.strokeStyle = `hsl(${h2},60%,42%)`; ctx.lineWidth = 1.5;
+      for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(30, -2, 4 + k * 4, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke(); }
+      break;
+    }
+
+    case "anemone": {
+      const hue = d.hue;
+      ctx.fillStyle = `hsl(${hue},60%,45%)`; ctx.beginPath(); ctx.ellipse(0, -8, 22, 12, 0, 0, TAU); ctx.fill();
+      for (let i = 0; i < 14; i++) {
+        const a = -Math.PI * (.1 + .8 * i / 13), len = 30 + (i % 3) * 8;
+        const sway = Math.sin(t * 2 + i) * .25;
+        const bx = (i - 6.5) * 2.5, x1 = bx + Math.cos(a + sway) * len, y1 = -12 + Math.sin(a + sway) * len;
+        ctx.strokeStyle = `hsla(${hue},90%,70%,.9)`; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(bx, -12); ctx.quadraticCurveTo(bx + Math.cos(a) * len * .5, -12 + Math.sin(a) * len * .5 - 6, x1, y1); ctx.stroke();
+        ctx.fillStyle = `hsla(${(hue + 60) % 360},100%,75%,${.5 + .5 * nightGlow})`; ctx.beginPath(); ctx.arc(x1, y1, 3, 0, TAU); ctx.fill();
+      }
+      break;
+    }
+
+    case "star": {
+      ctx.save(); ctx.translate(0, -14); ctx.rotate(Math.sin(t * 1.2) * .1);
+      ctx.beginPath();
+      for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rad = i % 2 ? 7 : 18; ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad); }
+      ctx.closePath(); ctx.fillStyle = `hsl(${d.hue},90%,60%)`; ctx.fill(); ctx.strokeStyle = `hsl(${d.hue},80%,40%)`; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.6)";
+      for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * TAU / 5; ctx.beginPath(); ctx.arc(Math.cos(a) * 10, Math.sin(a) * 10, 1.8, 0, TAU); ctx.fill(); }
+      ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(-3, -1, 1.5, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(3, -1, 1.5, 0, TAU); ctx.fill();
+      ctx.strokeStyle = "#222"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(0, 1, 3, Math.PI * .2, Math.PI * .8); ctx.stroke();
+      ctx.restore();
+      break;
+    }
+
+    case "clam": {
+      const open = (Math.sin(t * .7) + 1) / 2 * .9;
+      const g = ctx.createRadialGradient(0, -10, 0, 0, -10, 32);
+      g.addColorStop(0, `rgba(255,255,255,${.5 * open * nightGlow})`); g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.fillRect(-32, -44, 64, 46);
+      const shell = () => {
+        ctx.beginPath(); ctx.moveTo(-22, 0); ctx.arc(0, 0, 22, Math.PI, TAU); ctx.closePath();
+        ctx.fillStyle = `hsl(${d.hue},60%,75%)`; ctx.fill(); ctx.strokeStyle = `hsl(${d.hue},50%,50%)`; ctx.lineWidth = 1.5; ctx.stroke();
+        for (let k = 1; k <= 5; k++) { const a = Math.PI + Math.PI * k / 6; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22); ctx.stroke(); }
+      };
+      ctx.save(); ctx.scale(1, -.35); shell(); ctx.restore();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(0, -6, 6, 0, TAU); ctx.fill();
+      ctx.save(); ctx.translate(-22, 0); ctx.rotate(-open); ctx.translate(22, 0); shell(); ctx.restore();
+      break;
+    }
+
+    case "ship": {
+      ctx.save(); ctx.rotate(-.12);
+      ctx.fillStyle = "#5a3d24"; ctx.strokeStyle = "#3b2715"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(-42, -26); ctx.lineTo(42, -26); ctx.lineTo(30, 0); ctx.lineTo(-34, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "rgba(0,0,0,.25)"; ctx.lineWidth = 1;
+      for (const k of [-18, -10]) { ctx.beginPath(); ctx.moveTo(-38, k); ctx.lineTo(38, k); ctx.stroke(); }
+      ctx.fillStyle = night ? "#ffe680" : "#8fd3ff";
+      for (const px of [-20, 0, 20]) { ctx.beginPath(); ctx.arc(px, -14, 3.5, 0, TAU); ctx.fill(); }
+      ctx.strokeStyle = "#3b2715"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -26); ctx.lineTo(0, -82); ctx.stroke();
+      ctx.fillStyle = "rgba(230,230,220,.8)";
+      ctx.beginPath(); ctx.moveTo(2, -78); ctx.lineTo(30 + Math.sin(t * 2) * 3, -60); ctx.lineTo(22, -50); ctx.lineTo(28, -40); ctx.lineTo(2, -34); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#1a2a44"; ctx.beginPath(); ctx.ellipse(-18, -6, 7, 5, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+      break;
+    }
+
+    case "crystal": {
+      const hues = [d.hue, (d.hue + 40) % 360, (d.hue + 80) % 360];
+      const pulseA = .5 + .5 * Math.sin(t * 2);
+      const g = ctx.createRadialGradient(0, -22, 0, 0, -22, 48);
+      g.addColorStop(0, `hsla(${d.hue},100%,70%,${.4 * nightGlow * (.6 + .4 * pulseA)})`); g.addColorStop(1, `hsla(${d.hue},100%,70%,0)`);
+      ctx.fillStyle = g; ctx.fillRect(-50, -72, 100, 76);
+      ctx.fillStyle = "#4a5570"; ctx.beginPath(); ctx.ellipse(0, -4, 30, 10, 0, 0, TAU); ctx.fill();
+      const shards = [[-14, -36, 8], [0, -54, 10], [14, -32, 7], [-5, -26, 5], [8, -22, 4]];
+      shards.forEach(([sx, sy, w], i) => {
+        const h = hues[i % 3];
+        ctx.beginPath(); ctx.moveTo(sx - w, -4); ctx.lineTo(sx, sy); ctx.lineTo(sx + w, -4); ctx.closePath();
+        ctx.fillStyle = `hsla(${h},90%,${62 + pulseA * 12}%,.88)`; ctx.fill();
+        ctx.strokeStyle = `hsla(${h},100%,90%,.8)`; ctx.lineWidth = 1.2; ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.moveTo(sx - w * .35, -6); ctx.lineTo(sx - w * .1, sy * .75); ctx.stroke();
+      });
+      break;
+    }
+  }
+  if (decorating) {
+    ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+    ctx.strokeStyle = placing === "remove" ? "rgba(255,120,120,.85)" : "rgba(255,255,255,.4)";
+    rr(-46, -94, 92, 100, 10); ctx.stroke(); ctx.setLineDash([]);
+  }
+  ctx.restore();
 }
 
 function drawFood(f) {
@@ -766,9 +986,15 @@ function squidAt(x, y) {
 }
 canvas.addEventListener("pointerdown", ev => {
   const x = ev.clientX, y = ev.clientY;
+  document.getElementById("hint").classList.add("hide");
+  if (decorating) {
+    if (placing === "remove") { const hit = decoAt(x, y); if (hit) removeDeco(hit); else toast("Tap a decoration to take it away 🧹"); }
+    else if (placing) placeDeco(placing, x);
+    else toast("Pick a decoration first, then tap the sand ✨");
+    return;
+  }
   const s = squidAt(x, y);
   if (s) pet(s); else dropFood(x, y);
-  document.getElementById("hint").classList.add("hide");
 });
 function dropFood(x, y) {
   if (foods.length >= 12) { toast("That's a lot of snacks already! 🍤"); return; }
@@ -846,6 +1072,55 @@ document.getElementById("hatch-go").onclick = () => {
   toast("An egg! Watch it wiggle… 🥚");
 };
 
+/* decorate mode */
+const tray = document.getElementById("tray"), trayItems = document.getElementById("tray-items"), trayTip = document.getElementById("tray-tip");
+const decoBtn = document.getElementById("btn-deco");
+function decoAt(x, y) {
+  let hit = null, bd = 1e9;
+  for (const d of decos) {
+    const dx = Math.abs(d.xf * W - x);
+    if (dx < 46 * d.scale && y > SAND() - 95 * d.scale && dx < bd) { bd = dx; hit = d; }
+  }
+  return hit;
+}
+function placeDeco(kind, x) {
+  if (decos.length >= 14) { toast("The sand is full! Remove something first 🧹"); return; }
+  const hues = DECOS[kind].hues;
+  decos.push({ kind, xf: clamp(x, 50, W - 50) / W, scale: rand(.85, 1.15), phase: rand(0, 10), hue: hues[Math.floor(Math.random() * hues.length)] });
+  burst(x, SAND() - 30, ["✨", "⭐"], 8); blip(480, .12, "triangle");
+  save();
+}
+function removeDeco(d) {
+  decos.splice(decos.indexOf(d), 1);
+  burst(d.xf * W, SAND() - 30, ["💨", "✨"], 6); blip(240, .12);
+  save();
+}
+function setPlacing(kind) {
+  placing = kind;
+  [...trayItems.children].forEach(el => el.classList.toggle("pick", el.dataset.kind === kind));
+  trayTip.textContent = !kind ? "Pick something, then tap the sand!"
+    : kind === "remove" ? "Tap a decoration to take it away."
+    : `Tap the sand to place a ${DECOS[kind].name} ✨`;
+}
+Object.entries(DECOS).forEach(([key, k], i) => {
+  const el = document.createElement("div");
+  el.className = "deco"; el.dataset.kind = key;
+  el.innerHTML = `<span>${k.emoji}</span>${k.name}`;
+  el.onclick = () => { setPlacing(placing === key ? null : key); blip(350 + i * 40, .07); };
+  trayItems.appendChild(el);
+});
+function setDecorating(on) {
+  decorating = on; tray.classList.toggle("show", on); decoBtn.classList.toggle("on", on);
+  if (on) { selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
+  else placing = null;
+}
+decoBtn.onclick = () => { setDecorating(!decorating); blip(decorating ? 500 : 300, .1); };
+document.getElementById("tray-done").onclick = () => setDecorating(false);
+document.getElementById("tray-clear").onclick = () => {
+  if (!decos.length) return;
+  if (confirm("Take away all the decorations? 🧹")) { decos = []; save(); toast("All clear! ✨"); }
+};
+
 /* night + sound */
 const nightBtn = document.getElementById("btn-night");
 function applyNight() { nightBtn.textContent = night ? "☀️ Lights on" : "🌙 Lights off"; nightBtn.classList.toggle("on", night); }
@@ -863,6 +1138,7 @@ buildScenery();
 if (!load()) {
   squids.push(makeSquid({ name: "Pearl", hue: 190, x: W * .4, y: H * .45 }));
   squids.push(makeSquid({ name: "Glimmer", hue: 320, x: W * .6, y: H * .5, size: 1.1 }));
+  decos = starterDecos();
   save();
 }
 applyNight();
