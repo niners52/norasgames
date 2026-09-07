@@ -25,7 +25,7 @@
   .topbar > * { pointer-events:auto; }
   .title {
     font-family:"Dancing Script",cursive; font-size:clamp(1.4rem,4vw,2.2rem);
-    color:#bff3ff; text-shadow:0 0 14px #3cf, 0 0 30px rgba(60,200,255,.5);
+    color:#bff3ff; text-shadow:0 2px 6px rgba(0,20,60,.85), 0 0 14px #3cf, 0 0 30px rgba(60,200,255,.5);
   }
   .buttons { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
   button {
@@ -110,6 +110,17 @@
     color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(140,220,255,.4);
     border-radius:12px; padding:10px; margin-bottom:14px; outline:none;
   }
+  .scenes { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px; }
+  .scene {
+    cursor:pointer; border-radius:14px; border:2px solid rgba(140,220,255,.25); padding:8px 4px;
+    text-align:center; font-size:.74rem; font-weight:800; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,.8);
+    height:78px; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:2px;
+    transition:transform .15s, border-color .15s, box-shadow .15s;
+  }
+  .scene span { font-size:1.5rem; line-height:1; }
+  .scene:hover { transform:scale(1.05); }
+  .scene.pick { border-color:#fff; box-shadow:0 0 16px rgba(255,255,255,.55); transform:scale(1.06); }
+  .dialog .wide { width:100%; }
   .dialog .row { display:flex; gap:10px; }
   .dialog .row button { flex:1; }
   .dialog .go { background:linear-gradient(135deg,#00aaff,#ff44cc); border:none; }
@@ -163,6 +174,7 @@
   <div class="buttons">
     <button id="btn-hatch">🥚 Hatch a friend</button>
     <button id="btn-deco">🏰 Decorate</button>
+    <button id="btn-scene">🌅 Scene</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -206,6 +218,15 @@
       <button id="hatch-cancel">Not yet</button>
       <button class="go" id="hatch-go">✨ Hatch! ✨</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="scene-overlay">
+  <div class="dialog">
+    <h2>Change the scene!</h2>
+    <p>Where should your friends live today?</p>
+    <div class="scenes" id="scenes"></div>
+    <button class="wide" id="scene-close">Close</button>
   </div>
 </div>
 
@@ -289,6 +310,25 @@ const DECOS = {
 };
 let decos = [], decorating = false, placing = null;
 
+/* ---------- scenes ---------- */
+const SCENES = {
+  reef:   { name: "Coral Reef",    emoji: "🐠", day: ["#3fb6ff","#1a74c8","#0a3a80","#062756"], night: ["#04122c","#020a1e","#010612"],
+            sand: ["#e9d7a3","#b89a5e"], sandNight: ["#25304a","#151c2e"], weedHue: [120,175], weedLight: 45, rays: .07, particles: "bubbles" },
+  deep:   { name: "Deep Sea",      emoji: "🌑", day: ["#0a2a55","#05183a","#020b1e","#01060f"], night: ["#030c20","#02071a","#000308"],
+            sand: ["#2c3a5a","#1a2338"], sandNight: ["#1a2338","#0d1220"], weedHue: [180,210], weedLight: 38, rays: 0, particles: "motes", dimPebbles: true },
+  ice:    { name: "Ice Cave",      emoji: "❄️", day: ["#d8f4ff","#8fd3f4","#3f9ad6","#1e5f9e"], night: ["#1a3a5c","#0d2440","#061424"],
+            sand: ["#e6f6ff","#b9dcf0"], sandNight: ["#4a6a8a","#2c4460"], weedHue: [190,210], weedLight: 72, rays: .12, particles: "snow" },
+  sunset: { name: "Sunset Lagoon", emoji: "🌅", day: ["#ffb07a","#ff7aa2","#8a4fc9","#2a2a7a"], night: ["#2a1040","#160a2a","#0a0518"],
+            sand: ["#f4d9b0","#c9a878"], sandNight: ["#3a2a4a","#221830"], weedHue: [90,140], weedLight: 42, rays: .06, particles: "bubbles" },
+  galaxy: { name: "Galaxy Ocean",  emoji: "🌌", day: ["#1b0b3a","#3a1466","#1c0f4a","#0a0620"], night: ["#0b0520","#120a30","#050210"],
+            sand: ["#6a4a9a","#3d2a60"], sandNight: ["#3d2a60","#241838"], weedHue: [270,320], weedLight: 55, rays: 0, particles: "stars", dimPebbles: true },
+  lava:   { name: "Lava Vents",    emoji: "🌋", day: ["#3a1010","#5a1a0a","#2a0a05","#150402"], night: ["#1a0505","#2a0a05","#0a0202"],
+            sand: ["#4a3230","#2a1a18"], sandNight: ["#2a1a18","#160c0a"], weedHue: [0,25], weedLight: 35, rays: 0, particles: "embers", dimPebbles: true },
+};
+Object.entries(SCENES).forEach(([k, v]) => v.key = k);
+let sceneKey = "reef";
+const scene = () => SCENES[sceneKey] || SCENES.reef;
+
 function makeSquid(o = {}) {
   return {
     id: o.id || Math.random().toString(36).slice(2),
@@ -309,7 +349,7 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, savedAt: Date.now(),
+      night, decos, scene: sceneKey, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -322,17 +362,20 @@ function load() {
     const away = clamp((Date.now() - (d.savedAt || Date.now())) / 3600000, 0, 6); // hours, max 6
     squids = d.squids.map(s => makeSquid({ ...s, hunger: clamp(s.hunger + away * 8, 0, 85), happy: clamp(s.happy - away * 5, 20, 100) }));
     night = !!d.night;
-    decos = Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
+    sceneKey = SCENES[d.scene] ? d.scene : "reef";
+    decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
 }
 
 /* ---------- scenery ---------- */
 function buildScenery() {
+  const sc = scene();
   bubbles = []; weeds = [];
-  for (let i = 0; i < 40; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: rand(1.5, 5), vy: rand(.2, .7), wob: Math.random() * TAU });
+  const count = sc.particles === "stars" ? 90 : 45;
+  for (let i = 0; i < count; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: rand(1.5, 5), vy: rand(.2, .7), wob: Math.random() * TAU, hue: [190, 300, 160, 270][i % 4] });
   const n = Math.max(6, Math.floor(W / 110));
-  for (let i = 0; i < n; i++) weeds.push({ x: (i + .5) * (W / n) + rand(-30, 30), h: rand(60, 170), seg: 6 + Math.floor(rand(0, 5)), phase: Math.random() * TAU, hue: rand(120, 175) });
+  for (let i = 0; i < n; i++) weeds.push({ x: (i + .5) * (W / n) + rand(-30, 30), h: rand(60, 170), seg: 6 + Math.floor(rand(0, 5)), phase: Math.random() * TAU, hue: rand(sc.weedHue[0], sc.weedHue[1]) });
 }
 
 /* ---------- creature drawing ---------- */
@@ -634,25 +677,32 @@ function drawSquidBody(s, r, glow, col, pulse) {
 
 /* ---------- scenery drawing ---------- */
 function drawBackground() {
+  const sc = scene();
+  const stops = night ? sc.night : sc.day;
   const g = ctx.createLinearGradient(0, 0, 0, H);
-  if (night) { g.addColorStop(0, "#04122c"); g.addColorStop(.6, "#020a1e"); g.addColorStop(1, "#010612"); }
-  else       { g.addColorStop(0, "#3fb6ff"); g.addColorStop(.35, "#1a74c8"); g.addColorStop(.8, "#0a3a80"); g.addColorStop(1, "#062756"); }
+  stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c));
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
+  drawSceneExtras(sc);
+
   /* light rays */
-  ctx.save(); ctx.globalCompositeOperation = "screen";
-  for (let i = 0; i < 7; i++) {
-    const x = (i * 220 + frame * .35) % (W + 300) - 150;
-    const a = (night ? .02 : .07) + Math.sin(frame * .006 + i) * .02;
-    ctx.fillStyle = `rgba(170,230,255,${Math.max(0, a)})`;
-    ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 230, H); ctx.lineTo(x - 230, H); ctx.closePath(); ctx.fill();
+  const rayA = night ? sc.rays * .3 : sc.rays;
+  if (rayA > 0) {
+    ctx.save(); ctx.globalCompositeOperation = "screen";
+    for (let i = 0; i < 7; i++) {
+      const x = (i * 220 + frame * .35) % (W + 300) - 150;
+      const a = rayA + Math.sin(frame * .006 + i) * .02;
+      ctx.fillStyle = `rgba(170,230,255,${Math.max(0, a)})`;
+      ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 230, H); ctx.lineTo(x - 230, H); ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
   }
-  ctx.restore();
 
   /* sand */
   const sy = SAND();
+  const sandCols = night ? sc.sandNight : sc.sand;
   const sg = ctx.createLinearGradient(0, sy, 0, H);
-  sg.addColorStop(0, night ? "#25304a" : "#e9d7a3"); sg.addColorStop(1, night ? "#151c2e" : "#b89a5e");
+  sg.addColorStop(0, sandCols[0]); sg.addColorStop(1, sandCols[1]);
   ctx.fillStyle = sg;
   ctx.beginPath(); ctx.moveTo(0, H);
   for (let x = 0; x <= W; x += 40) ctx.lineTo(x, sy + Math.sin(x * .02 + 1) * 6);
@@ -660,7 +710,7 @@ function drawBackground() {
   /* shells / pebbles */
   for (let i = 0; i < 12; i++) {
     const x = (i * 197) % W, y = sy + 20 + (i * 53) % 35;
-    ctx.fillStyle = night ? "rgba(120,150,190,.35)" : ["#ffb6c1","#fff3b0","#b3f0ff","#f6d6ff"][i % 4];
+    ctx.fillStyle = (night || sc.dimPebbles) ? "rgba(160,180,210,.3)" : ["#ffb6c1","#fff3b0","#b3f0ff","#f6d6ff"][i % 4];
     ctx.beginPath(); ctx.ellipse(x, y, 7, 4, 0, 0, TAU); ctx.fill();
   }
 
@@ -671,19 +721,104 @@ function drawBackground() {
       const t = k / w.seg;
       ctx.lineTo(w.x + Math.sin(frame * .02 + w.phase + t * 3) * 18 * t, sy + 8 - w.h * t);
     }
-    ctx.strokeStyle = `hsla(${w.hue},70%,${night ? 30 : 45}%,.85)`;
+    ctx.strokeStyle = `hsla(${w.hue},70%,${night ? sc.weedLight * .65 : sc.weedLight}%,.85)`;
     ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.stroke();
   }
+
+  if (sc.key === "lava") drawVents(sy);
 
   /* decorations */
   for (const d of decos) drawDeco(d);
 
-  /* bubbles */
+  drawParticles(sc, sy);
+}
+
+function drawSceneExtras(sc) {
+  if (sc.key === "ice") {
+    ctx.fillStyle = night ? "rgba(200,230,255,.35)" : "rgba(255,255,255,.75)";
+    for (const [xf, w] of [[.05, 90], [.35, 140], [.7, 110], [.9, 70]]) {
+      const x = xf * W, h = w * .55;
+      ctx.beginPath(); ctx.moveTo(x - w * .6, 0); ctx.lineTo(x - w * .3, h * .6); ctx.lineTo(x, h); ctx.lineTo(x + w * .35, h * .5); ctx.lineTo(x + w * .6, 0); ctx.closePath(); ctx.fill();
+    }
+  } else if (sc.key === "sunset") {
+    const sx = W * .75, sy0 = 40;
+    const g = ctx.createRadialGradient(sx, sy0, 0, sx, sy0, 160);
+    g.addColorStop(0, night ? "rgba(255,230,150,.35)" : "rgba(255,240,180,.9)");
+    g.addColorStop(.3, night ? "rgba(255,200,120,.15)" : "rgba(255,200,120,.45)");
+    g.addColorStop(1, "rgba(255,180,100,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 260);
+    ctx.fillStyle = night ? "rgba(255,240,200,.6)" : "rgba(255,250,220,.95)"; ctx.beginPath(); ctx.arc(sx, sy0, night ? 22 : 34, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.lineWidth = 1.5;
+    for (let k = 0; k < 4; k++) {
+      const y = 20 + k * 14; ctx.beginPath();
+      for (let x = 0; x <= W; x += 20) ctx.lineTo(x, y + Math.sin(x * .03 + frame * .03 + k) * 3);
+      ctx.stroke();
+    }
+  } else if (sc.key === "galaxy") {
+    const ng = ctx.createRadialGradient(W * .4, H * .3, 0, W * .4, H * .3, W * .4);
+    ng.addColorStop(0, "rgba(255,80,200,.18)"); ng.addColorStop(.6, "rgba(80,40,200,.1)"); ng.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = ng; ctx.fillRect(0, 0, W, H);
+    const px = W * .8, py = 110;
+    const pg = ctx.createRadialGradient(px - 15, py - 15, 5, px, py, 48);
+    pg.addColorStop(0, "#ffb3e6"); pg.addColorStop(1, "#7a2fb5");
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(px, py, 46, 0, TAU); ctx.fill();
+    ctx.strokeStyle = "rgba(255,220,255,.7)"; ctx.lineWidth = 6; ctx.beginPath(); ctx.ellipse(px, py, 80, 18, -.3, 0, TAU); ctx.stroke();
+    const mx0 = W * .18, my0 = 80;
+    ctx.fillStyle = "#e8e6ff"; ctx.beginPath(); ctx.arc(mx0, my0, 22, 0, TAU); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.12)";
+    for (const [mx, my, mr] of [[-6, -4, 5], [7, 6, 4], [4, -9, 3]]) { ctx.beginPath(); ctx.arc(mx0 + mx, my0 + my, mr, 0, TAU); ctx.fill(); }
+  } else if (sc.key === "deep") {
+    const dg = ctx.createRadialGradient(W * .5, H, 0, W * .5, H, H * .6);
+    dg.addColorStop(0, "rgba(40,120,200,.15)"); dg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = dg; ctx.fillRect(0, 0, W, H);
+  } else if (sc.key === "lava") {
+    const lg = ctx.createRadialGradient(W * .5, H, 0, W * .5, H, H * .7);
+    lg.addColorStop(0, "rgba(255,90,20,.35)"); lg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function drawVents(sy) {
+  const vents = [.15, .5, .82];
+  for (let i = 0; i < vents.length; i++) {
+    const x = vents[i] * W, t = frame / 60 + i * 2;
+    const glow = .5 + .5 * Math.sin(t * 3);
+    const g = ctx.createRadialGradient(x, sy, 0, x, sy, 60);
+    g.addColorStop(0, `rgba(255,120,30,${.35 + .3 * glow})`); g.addColorStop(1, "rgba(255,120,30,0)");
+    ctx.fillStyle = g; ctx.fillRect(x - 60, sy - 60, 120, 70);
+    ctx.fillStyle = "#2a1410"; ctx.beginPath(); ctx.moveTo(x - 34, sy + 6); ctx.lineTo(x - 10, sy - 28); ctx.lineTo(x + 10, sy - 28); ctx.lineTo(x + 34, sy + 6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = `rgba(255,${Math.floor(100 + 80 * glow)},30,.95)`; ctx.beginPath(); ctx.ellipse(x, sy - 28, 10, 4, 0, 0, TAU); ctx.fill();
+    for (let k = 0; k < 3; k++) {
+      const yy = sy - 34 - ((t * 40 + k * 25) % 80);
+      ctx.strokeStyle = `rgba(255,180,80,${Math.max(.1, .6 - (sy - 34 - yy) / 160)})`; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x + Math.sin(t * 2 + k) * 6, yy, 3, 0, TAU); ctx.stroke();
+    }
+  }
+}
+
+function drawParticles(sc, sy) {
+  const type = sc.particles;
   for (const b of bubbles) {
-    b.y -= b.vy; b.wob += .03;
-    if (b.y < -10) { b.y = sy; b.x = Math.random() * W; }
-    ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 6, b.y, b.r, 0, TAU);
-    ctx.strokeStyle = "rgba(220,245,255,.45)"; ctx.lineWidth = 1; ctx.stroke();
+    b.wob += .03;
+    if (type === "bubbles") {
+      b.y -= b.vy; if (b.y < -10) { b.y = sy; b.x = Math.random() * W; }
+      ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 6, b.y, b.r, 0, TAU);
+      ctx.strokeStyle = "rgba(220,245,255,.45)"; ctx.lineWidth = 1; ctx.stroke();
+    } else if (type === "motes") {
+      b.y -= b.vy * .3; if (b.y < -10) { b.y = sy; b.x = Math.random() * W; }
+      const a = .3 + .5 * (.5 + .5 * Math.sin(b.wob * 2));
+      ctx.fillStyle = `hsla(${b.hue},100%,70%,${a})`; ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 4, b.y, b.r * .5, 0, TAU); ctx.fill();
+    } else if (type === "snow") {
+      b.y += b.vy * .6; if (b.y > sy) { b.y = -10; b.x = Math.random() * W; }
+      ctx.fillStyle = "rgba(255,255,255,.8)"; ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 8, b.y, b.r * .6, 0, TAU); ctx.fill();
+    } else if (type === "stars") {
+      const a = .3 + .7 * (.5 + .5 * Math.sin(b.wob * 3 + b.x));
+      ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(b.x, b.y * .7, b.r * .35, 0, TAU); ctx.fill();
+    } else if (type === "embers") {
+      b.y -= b.vy * 1.5; if (b.y < H * .3) { b.y = sy; b.x = Math.random() * W; }
+      const a = .4 + .6 * (.5 + .5 * Math.sin(b.wob * 4));
+      ctx.fillStyle = `rgba(255,${Math.floor(120 + 80 * a)},40,${a})`; ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 5, b.y, b.r * .5, 0, TAU); ctx.fill();
+    }
   }
 }
 
@@ -1121,6 +1256,25 @@ document.getElementById("tray-clear").onclick = () => {
   if (confirm("Take away all the decorations? 🧹")) { decos = []; save(); toast("All clear! ✨"); }
 };
 
+/* scenes */
+const sceneBox = document.getElementById("scenes"), sceneOverlay = document.getElementById("scene-overlay");
+function setScene(key) {
+  sceneKey = SCENES[key] ? key : "reef";
+  buildScenery();
+  [...sceneBox.children].forEach(el => el.classList.toggle("pick", el.dataset.key === sceneKey));
+  save();
+}
+Object.entries(SCENES).forEach(([key, sc], i) => {
+  const el = document.createElement("div");
+  el.className = "scene"; el.dataset.key = key;
+  el.style.background = `linear-gradient(${sc.day.join(",")})`;
+  el.innerHTML = `<span>${sc.emoji}</span>${sc.name}`;
+  el.onclick = () => { setScene(key); blip(400 + i * 50, .12); toast(`${sc.emoji} Welcome to the ${sc.name}!`); sceneOverlay.classList.remove("show"); };
+  sceneBox.appendChild(el);
+});
+document.getElementById("btn-scene").onclick = () => sceneOverlay.classList.add("show");
+document.getElementById("scene-close").onclick = () => sceneOverlay.classList.remove("show");
+
 /* night + sound */
 const nightBtn = document.getElementById("btn-night");
 function applyNight() { nightBtn.textContent = night ? "☀️ Lights on" : "🌙 Lights off"; nightBtn.classList.toggle("on", night); }
@@ -1142,6 +1296,7 @@ if (!load()) {
   save();
 }
 applyNight();
+setScene(sceneKey);
 window.addEventListener("resize", buildScenery);
 setInterval(save, 15000);
 requestAnimationFrame(loop);
