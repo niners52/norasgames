@@ -87,6 +87,16 @@
   }
   .dialog h2 { font-family:"Dancing Script",cursive; font-size:2rem; color:#bff3ff; text-shadow:0 0 14px #3cf; margin-bottom:6px; }
   .dialog p { font-size:.9rem; color:rgba(200,240,255,.8); margin-bottom:14px; }
+  .kinds { display:flex; justify-content:center; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .kind {
+    display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer;
+    width:62px; padding:8px 4px; border-radius:14px; border:2px solid rgba(140,220,255,.25);
+    background:rgba(255,255,255,.06); font-size:.7rem; font-weight:800; color:#bfefff;
+    transition:transform .15s, border-color .15s, background .15s;
+  }
+  .kind span { font-size:1.7rem; line-height:1; }
+  .kind:hover { transform:scale(1.06); background:rgba(255,255,255,.12); }
+  .kind.pick { border-color:#fff; background:rgba(255,120,220,.25); transform:scale(1.08); }
   .swatches { display:flex; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
   .swatch {
     width:44px; height:44px; border-radius:50%; border:3px solid transparent; cursor:pointer;
@@ -126,13 +136,13 @@
 <div class="topbar">
   <div class="title">🦑 Glass Squid Aquarium</div>
   <div class="buttons">
-    <button id="btn-hatch">🥚 Hatch a squid</button>
+    <button id="btn-hatch">🥚 Hatch a friend</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
 </div>
 
-<div class="hint" id="hint">Tap the water to drop a snack 🍤 · Tap a squid to pet it 💖</div>
+<div class="hint" id="hint">Tap the water to drop a snack 🍤 · Tap a creature to pet it 💖</div>
 
 <div class="card" id="card">
   <button class="close" id="card-close">✕</button>
@@ -151,10 +161,11 @@
 
 <div class="overlay" id="overlay">
   <div class="dialog">
-    <h2>Hatch a new squid!</h2>
-    <p>Pick a glow color and give your squid a name.</p>
+    <h2>Hatch a new friend!</h2>
+    <p>Pick a creature, a glow color, and a name.</p>
+    <div class="kinds" id="kinds"></div>
     <div class="swatches" id="swatches"></div>
-    <input id="hatch-name" maxlength="16" placeholder="Squid's name" spellcheck="false">
+    <input id="hatch-name" maxlength="16" placeholder="Friend's name" spellcheck="false">
     <div class="row">
       <button id="hatch-cancel">Not yet</button>
       <button class="go" id="hatch-go">✨ Hatch! ✨</button>
@@ -195,7 +206,17 @@ const COLORS = [
   { name: "Sunny",    hue: 48  },
   { name: "Coral",    hue: 12  },
 ];
-const NAMES = ["Bubbles","Pearl","Glimmer","Inky","Nova","Twinkle","Marina","Sprinkle","Luna","Coral","Jelly","Shimmer","Pip","Blossom","Frosty","Ziggy"];
+const NAMES = ["Bubbles","Pearl","Glimmer","Inky","Nova","Twinkle","Marina","Sprinkle","Luna","Coral","Jelly","Shimmer","Pip","Blossom","Frosty","Ziggy","Wobble","Splash","Finn","Squishy","Dot","Sunny","Misty","Coralie"];
+
+/* ---------- creatures you can hatch ---------- */
+const KINDS = {
+  squid: { name: "Squid",     emoji: "🦑", speed: 32, chase: 95,  mode: "heading", tiltK: 0,   tag: 2.4 },
+  jelly: { name: "Jellyfish", emoji: "🪼", speed: 16, chase: 45,  mode: "upright", tiltK: 0,   tag: 2.2 },
+  octo:  { name: "Octopus",   emoji: "🐙", speed: 26, chase: 70,  mode: "flip",    tiltK: .25, tag: 2.4 },
+  fish:  { name: "Fish",      emoji: "🐠", speed: 55, chase: 130, mode: "flip",    tiltK: .6,  tag: 2.0 },
+  horse: { name: "Seahorse",  emoji: "🐴", speed: 16, chase: 45,  mode: "flip",    tiltK: .2,  tag: 3.3 },
+};
+const kindOf = s => KINDS[s.kind] || KINDS.squid;
 
 /* ---------- sound (tiny blips, no files needed) ---------- */
 let soundOn = true, audio = null;
@@ -222,6 +243,8 @@ function makeSquid(o = {}) {
   return {
     id: o.id || Math.random().toString(36).slice(2),
     name: o.name || NAMES[Math.floor(Math.random() * NAMES.length)],
+    kind: KINDS[o.kind] ? o.kind : "squid",
+    face: 1, tilt: 0,
     hue: o.hue ?? 190,
     size: o.size ?? 1,            // grows to 2.2
     hunger: o.hunger ?? 40,       // 0 = full, 100 = starving
@@ -237,7 +260,7 @@ function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
       night, savedAt: Date.now(),
-      squids: squids.map(s => ({ id: s.id, name: s.name, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
+      squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
 }
@@ -261,10 +284,35 @@ function buildScenery() {
   for (let i = 0; i < n; i++) weeds.push({ x: (i + .5) * (W / n) + rand(-30, 30), h: rand(60, 170), seg: 6 + Math.floor(rand(0, 5)), phase: Math.random() * TAU, hue: rand(120, 175) });
 }
 
-/* ---------- squid drawing ---------- */
-function drawSquid(s) {
-  const r = 22 * s.size;                    // head radius
-  const L = r * 2.6;                        // mantle length
+/* ---------- creature drawing ---------- */
+function drawEye(x, y, er, blink, hue) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(1, blink > 0 ? .15 : 1);
+  ctx.beginPath(); ctx.arc(0, 0, er, 0, TAU); ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill();
+  ctx.beginPath(); ctx.arc(er * .15, 0, er * .6, 0, TAU); ctx.fillStyle = `hsl(${hue},80%,20%)`; ctx.fill();
+  ctx.beginPath(); ctx.arc(er * .35, -er * .25, er * .22, 0, TAU); ctx.fillStyle = "#fff"; ctx.fill();
+  ctx.restore();
+}
+function smile(x, y, sr) {
+  ctx.beginPath(); ctx.arc(x, y, sr, Math.PI * .15, Math.PI * .85);
+  ctx.strokeStyle = "rgba(255,255,255,.7)"; ctx.lineWidth = 1.5; ctx.lineCap = "round"; ctx.stroke();
+}
+function glassBody(y0, y1, glow) {
+  const body = ctx.createLinearGradient(0, y0, 0, y1);
+  body.addColorStop(0, `rgba(220,248,255,${.24 + .1 * glow})`);
+  body.addColorStop(.5, `rgba(180,230,255,${.10})`);
+  body.addColorStop(1, `rgba(140,200,255,${.16})`);
+  ctx.fillStyle = body; ctx.fill();
+  ctx.strokeStyle = `rgba(235,252,255,${.6 + .3 * glow})`; ctx.lineWidth = 1.6; ctx.stroke();
+}
+function organ(x, y, rad, col, glow, pulse) {
+  const og = ctx.createRadialGradient(x, y, 0, x, y, rad);
+  og.addColorStop(0, col(.9 * glow * pulse)); og.addColorStop(1, col(0));
+  ctx.fillStyle = og; ctx.beginPath(); ctx.arc(x, y, rad, 0, TAU); ctx.fill();
+}
+
+function drawCreature(s) {
+  const kind = kindOf(s);
+  const r = 22 * s.size;
   const glowLevel = night ? 1 : .55;
   const hungryDim = 1 - (s.hunger / 100) * .55;
   const glow = glowLevel * hungryDim + s.glowBurst;
@@ -273,14 +321,182 @@ function drawSquid(s) {
 
   ctx.save();
   ctx.translate(s.x, s.y);
-  ctx.rotate(s.angle);
+  if (kind.mode === "heading") ctx.rotate(s.angle);
+  else if (kind.mode === "flip") { ctx.scale(s.face, 1); ctx.rotate(s.tilt); }
 
   /* outer glow */
   const g = ctx.createRadialGradient(0, 0, r * .3, 0, 0, r * 3.2);
   g.addColorStop(0, col(.35 * glow * pulse));
   g.addColorStop(1, col(0));
   ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(L * .3, 0, r * 3.2, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(0, 0, r * 3.2, 0, TAU); ctx.fill();
+
+  if (s.kind === "jelly") drawJellyBody(s, r, glow, col, pulse);
+  else if (s.kind === "octo") drawOctoBody(s, r, glow, col, pulse);
+  else if (s.kind === "fish") drawFishBody(s, r, glow, col, pulse);
+  else if (s.kind === "horse") drawHorseBody(s, r, glow, col, pulse);
+  else drawSquidBody(s, r, glow, col, pulse);
+  ctx.restore();
+
+  /* name tag */
+  if (selected === s || s.glowBurst > 0) {
+    ctx.save();
+    ctx.font = `800 ${13 + 3 * s.size}px Nunito, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    ctx.shadowColor = `hsl(${s.hue},100%,70%)`; ctx.shadowBlur = 12;
+    ctx.fillText(s.name, s.x, s.y - r * kind.tag);
+    ctx.restore();
+  }
+}
+
+/* ---------- jellyfish ---------- */
+function drawJellyBody(s, r, glow, col, pulse) {
+  const R = r * 1.5;
+  const sq = 1 + .12 * Math.sin(s.pulse);
+  /* long trailing tentacles */
+  for (let i = 0; i < 7; i++) {
+    const x0 = (i - 3) / 3 * R * .85, len = R * (2 + (i % 2) * .9);
+    ctx.beginPath(); ctx.moveTo(x0, R * .15);
+    for (let k = 1; k <= 6; k++) {
+      const t = k / 6;
+      ctx.lineTo(x0 + Math.sin(s.wob * 1.2 + i + t * 3) * R * .35 * t, R * .15 + len * t);
+    }
+    ctx.strokeStyle = col(.5 * (.5 + glow * .5)); ctx.lineWidth = Math.max(1.2, r * .09); ctx.lineCap = "round"; ctx.stroke();
+  }
+  /* frilly oral arms */
+  for (let i = 0; i < 4; i++) {
+    const x0 = (i - 1.5) / 1.5 * R * .4, len = R * 1.3;
+    ctx.beginPath(); ctx.moveTo(x0, R * .2);
+    for (let k = 1; k <= 5; k++) {
+      const t = k / 5;
+      ctx.lineTo(x0 + Math.sin(s.wob * 2 + i * 2 + t * 6) * R * .18, R * .2 + len * t);
+    }
+    ctx.strokeStyle = `rgba(255,255,255,${.25 + .2 * glow})`; ctx.lineWidth = Math.max(2, r * .2); ctx.lineCap = "round"; ctx.stroke();
+  }
+  /* bell with a scalloped edge */
+  ctx.beginPath();
+  ctx.ellipse(0, 0, R, R * .95 * sq, 0, Math.PI, TAU);
+  for (let k = 1; k <= 5; k++) {
+    const x1 = R - 2 * R * k / 5, cx = R - 2 * R * (k - .5) / 5;
+    ctx.quadraticCurveTo(cx, R * .3, x1, R * .05);
+  }
+  ctx.closePath();
+  glassBody(-R, R * .3, glow);
+  organ(0, -R * .35, R * .8, col, glow, pulse);
+  for (let i = 0; i < 5; i++) {
+    const a = Math.PI + Math.PI * (i + .5) / 5;
+    ctx.fillStyle = col(.9 * glow); ctx.beginPath(); ctx.arc(Math.cos(a) * R * .8, Math.sin(a) * R * .8 * sq, r * .1, 0, TAU); ctx.fill();
+  }
+  ctx.beginPath(); ctx.arc(0, 0, R * .8, Math.PI * 1.15, Math.PI * 1.6);
+  ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
+  drawEye(-R * .32, -R * .1, r * .3, s.blink, s.hue);
+  drawEye(R * .32, -R * .1, r * .3, s.blink, s.hue);
+  if (s.happy > 45) smile(0, R * .08, r * .22);
+}
+
+/* ---------- octopus ---------- */
+function drawOctoBody(s, r, glow, col, pulse) {
+  const R = r * 1.3;
+  for (let i = 0; i < 8; i++) {
+    const a = i / 7 - .5, x0 = a * R * 1.3, len = R * (1.7 + (i % 3) * .3);
+    ctx.beginPath(); ctx.moveTo(x0, R * .45);
+    let px = x0, py = R * .45;
+    for (let k = 1; k <= 6; k++) {
+      const t = k / 6;
+      px = x0 + a * R * 1.4 * t + Math.sin(s.wob * 1.4 + i + t * 3) * R * .25 * t;
+      py = R * .45 + len * t * (1 - .2 * t * t);
+      ctx.lineTo(px, py);
+    }
+    ctx.arc(px + a * R * .25, py - R * .12, R * .13, Math.PI * .5, Math.PI * 2.2);
+    ctx.strokeStyle = col(.6 * (.5 + glow * .5)); ctx.lineWidth = Math.max(1.5, r * .17); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.stroke();
+  }
+  ctx.beginPath(); ctx.ellipse(0, -R * .25, R * 1.05, R * 1.2, 0, 0, TAU);
+  glassBody(-R * 1.45, R * .95, glow);
+  for (let i = 0; i < 3; i++) organ((i - 1) * R * .45, -R * .55 + Math.sin(s.pulse + i) * R * .15, R * .45, col, glow, pulse);
+  ctx.beginPath(); ctx.ellipse(0, -R * .25, R * .85, R, 0, Math.PI * 1.15, Math.PI * 1.6);
+  ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
+  drawEye(-R * .38, R * .15, r * .34, s.blink, s.hue);
+  drawEye(R * .38, R * .15, r * .34, s.blink, s.hue);
+  if (s.happy > 45) smile(0, R * .4, r * .22);
+}
+
+/* ---------- glass fish ---------- */
+function drawFishBody(s, r, glow, col, pulse) {
+  const L = r * 1.9, Hh = r * 1.05;
+  const wag = Math.sin(s.wob * 3) * .3;
+  const finStroke = `rgba(235,252,255,${.5 + .3 * glow})`;
+  /* tail */
+  ctx.save(); ctx.translate(-L * .85, 0); ctx.rotate(wag);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-L * .55, -Hh * .9); ctx.quadraticCurveTo(-L * .35, 0, -L * .55, Hh * .9); ctx.closePath();
+  ctx.fillStyle = col(.35 * (.5 + glow * .5)); ctx.fill();
+  ctx.strokeStyle = finStroke; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.restore();
+  /* dorsal + belly fins */
+  ctx.strokeStyle = finStroke; ctx.lineWidth = 1.2; ctx.fillStyle = col(.3 * (.5 + glow * .5));
+  ctx.beginPath(); ctx.moveTo(-L * .45, -Hh * .75); ctx.quadraticCurveTo(-L * .1, -Hh * 1.7, L * .3, -Hh * .8); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-L * .3, Hh * .8); ctx.quadraticCurveTo(-L * .05, Hh * 1.35, L * .15, Hh * .85); ctx.closePath(); ctx.fill(); ctx.stroke();
+  /* body */
+  ctx.beginPath(); ctx.ellipse(0, 0, L, Hh, 0, 0, TAU);
+  glassBody(-Hh, Hh, glow);
+  for (let i = 0; i < 3; i++) {
+    const ox = -L * .45 + i * L * .38;
+    const og = ctx.createRadialGradient(ox, 0, 0, ox, 0, Hh * .8);
+    og.addColorStop(0, col(.85 * glow * pulse)); og.addColorStop(1, col(0));
+    ctx.fillStyle = og; ctx.beginPath(); ctx.ellipse(ox, 0, L * .18, Hh * .85, 0, 0, TAU); ctx.fill();
+  }
+  /* flapping side fin */
+  ctx.save(); ctx.translate(L * .1, Hh * .2); ctx.rotate(Math.sin(s.wob * 4) * .35 + .4);
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.quadraticCurveTo(-L * .35, Hh * .3, -L * .3, Hh * .65); ctx.quadraticCurveTo(-L * .05, Hh * .3, 0, 0);
+  ctx.fillStyle = `rgba(255,255,255,${.25 + .2 * glow})`; ctx.fill(); ctx.strokeStyle = finStroke; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(0, 0, L * .8, Hh * .75, 0, Math.PI * 1.1, Math.PI * 1.6);
+  ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
+  drawEye(L * .55, -Hh * .15, r * .32, s.blink, s.hue);
+  smile(L * .8, Hh * .15, r * .13);
+}
+
+/* ---------- seahorse ---------- */
+function drawHorseBody(s, r, glow, col, pulse) {
+  const R = r;
+  ctx.lineJoin = "round"; ctx.lineCap = "round";
+  /* fluttering back fin */
+  ctx.save(); ctx.translate(-R * .75, -R * .5); ctx.rotate(Math.sin(s.wob * 5) * .25);
+  ctx.beginPath(); ctx.moveTo(0, -R * .5); ctx.quadraticCurveTo(-R * .9, 0, 0, R * .6); ctx.closePath();
+  ctx.fillStyle = col(.35 * (.5 + glow * .5)); ctx.fill();
+  ctx.strokeStyle = `rgba(235,252,255,${.5 + .3 * glow})`; ctx.lineWidth = 1.2; ctx.stroke();
+  ctx.restore();
+  /* body from neck down to a curly tail */
+  ctx.beginPath();
+  ctx.moveTo(-R * .35, -R * 1.6);
+  ctx.bezierCurveTo(-R * .95, -R * .7, -R * .75, R * .6, -R * .25, R * 1.2);
+  ctx.quadraticCurveTo(-R * .6, R * 2.1, R * .25, R * 2.15);
+  ctx.quadraticCurveTo(R * .6, R * 1.8, R * .2, R * 1.55);
+  ctx.bezierCurveTo(R * .75, R * 1.0, R * .95, -R * .2, R * .35, -R * 1.55);
+  ctx.closePath();
+  glassBody(-R * 1.6, R * 2.1, glow);
+  for (let i = 0; i < 5; i++) {
+    const y = -R * 1.1 + i * R * .5, inset = Math.abs(i - 2) * R * .08;
+    ctx.beginPath(); ctx.moveTo(-R * .55 + inset, y); ctx.lineTo(R * .6 - inset, y + R * .1);
+    ctx.strokeStyle = `rgba(255,255,255,${.25 + .15 * glow})`; ctx.lineWidth = 1.2; ctx.stroke();
+  }
+  for (let i = 0; i < 4; i++) organ(0, -R * 1.1 + i * R * .6 + Math.sin(s.pulse + i) * R * .08, R * .5, col, glow, pulse);
+  /* head, snout, crown */
+  ctx.beginPath(); ctx.arc(0, -R * 2.05, R * .62, 0, TAU);
+  glassBody(-R * 2.7, -R * 1.4, glow);
+  ctx.beginPath(); ctx.moveTo(R * .45, -R * 2.0); ctx.lineTo(R * 1.35, -R * 1.85);
+  ctx.strokeStyle = `rgba(210,245,255,${.55 + .3 * glow})`; ctx.lineWidth = R * .36; ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-R * .45, -R * 2.45); ctx.lineTo(-R * .3, -R * 2.95); ctx.lineTo(-R * .1, -R * 2.6); ctx.lineTo(R * .1, -R * 3.0); ctx.lineTo(R * .3, -R * 2.6); ctx.lineTo(R * .45, -R * 2.45);
+  ctx.closePath();
+  ctx.fillStyle = col(.5 * (.5 + glow * .5)); ctx.fill(); ctx.strokeStyle = "rgba(235,252,255,.7)"; ctx.lineWidth = 1.2; ctx.stroke();
+  drawEye(R * .18, -R * 2.15, r * .26, s.blink, s.hue);
+  if (s.happy > 45) smile(R * .85, -R * 1.72, r * .11);
+}
+
+/* ---------- glass squid ---------- */
+function drawSquidBody(s, r, glow, col, pulse) {
+  const L = r * 2.6;                        // mantle length
 
   /* tentacles (trail behind the head, toward -x) */
   const arms = 8;
@@ -362,18 +578,6 @@ function drawSquid(s) {
   if (s.happy > 45) {
     ctx.beginPath(); ctx.arc(-r * .55, 0, r * .28, Math.PI * .55, Math.PI * 1.45);
     ctx.strokeStyle = `rgba(255,255,255,.7)`; ctx.lineWidth = 1.5; ctx.stroke();
-  }
-  ctx.restore();
-
-  /* name tag */
-  if (selected === s || s.glowBurst > 0) {
-    ctx.save();
-    ctx.font = `800 ${13 + 3 * s.size}px Nunito, sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillStyle = `rgba(255,255,255,${.9})`;
-    ctx.shadowColor = `hsl(${s.hue},100%,70%)`; ctx.shadowBlur = 12;
-    ctx.fillText(s.name, s.x, s.y - r * 2.4);
-    ctx.restore();
   }
 }
 
@@ -485,15 +689,23 @@ function update(dt) {
       }
     }
     const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy) || 1;
-    const speed = (goal ? 95 : 32) * (1 - s.hunger / 300);
+    const kind = kindOf(s);
+    const speed = (goal ? kind.chase : kind.speed) * (1 - s.hunger / 300);
     s.vx += (dx / d * speed - s.vx) * dt * 1.5;
     s.vy += (dy / d * speed - s.vy) * dt * 1.5;
     s.x += s.vx * dt; s.y += s.vy * dt + Math.sin(s.wob) * .25;
     s.x = clamp(s.x, 40, W - 40); s.y = clamp(s.y, 70, sy - 30);
-    /* face the way we swim (mantle points where we're going) */
-    const want = Math.atan2(s.vy, s.vx);
-    let diff = want - s.angle; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
-    s.angle += diff * dt * 3;
+    /* face the way we swim */
+    if (kind.mode === "heading") {
+      const want = Math.atan2(s.vy, s.vx);
+      let diff = want - s.angle; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+      s.angle += diff * dt * 3;
+    } else if (kind.mode === "flip") {
+      if (Math.abs(s.vx) > 3) s.face = s.vx > 0 ? 1 : -1;
+      const wantTilt = Math.atan2(s.vy, Math.abs(s.vx) + 1) * kind.tiltK;
+      s.tilt += (wantTilt - s.tilt) * dt * 3;
+    }
+    if (s.kind === "jelly") s.y += Math.sin(s.pulse) * .5;   // jellyfish bob with every pulse
 
     /* eat! */
     if (goal && Math.hypot(goal.x - s.x, goal.y - s.y) < 24 * s.size + 10) {
@@ -514,10 +726,10 @@ function update(dt) {
   for (const e of eggs) {
     e.t += dt;
     if (e.t > 3) {
-      const s = makeSquid({ name: e.name, hue: e.hue, size: 1, hunger: 30, happy: 90, x: e.x, y: e.y - 30 });
+      const s = makeSquid({ name: e.name, kind: e.kind, hue: e.hue, size: 1, hunger: 30, happy: 90, x: e.x, y: e.y - 30 });
       squids.push(s); select(s);
       burst(e.x, e.y, ["✨", "🌟", "💖"], 16); blip(440, .35, "sine", .18);
-      toast(`${s.name} hatched! Say hi! 🦑`);
+      toast(`${s.name} the ${kindOf(s).name} hatched! Say hi! ${kindOf(s).emoji}`);
       save();
     }
   }
@@ -538,7 +750,7 @@ function loop(now) {
   drawBackground();
   for (const e of eggs) drawEgg(e);
   for (const f of foods) drawFood(f);
-  for (const s of [...squids].sort((a, b) => a.size - b.size)) drawSquid(s);
+  for (const s of [...squids].sort((a, b) => a.size - b.size)) drawCreature(s);
   drawSparkles();
   if (night) {
     ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
@@ -582,7 +794,7 @@ function refreshCard() {
   const days = Math.max(0, Math.floor((Date.now() - s.bornAt) / 86400000));
   const colorName = (COLORS.find(c => c.hue === s.hue) || { name: "Glowy" }).name;
   const age = days === 0 ? "hatched today" : days + " day" + (days > 1 ? "s" : "") + " old";
-  document.getElementById("level").textContent = `${level(s.size)} squid · ${colorName} glow · ${age}`;
+  document.getElementById("level").textContent = `${level(s.size)} ${kindOf(s).name.toLowerCase()} · ${colorName} glow · ${age}`;
   document.getElementById("bar-hunger").style.width = (100 - s.hunger) + "%";
   document.getElementById("bar-happy").style.width = s.happy + "%";
 }
@@ -603,7 +815,15 @@ document.getElementById("btn-bye").onclick = () => {
 };
 
 /* hatch dialog */
-let pickHue = COLORS[0].hue;
+let pickKind = "squid", pickHue = COLORS[0].hue;
+const kindBox = document.getElementById("kinds");
+Object.entries(KINDS).forEach(([key, k], i) => {
+  const d = document.createElement("div");
+  d.className = "kind" + (i === 0 ? " pick" : "");
+  d.innerHTML = `<span>${k.emoji}</span>${k.name}`;
+  d.onclick = () => { pickKind = key; [...kindBox.children].forEach(x => x.classList.remove("pick")); d.classList.add("pick"); blip(300 + i * 70, .08); };
+  kindBox.appendChild(d);
+});
 const swatchBox = document.getElementById("swatches");
 COLORS.forEach((c, i) => {
   const d = document.createElement("div");
@@ -613,7 +833,7 @@ COLORS.forEach((c, i) => {
   swatchBox.appendChild(d);
 });
 document.getElementById("btn-hatch").onclick = () => {
-  if (squids.length >= 8) { toast("The tank is full! Release a squid to make room 🌊"); return; }
+  if (squids.length >= 10) { toast("The tank is full! Release a friend to make room 🌊"); return; }
   document.getElementById("hatch-name").value = NAMES[Math.floor(Math.random() * NAMES.length)];
   document.getElementById("overlay").classList.add("show");
 };
@@ -621,7 +841,7 @@ document.getElementById("hatch-cancel").onclick = () => document.getElementById(
 document.getElementById("hatch-go").onclick = () => {
   const name = document.getElementById("hatch-name").value.trim() || "Squid";
   document.getElementById("overlay").classList.remove("show");
-  eggs.push({ x: rand(W * .25, W * .75), y: SAND() - 22, hue: pickHue, name, t: 0 });
+  eggs.push({ x: rand(W * .25, W * .75), y: SAND() - 22, hue: pickHue, kind: pickKind, name, t: 0 });
   blip(350, .2, "triangle");
   toast("An egg! Watch it wiggle… 🥚");
 };
