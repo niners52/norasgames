@@ -160,6 +160,22 @@
   .deco { position:relative; }
   .deco .num { position:absolute; top:-7px; right:-7px; background:#ff44cc; color:#fff; border-radius:999px; font-size:.65rem; padding:1px 7px; box-shadow:0 0 8px rgba(255,68,204,.7); }
   #show-start { background:linear-gradient(135deg,#ff9f1c,#ff44cc); border:none; }
+  .dialog.big { width:min(520px,100%); }
+  .book { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; margin-bottom:14px; max-height:52vh; overflow-y:auto; padding:2px; }
+  .item {
+    border-radius:12px; border:2px solid rgba(140,220,255,.2); background:rgba(255,255,255,.05);
+    padding:8px 4px 6px; text-align:center; font-size:.68rem; font-weight:800; color:#bfefff; position:relative;
+  }
+  .item .e { display:block; font-size:1.7rem; line-height:1.25; }
+  .item small { display:block; font-weight:700; opacity:.7; font-size:.58rem; letter-spacing:.3px; }
+  .item.none { opacity:.5; }
+  .item .n { position:absolute; top:4px; right:5px; font-size:.65rem; background:rgba(255,255,255,.18); border-radius:999px; padding:1px 6px; }
+  .item.common    { border-color:rgba(155,231,255,.45); }
+  .item.uncommon  { border-color:rgba(125,255,176,.55); }
+  .item.rare      { border-color:rgba(255,125,224,.65); }
+  .item.legendary { border-color:#ffd75e; box-shadow:0 0 12px rgba(255,215,94,.45); }
+  .item.legendary:not(.none) { background:rgba(255,215,94,.12); }
+  @media (max-width:600px) { .book { grid-template-columns:repeat(3, 1fr); } }
   #cook-btn { background:linear-gradient(135deg,#ff9f1c,#ff4d6d); border:none; }
   #cook-btn:disabled { opacity:.6; transform:none; cursor:wait; }
   .recipe-info { font-size:.8rem; color:rgba(200,240,255,.85); margin-top:8px; line-height:1.45; }
@@ -190,6 +206,7 @@
     <button id="btn-booth">📸 Photo Booth</button>
     <button id="btn-show">🎪 Show</button>
     <button id="btn-kitchen">🍳 Kitchen</button>
+    <button id="btn-visitors">🔭 Visitors</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -290,6 +307,15 @@
   </div>
 </div>
 
+<div class="overlay" id="visitor-overlay">
+  <div class="dialog big">
+    <h2>Visitor Book 🔭</h2>
+    <p id="visitor-sub"></p>
+    <div class="book" id="visitor-book"></div>
+    <button class="wide" id="visitor-close">Close</button>
+  </div>
+</div>
+
 <div class="overlay" id="photo-overlay">
   <div class="dialog big">
     <h2>Say cheese! 📸</h2>
@@ -385,6 +411,22 @@ const SNACKS = {
   ice:     { name: "Ice pop",       emoji: "🧊", ing: "Iceberg chips + blueberry juice",                   power: "Brrr! Friends turn frosty blue and shiver." },
 };
 let pantry = { type: "shrimp", left: -1 }, cooking = false;
+
+/* ---------- surprise visitors ---------- */
+const VRARITY = { common: "Common", uncommon: "Uncommon", rare: "Rare!", legendary: "LEGENDARY!!" };
+const VISITORS = {
+  whale:    { name: "Giant Whale",    emoji: "🐋", size: 150, rarity: "common",    layer: "back",  flip: true,  desc: "So big the whole tank rocks!" },
+  turtle:   { name: "Sea Turtle",     emoji: "🐢", size: 70,  rarity: "common",    layer: "front", flip: true,  desc: "Slow, wise, and 100 years old." },
+  balloon:  { name: "Lost Balloon",   emoji: "🎈", size: 60,  rarity: "common",    layer: "front", flip: false, desc: "Someone let go at the beach. Pop it!" },
+  dolphins: { name: "Dolphin Pod",    emoji: "🐬", size: 60,  rarity: "uncommon",  layer: "front", flip: true,  desc: "Three dolphins leaping together." },
+  shark:    { name: "Friendly Shark", emoji: "🦈", size: 95,  rarity: "uncommon",  layer: "front", flip: true,  desc: "He just wants a high five!" },
+  ufo:      { name: "Sea UFO",        emoji: "🛸", size: 70,  rarity: "uncommon",  layer: "front", flip: false, desc: "Beep boop. Visits Galaxy Ocean the most." },
+  mermaid:  { name: "Mermaid",        emoji: "🧜‍♀️", size: 90, rarity: "rare",      layer: "front", flip: false, desc: "She stops to wave and sprinkle sparkles." },
+  star:     { name: "Shooting Star",  emoji: "⭐", size: 40,  rarity: "rare",      layer: "front", flip: false, desc: "Quick! Make a wish!" },
+  rainbow:  { name: "Rainbow",        emoji: "🌈", size: 0,   rarity: "rare",      layer: "back",  flip: false, desc: "Every color at once, right over the tank." },
+  dragon:   { name: "Sea Dragon",     emoji: "🐲", size: 70,  rarity: "legendary", layer: "front", flip: false, desc: "A glowing serpent from the deepest deep." },
+};
+let visitor = null, visitorTimer = 40, visitors = {};
 const MELODY = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 880, 784, 659, 587];
 const CROWD = ["🐟", "🦀", "🐢", "🐡", "🦐", "🐬", "🐙", "🐠", "🦭"];
 const kindOf = s => KINDS[s.kind] || KINDS.squid;
@@ -469,7 +511,7 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, scene: sceneKey, pantry, savedAt: Date.now(),
+      night, decos, scene: sceneKey, pantry, visitors, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hat: s.hat, glasses: s.glasses, buddy: s.buddy, parents: s.parents, baby: s.baby, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -484,6 +526,7 @@ function load() {
     night = !!d.night;
     sceneKey = SCENES[d.scene] ? d.scene : "reef";
     pantry = d.pantry && SNACKS[d.pantry.type] ? d.pantry : { type: "shrimp", left: -1 };
+    visitors = d.visitors && typeof d.visitors === "object" ? d.visitors : {};
     decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
@@ -1349,7 +1392,120 @@ function update(dt) {
   }
   eggs = eggs.filter(e => e.t <= 3);
   updateSparkles(dt); updateRings(dt);
+  if (!booth.open) { if (visitor) updateVisitor(dt); else { visitorTimer -= dt; if (visitorTimer <= 0) { spawnVisitor(); visitorTimer = rand(70, 160); } } }
   if (selected) refreshCard();
+}
+
+/* ---------- visitors ---------- */
+function spawnVisitor(forceId) {
+  const roll = Math.random() * 100;
+  const rar = roll < 45 ? "common" : roll < 75 ? "uncommon" : roll < 95 ? "rare" : "legendary";
+  const pool = Object.keys(VISITORS).filter(k => VISITORS[k].rarity === rar);
+  let id = forceId || pool[Math.floor(Math.random() * pool.length)];
+  if (!forceId && sceneKey === "galaxy" && Math.random() < .3) id = "ufo";
+  if (!forceId && night && Math.random() < .2) id = "star";
+  const fromLeft = Math.random() < .5, dir = fromLeft ? 1 : -1;
+  const v = { id, t: 0, spotted: false, dir, x: fromLeft ? -160 : W + 160, y: H * .4, vx: 0, vy: 0, trail: [], dur: 40 };
+  switch (id) {
+    case "whale":    v.vx = 45 * dir;  v.y = H * .32; break;
+    case "turtle":   v.vx = 55 * dir;  v.y = H * .5;  break;
+    case "shark":    v.vx = 95 * dir;  v.y = H * .45; break;
+    case "dolphins": v.vx = 120 * dir; v.y = H * .42; break;
+    case "dragon":   v.vx = 75 * dir;  v.y = H * .4;  break;
+    case "ufo":      v.vx = 80 * dir;  v.y = 90;      break;
+    case "mermaid":  v.y = H * .45; v.dur = 13; break;
+    case "star":     v.x = fromLeft ? -40 : W + 40; v.y = 40; v.vx = 420 * dir; v.vy = 110; v.dur = 5; break;
+    case "rainbow":  v.x = W / 2; v.dur = 14; break;
+    case "balloon":  v.x = rand(W * .2, W * .8); v.y = H + 40; v.vy = -45; break;
+  }
+  visitor = v;
+  toast("👀 Look! Something is coming…"); blip(330, .3, "triangle", .08);
+}
+function updateVisitor(dt) {
+  const v = visitor, d = VISITORS[v.id]; v.t += dt;
+  if (v.id === "mermaid") {
+    if (v.t < 3) v.x += (W * .5 - v.x) * dt * 1.4;
+    else if (v.t < 9) { v.y = H * .45 + Math.sin(v.t * 3) * 12; if (Math.random() < dt * 5) sparkles.push(sp(v.x + rand(-60, 60), v.y - 30, "✨")); }
+    else v.x += 260 * v.dir * dt;
+  } else if (v.id !== "rainbow") { v.x += v.vx * dt; v.y += v.vy * dt; }
+  if (v.id === "turtle") v.y += Math.sin(v.t * 2) * .4;
+  if (v.id === "whale" && Math.random() < dt * 2) rings.push({ x: v.x - v.dir * 30, y: v.y - 70, r: 4, life: .8, hue: 200 });
+  if (v.id === "dragon") { v.y = H * .4 + Math.sin(v.t * 2) * 70; v.trail.push({ x: v.x, y: v.y }); if (v.trail.length > 36) v.trail.shift(); }
+  if (v.id === "ufo") v.y = 90 + Math.sin(v.t * 3) * 20;
+  if (v.id === "balloon") v.x += Math.sin(v.t * 1.5) * .6;
+  if (v.id === "dolphins" && Math.random() < dt * 3) burst(v.x - rand(0, 180) * v.dir, v.y + 30, ["💦"], 2);
+  if (v.id === "star" && Math.random() < dt * 20) sparkles.push(sp(v.x, v.y, "✨"));
+  const gone = v.dead || v.t > v.dur || v.x < -280 || v.x > W + 280 || v.y < -120;
+  if (gone) { if (!v.spotted) toast(`The ${d.name} left… ${d.emoji} Tap visitors to spot them next time!`); visitor = null; }
+}
+function visitorAt(x, y) {
+  const v = visitor; if (!v || v.spotted) return null;
+  if (v.id === "rainbow") { const dist = Math.hypot(x - W / 2, y - H * .42); return (y < H * .42 && dist > 150 && dist < 290) ? v : null; }
+  if (v.id === "dolphins") {
+    for (let i = 0; i < 3; i++) { const px = v.x - i * 90 * v.dir, py = v.y - Math.abs(Math.sin(v.t * 2.2 + i * .9)) * 110; if (Math.hypot(px - x, py - y) < 55) return v; }
+    return null;
+  }
+  return Math.hypot(v.x - x, v.y - y) < Math.max(50, VISITORS[v.id].size * .7) ? v : null;
+}
+function spotVisitor(v) {
+  v.spotted = true; const d = VISITORS[v.id];
+  visitors[v.id] = (visitors[v.id] || 0) + 1;
+  burst(v.x, v.y, ["💖", "⭐", "✨"], 12); blip(880, .3, "sine", .14);
+  toast(visitors[v.id] === 1 ? `You spotted a ${d.name}! ${d.emoji} New badge in your Visitor Book! 🏅` : `${d.name} again! ${d.emoji} Spotted ${visitors[v.id]} times`);
+  if (v.id === "balloon") { burst(v.x, v.y, ["💥"], 6); v.dead = true; }
+  for (const s of squids) s.happy = clamp(s.happy + 5, 0, 100);
+  updateVisitorButton(); save();
+}
+function drawVisitor(v) {
+  const d = VISITORS[v.id];
+  ctx.save();
+  if (v.id === "rainbow") {
+    const a = Math.min(1, v.t / 2, (v.dur - v.t) / 2) * .75;
+    ["#ff4d6d", "#ffb84d", "#fff44d", "#4dff88", "#4dd2ff", "#b44dff"].forEach((c, i) => {
+      ctx.strokeStyle = c; ctx.globalAlpha = a; ctx.lineWidth = 16;
+      ctx.beginPath(); ctx.arc(W / 2, H * .42, 270 - i * 16, Math.PI, TAU); ctx.stroke();
+    });
+    ctx.globalAlpha = 1;
+  } else {
+    if (v.id === "star") {
+      const g = ctx.createLinearGradient(v.x - v.vx * .4, v.y - v.vy * .4, v.x, v.y);
+      g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,255,220,.9)");
+      ctx.strokeStyle = g; ctx.lineWidth = 5; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(v.x - v.vx * .4, v.y - v.vy * .4); ctx.lineTo(v.x, v.y); ctx.stroke();
+    }
+    if (v.id === "dragon") {
+      v.trail.forEach((p, i) => {
+        const t = i / v.trail.length;
+        ctx.fillStyle = `hsla(${(frame * 2 + i * 10) % 360},100%,65%,${.25 + .5 * t})`;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 8 + t * 22, 0, TAU); ctx.fill();
+      });
+    }
+    if (v.id === "ufo") {
+      ctx.fillStyle = "rgba(120,255,160,.14)"; ctx.beginPath(); ctx.moveTo(v.x, v.y + 20); ctx.lineTo(v.x - 80, H * .8); ctx.lineTo(v.x + 80, H * .8); ctx.closePath(); ctx.fill();
+    }
+    ctx.font = `${d.size}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const members = v.id === "dolphins" ? 3 : 1;
+    for (let i = 0; i < members; i++) {
+      const px = v.id === "dolphins" ? v.x - i * 90 * v.dir : v.x;
+      const py = v.id === "dolphins" ? v.y - Math.abs(Math.sin(v.t * 2.2 + i * .9)) * 110 : v.y;
+      ctx.save(); ctx.translate(px, py);
+      if (d.flip && v.dir > 0) ctx.scale(-1, 1);
+      if (v.id === "whale") ctx.globalAlpha = .85;
+      ctx.fillText(d.emoji, 0, 0);
+      ctx.restore();
+    }
+    if (v.id === "mermaid" && v.t > 3 && v.t < 9) { ctx.font = "28px serif"; ctx.fillText("👋", v.x + 55, v.y - 40 + Math.sin(v.t * 8) * 6); }
+  }
+  if (!v.spotted) {
+    const hx = v.id === "rainbow" ? W / 2 : v.x, hy = v.id === "rainbow" ? H * .42 - 200 : v.y;
+    const pr = v.id === "rainbow" ? 60 : Math.max(50, d.size * .7), pul = .5 + .4 * Math.sin(frame * .15);
+    ctx.setLineDash([6, 6]); ctx.strokeStyle = `rgba(255,255,255,${pul})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hx, hy, pr, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = "800 14px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = `rgba(255,255,255,${pul})`; ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 6;
+    ctx.fillText("👆 tap to spot!", hx, hy - pr - 12);
+  }
+  ctx.restore();
 }
 function updateSparkles(dt) {
   for (const p of sparkles) { p.x += p.vx; p.y += p.vy; p.vy += .03; p.life -= dt * .8; }
@@ -1382,9 +1538,11 @@ function loop(now) {
   if (show.active) showUpdate(dt); else if (!booth.freeze) update(dt);
   drawBackground();
   if (show.active) drawSpotlights();
+  if (visitor && VISITORS[visitor.id].layer === "back") drawVisitor(visitor);
   for (const e of eggs) drawEgg(e);
   for (const f of foods) drawFood(f);
   for (const s of [...squids].sort((a, b) => a.size - b.size)) drawCreature(s);
+  if (visitor && VISITORS[visitor.id].layer === "front") drawVisitor(visitor);
   drawSparkles(); drawRings();
   if (night) {
     ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
@@ -1478,6 +1636,8 @@ canvas.addEventListener("pointerdown", ev => {
     if (b && b !== a) makeBuddies(a, b); else toast("Okay, no buddy this time.");
     return;
   }
+  const vis = visitorAt(x, y);
+  if (vis) { spotVisitor(vis); return; }
   if (decorating) {
     if (placing === "remove") { const hit = decoAt(x, y); if (hit) removeDeco(hit); else toast("Tap a decoration to take it away 🧹"); }
     else if (placing) placeDeco(placing, x);
@@ -1949,6 +2109,30 @@ Object.entries(SCENES).forEach(([key, sc], i) => {
 document.getElementById("btn-scene").onclick = () => sceneOverlay.classList.add("show");
 document.getElementById("scene-close").onclick = () => sceneOverlay.classList.remove("show");
 
+/* visitor book */
+function updateVisitorButton() {
+  const n = Object.keys(visitors).length, total = Object.keys(VISITORS).length;
+  document.getElementById("btn-visitors").textContent = n ? `🔭 Visitors ${n}/${total}` : "🔭 Visitors";
+}
+function renderVisitorBook() {
+  const box = document.getElementById("visitor-book"); box.innerHTML = "";
+  let found = 0;
+  for (const [id, d] of Object.entries(VISITORS)) {
+    const n = visitors[id] || 0; if (n) found++;
+    const el = document.createElement("div");
+    el.className = `item ${d.rarity}${n ? "" : " none"}`;
+    el.innerHTML = `<span class="e">${n ? d.emoji : "❔"}</span>${n ? d.name : "???"}<small>${VRARITY[d.rarity]}</small>${n ? `<span class="n">×${n}</span>` : ""}`;
+    el.title = n ? d.desc : "Not spotted yet";
+    box.appendChild(el);
+  }
+  const total = Object.keys(VISITORS).length;
+  document.getElementById("visitor-sub").textContent = found === total
+    ? `You've spotted all ${total} visitors! You're a master sea-watcher! 🏆`
+    : `Spotted ${found} of ${total}. A surprise visitor swims by every few minutes. Tap them to spot them!`;
+}
+document.getElementById("btn-visitors").onclick = () => { renderVisitorBook(); document.getElementById("visitor-overlay").classList.add("show"); blip(500, .1); };
+document.getElementById("visitor-close").onclick = () => document.getElementById("visitor-overlay").classList.remove("show");
+
 /* night + sound */
 const nightBtn = document.getElementById("btn-night");
 function applyNight() { nightBtn.textContent = night ? "☀️ Lights on" : "🌙 Lights off"; nightBtn.classList.toggle("on", night); }
@@ -1971,6 +2155,7 @@ if (!load()) {
 }
 applyNight();
 setScene(sceneKey);
+updateVisitorButton();
 window.addEventListener("resize", buildScenery);
 setInterval(save, 15000);
 requestAnimationFrame(loop);
