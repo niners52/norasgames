@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nora's Gallery · Ocean Life &amp; Myths</title>
+<style>
+  *      { margin: 0; padding: 0; box-sizing: border-box; }
+  html,
+  body   { min-height: 100%; }
+  body   {
+    background: #031a3a;
+    color: #cfefff;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  canvas#ocean-bg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: block;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 18px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    background: linear-gradient(to bottom,
+                  rgba(2, 15, 40, 0.92) 0%,
+                  rgba(2, 15, 40, 0.55) 75%,
+                  rgba(2, 15, 40, 0));
+    backdrop-filter: blur(2px);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #aef6ff;
+    text-shadow: 0 0 12px #3af, 0 0 24px rgba(60, 170, 255, 0.6);
+    letter-spacing: 1.5px;
+    user-select: none;
+  }
+  nav ul {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  nav a {
+    color: #cfefff;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    display: block;
+  }
+  nav a:hover {
+    background: rgba(120, 220, 255, 0.15);
+    border-color: rgba(170, 235, 255, 0.5);
+    color: #fff;
+    text-shadow: 0 0 10px #0ff;
+  }
+  nav a.active {
+    background: rgba(170, 100, 255, 0.18);
+    border-color: rgba(200, 150, 255, 0.6);
+    color: #fff;
+    text-shadow: 0 0 10px #c8f;
+  }
+
+  /* ---------- Page content ---------- */
+  main {
+    position: relative;
+    z-index: 10;
+    padding: 130px 24px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  .page-header h1 {
+    font-size: clamp(40px, 6vw, 70px);
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(60, 170, 255, 0.8),
+                 0 0 40px rgba(120, 80, 255, 0.6),
+                 0 0 80px rgba(0, 0, 0, 0.95);
+    animation: heroGlow 4s ease-in-out infinite alternate;
+    margin-bottom: 12px;
+  }
+  @keyframes heroGlow {
+    0%   { text-shadow: 0 0 20px rgba(60,170,255,0.8),
+                        0 0 40px rgba(120,80,255,0.6),
+                        0 0 80px rgba(0,0,0,0.95); }
+    100% { text-shadow: 0 0 30px rgba(120,220,255,1.0),
+                        0 0 60px rgba(180,120,255,0.85),
+                        0 0 90px rgba(0,0,0,0.95); }
+  }
+  .page-header p {
+    font-style: italic;
+    font-size: clamp(16px, 1.7vw, 22px);
+    color: #cfefff;
+    text-shadow: 0 0 14px #000;
+    letter-spacing: 1.5px;
+  }
+
+  /* category tabs (placeholder) */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0 auto 50px;
+  }
+  .tab {
+    background: rgba(8, 16, 40, 0.78);
+    border: 1px solid rgba(170, 235, 255, 0.45);
+    color: #cfefff;
+    padding: 10px 22px;
+    border-radius: 22px;
+    font-size: 14px;
+    letter-spacing: 1.2px;
+    transition: all 0.2s ease;
+    cursor: default;
+  }
+  .tab.active {
+    background: rgba(170, 100, 255, 0.25);
+    border-color: rgba(220, 180, 255, 0.85);
+    color: #fff;
+    text-shadow: 0 0 10px #c8f;
+  }
+
+  /* gallery masonry — items with varying aspect ratios */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 22px;
+  }
+  .frame {
+    background: linear-gradient(135deg,
+                  rgba(8, 16, 40, 0.85),
+                  rgba(15, 25, 60, 0.85));
+    border: 1px solid rgba(170, 235, 255, 0.5);
+    border-radius: 10px;
+    padding: 14px;
+    position: relative;
+    transition: all 0.25s ease;
+    box-shadow: 0 0 28px rgba(60, 170, 255, 0.12);
+  }
+  .frame::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(255, 215, 120, 0.45);
+    border-radius: 6px;
+    pointer-events: none;
+  }
+  .frame:hover {
+    transform: translateY(-3px);
+    border-color: #ffd560;
+    box-shadow: 0 0 36px rgba(255, 215, 120, 0.4);
+  }
+  .frame .canvas {
+    background: rgba(0, 0, 15, 0.55);
+    border: 1px dashed rgba(170, 235, 255, 0.35);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(200, 230, 255, 0.45);
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 1px;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    padding: 20px;
+  }
+  .frame .canvas .icon {
+    font-size: 36px;
+    opacity: 0.55;
+  }
+  .frame .label {
+    margin-top: 12px;
+    text-align: center;
+  }
+  .frame .label .title {
+    font-size: 14px;
+    color: #cfefff;
+    font-weight: bold;
+    letter-spacing: 1px;
+  }
+  .frame .label .meta {
+    font-size: 11px;
+    color: rgba(200, 230, 255, 0.55);
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+    font-style: italic;
+  }
+
+  /* varying aspect ratios for visual rhythm */
+  .frame.tall    .canvas { aspect-ratio: 3 / 4; }
+  .frame.square  .canvas { aspect-ratio: 1 / 1; }
+  .frame.wide    .canvas { aspect-ratio: 4 / 3; }
+  .frame.pano    .canvas { aspect-ratio: 16 / 9; }
+
+  /* "Add artwork" placeholder */
+  .frame.add {
+    background: rgba(8, 16, 40, 0.45);
+    border: 2px dashed rgba(170, 235, 255, 0.4);
+  }
+  .frame.add::before { display: none; }
+  .frame.add .canvas {
+    background: transparent;
+    border: none;
+    color: rgba(207, 239, 255, 0.6);
+    aspect-ratio: 1 / 1;
+  }
+  .frame.add .canvas .icon { font-size: 42px; }
+
+  /* dividers between gallery rooms */
+  .room-title {
+    font-size: clamp(22px, 2.6vw, 30px);
+    color: #fff;
+    letter-spacing: 3px;
+    margin: 60px 0 8px;
+    text-align: center;
+    text-shadow: 0 0 12px rgba(120, 220, 255, 0.7);
+  }
+  .room-desc {
+    text-align: center;
+    color: #9bdfff;
+    font-style: italic;
+    margin-bottom: 30px;
+    letter-spacing: 1px;
+  }
+
+  footer {
+    text-align: center;
+    color: rgba(200, 230, 255, 0.5);
+    font-size: 13px;
+    padding: 30px 12px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 760px) {
+    nav { padding: 10px 14px; flex-direction: column; gap: 8px; }
+    nav a { padding: 6px 10px; font-size: 13px; }
+    main { padding-top: 170px; }
+  }
+
+  /* ---------- Scuba diver guide ---------- */
+  .scuba-guide {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 90;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    pointer-events: none;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+  .diver-wrap {
+    width: 140px;
+    animation: diverBob 3.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(60, 170, 255, 0.45));
+  }
+  .diver-wrap svg { width: 100%; height: auto; display: block; }
+  @keyframes diverBob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  .speech-bubble {
+    background: rgba(8, 16, 40, 0.92);
+    border: 2px solid rgba(170, 235, 255, 0.7);
+    border-radius: 16px;
+    padding: 12px 18px;
+    max-width: 260px;
+    color: #cfefff;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 0 24px rgba(60, 170, 255, 0.4);
+    letter-spacing: 0.3px;
+    animation: bubbleFloat 3.5s ease-in-out infinite;
+    margin-bottom: 50px;
+  }
+  .speech-bubble p { margin: 0; }
+  @keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .speech-bubble::after {
+    content: "";
+    position: absolute;
+    right: -10px; bottom: 18px;
+    width: 0; height: 0;
+    border-left: 12px solid rgba(170, 235, 255, 0.7);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+  .speech-bubble::before {
+    content: "";
+    position: absolute;
+    right: -6px; bottom: 20px;
+    width: 0; height: 0;
+    border-left: 10px solid rgba(8, 16, 40, 0.92);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    z-index: 1;
+  }
+  @media (max-width: 760px) {
+    .scuba-guide { bottom: 10px; right: 10px; gap: 8px; }
+    .diver-wrap { width: 100px; }
+    .speech-bubble { max-width: 180px; font-size: 12px; padding: 8px 12px; margin-bottom: 30px; }
+  }
+  @media (max-width: 480px) {
+    .speech-bubble { display: none; }
+    .diver-wrap { width: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="ocean-bg"></canvas>
+
+<nav>
+  <div class="logo">🌊 Ocean Life &amp; Myths</div>
+  <ul>
+    <li><a href="ocean_life_and_myths.html">Home</a></li>
+    <li><a href="cephalopods.html">Cephalopods</a></li>
+    <li><a href="meet_the_kraken.html">Meet the Kraken</a></li>
+    <li><a href="field_guide.html">Field Guide</a></li>
+    <li><a href="gallery.html" class="active">Gallery</a></li>
+    <li><a href="about_me.html">About Me</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <header class="page-header">
+    <h1>NORA'S GALLERY</h1>
+    <p>A collection of underwater wonders…</p>
+  </header>
+
+  <!-- category tabs (placeholders) -->
+  <div class="tabs">
+    <div class="tab active">All Artwork</div>
+    <div class="tab">✏️ Sketches</div>
+    <div class="tab">🎨 Paintings</div>
+    <div class="tab">🖼️ Digital</div>
+    <div class="tab">📷 Photos</div>
+  </div>
+
+  <!-- ============ ROOM 1 ============ -->
+  <h2 class="room-title">✨  THE GLASS SQUID ROOM  ✨</h2>
+  <p class="room-desc">Studies of the glowing creatures of the twilight zone</p>
+
+  <div class="gallery-grid">
+    <div class="frame tall">
+      <div class="canvas"><span class="icon">🦑</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #001</div>
+        <div class="meta">SKETCH · TBA</div>
+      </div>
+    </div>
+    <div class="frame square">
+      <div class="canvas"><span class="icon">🌊</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #002</div>
+        <div class="meta">PAINTING · TBA</div>
+      </div>
+    </div>
+    <div class="frame wide">
+      <div class="canvas"><span class="icon">✨</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #003</div>
+        <div class="meta">DIGITAL · TBA</div>
+      </div>
+    </div>
+    <div class="frame square">
+      <div class="canvas"><span class="icon">🦑</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #004</div>
+        <div class="meta">SKETCH · TBA</div>
+      </div>
+    </div>
+    <div class="frame add">
+      <div class="canvas"><span class="icon">+</span><span>Add artwork</span></div>
+    </div>
+  </div>
+
+  <!-- ============ ROOM 2 ============ -->
+  <h2 class="room-title">🐙  CEPHALOPOD COLLECTION  🐙</h2>
+  <p class="room-desc">Octopuses, cuttlefish, and friends</p>
+
+  <div class="gallery-grid">
+    <div class="frame square">
+      <div class="canvas"><span class="icon">🐙</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #005</div>
+        <div class="meta">PAINTING · TBA</div>
+      </div>
+    </div>
+    <div class="frame tall">
+      <div class="canvas"><span class="icon">🦑</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #006</div>
+        <div class="meta">DIGITAL · TBA</div>
+      </div>
+    </div>
+    <div class="frame wide">
+      <div class="canvas"><span class="icon">📷</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #007</div>
+        <div class="meta">PHOTO · TBA</div>
+      </div>
+    </div>
+    <div class="frame square">
+      <div class="canvas"><span class="icon">🐚</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #008</div>
+        <div class="meta">SKETCH · TBA</div>
+      </div>
+    </div>
+    <div class="frame add">
+      <div class="canvas"><span class="icon">+</span><span>Add artwork</span></div>
+    </div>
+  </div>
+
+  <!-- ============ ROOM 3 ============ -->
+  <h2 class="room-title">⚓  MYTHS &amp; LEGENDS  ⚓</h2>
+  <p class="room-desc">The kraken, sea serpents, and the creatures of folklore</p>
+
+  <div class="gallery-grid">
+    <div class="frame pano">
+      <div class="canvas"><span class="icon">🐙</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">The Kraken Rises</div>
+        <div class="meta">DIGITAL · TBA</div>
+      </div>
+    </div>
+    <div class="frame tall">
+      <div class="canvas"><span class="icon">⚓</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #010</div>
+        <div class="meta">PAINTING · TBA</div>
+      </div>
+    </div>
+    <div class="frame square">
+      <div class="canvas"><span class="icon">🌊</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #011</div>
+        <div class="meta">SKETCH · TBA</div>
+      </div>
+    </div>
+    <div class="frame wide">
+      <div class="canvas"><span class="icon">🦑</span><span>Artwork coming soon</span></div>
+      <div class="label">
+        <div class="title">Untitled #012</div>
+        <div class="meta">DIGITAL · TBA</div>
+      </div>
+    </div>
+    <div class="frame add">
+      <div class="canvas"><span class="icon">+</span><span>Add artwork</span></div>
+    </div>
+  </div>
+
+  <footer>
+    🌊  Ocean Life &amp; Myths  ·  Page 5 of 6  ·  Curated by Nora  🌊
+  </footer>
+
+</main>
+
+<script>
+"use strict";
+const canvas = document.getElementById("ocean-bg");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+window.addEventListener("resize", resize);
+resize();
+const TAU = Math.PI * 2;
+let frame = 0;
+const bubbles = [];
+for (let i = 0; i < 50; i++) {
+  bubbles.push({
+    x: Math.random() * 1600,
+    y: Math.random() * 900,
+    r: 2 + Math.random() * 7,
+    vy: -0.25 - Math.random() * 0.9,
+    wob: Math.random() * TAU,
+    wobSpeed: 0.01 + Math.random() * 0.04
+  });
+}
+function loop() {
+  frame++;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0,    "#5dc8ff");
+  g.addColorStop(0.45, "#1d6db8");
+  g.addColorStop(0.85, "#082750");
+  g.addColorStop(1,    "#031530");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (let i = 0; i < 6; i++) {
+    const x = (i * 240 + frame * 0.30) % (W + 220) - 110;
+    const intensity = 0.05 + Math.sin(frame * 0.005 + i) * 0.02;
+    ctx.fillStyle = `rgba(150, 220, 255, ${intensity})`;
+    ctx.beginPath();
+    ctx.moveTo(x - 35, 0); ctx.lineTo(x + 35, 0);
+    ctx.lineTo(x + 220, H); ctx.lineTo(x - 220, H);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (const b of bubbles) {
+    b.wob += b.wobSpeed;
+    b.x += Math.sin(b.wob) * 0.3;
+    b.y += b.vy;
+    if (b.y < -20) { b.y = H + 20; b.x = Math.random() * W; }
+    ctx.strokeStyle = "rgba(180, 230, 255, 0.5)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>

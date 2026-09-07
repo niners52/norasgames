@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choose Your Model</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="text-align:center;padding:40px 20px 100px">
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.5rem,2vw,0.8rem);
+              color:#00aaff;text-shadow:0 0 15px rgba(0,170,255,0.8);margin-bottom:8px;line-height:1.6">
+      CHOOSE YOUR FIRST MODEL!! 🌊
+    </p>
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(150,220,255,0.7);margin-bottom:32px">
+      "Choose wisely — the others will be locked!!"
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
+                gap:20px;max-width:700px;margin:0 auto 32px" id="models-grid"></div>
+
+    <button class="btn-main" id="confirm-btn" onclick="confirmModel()" style="display:none">
+      ✨ THIS IS MY MODEL!! ✨
+    </button>
+  </div>
+
+  <script src="game.js"></script>
+  <script>
+    createBubbles(8);
+    let selectedModel = null;
+
+    const models = [
+      {
+        id: 'squid',
+        name: 'SQUID',
+        emoji: '🦑',
+        color: '#aa44ff',
+        personality: 'Fierce and dramatic!!',
+      },
+      {
+        id: 'tropical-fish',
+        name: 'TROPICAL FISH',
+        emoji: '🐠',
+        color: '#ff8844',
+        personality: 'Colorful and bubbly!!',
+      },
+      {
+        id: 'seahorse',
+        name: 'SEAHORSE',
+        emoji: '🐴',
+        color: '#44aaff',
+        personality: 'Elegant and graceful!!',
+      },
+    ];
+
+    const grid = document.getElementById('models-grid');
+
+    models.forEach(model => {
+      const card = document.createElement('div');
+      card.style.cssText = `
+        background:rgba(4,21,48,0.8);
+        border:2px solid rgba(0,170,255,0.2);
+        border-radius:20px;
+        padding:24px;
+        text-align:center;
+        cursor:pointer;
+        transition:all 0.3s;
+      `;
+
+      card.innerHTML = `
+        <div style="font-size:4rem;margin-bottom:16px">${model.emoji}</div>
+        <p style="font-family:'Press Start 2P',cursive;font-size:0.45rem;
+                  color:${model.color};margin-bottom:8px;line-height:1.5">
+          ${model.name}
+        </p>
+        <p style="font-family:'Dancing Script',cursive;font-size:1rem;
+                  color:rgba(150,200,255,0.7)">
+          "${model.personality}"
+        </p>
+      `;
+
+      card.addEventListener('click', () => {
+        selectedModel = model.id;
+        document.querySelectorAll('#models-grid > div').forEach(c => {
+          c.style.borderColor = 'rgba(0,170,255,0.2)';
+          c.style.boxShadow = 'none';
+          c.style.opacity = '0.5';
+        });
+        card.style.borderColor = model.color;
+        card.style.boxShadow = `0 0 25px ${model.color}44`;
+        card.style.opacity = '1';
+        document.getElementById('confirm-btn').style.display = 'inline-block';
+      });
+
+      grid.appendChild(card);
+    });
+
+    function confirmModel() {
+      if (!selectedModel) return;
+      const state = getState();
+      state.startingModel = selectedModel;
+      state.unlockedModels = [selectedModel];
+      saveState(state);
+      window.location.href = 'runway.html';
+    }
+  </script>
+</body>
+</html>

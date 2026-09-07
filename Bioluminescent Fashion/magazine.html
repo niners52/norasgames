@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ocean Vogue Magazine</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="text-align:center;padding:40px 20px 100px">
+
+    <p style="font-family:'Playfair Display',serif;font-size:clamp(1.5rem,5vw,3rem);
+              background:linear-gradient(135deg,#ffcc44,#ff44cc);
+              -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+              background-clip:text;margin-bottom:4px">
+      OCEAN VOGUE
+    </p>
+
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(150,220,255,0.7);margin-bottom:32px">
+      "Your greatest looks, remembered forever!!"
+    </p>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">💰 <span id="hud-coins">0</span></div>
+      <div class="hud-item">⭐ LVL <span id="hud-level">1</span></div>
+      <div class="hud-item">XP <span id="hud-xp">0/100</span>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div id="looks-list" style="display:flex;flex-direction:column;gap:14px;
+                max-width:500px;margin:0 auto"></div>
+
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="window.location.href='runway.html'">👗 RUNWAY</button>
+    <button class="nav-btn" onclick="window.location.href='backstage.html'">🎭 BACKSTAGE</button>
+    <button class="nav-btn" onclick="window.location.href='models.html'">🦑 MODELS</button>
+    <button class="nav-btn active">📖 MAGAZINE</button>
+  </nav>
+
+  <script src="game.js"></script>
+  <script>
+    createBubbles(6);
+    updateHUD();
+
+    const state = getState();
+    const looks = state.bestLooks || [];
+    const list = document.getElementById('looks-list');
+
+    const garmentEmojis = { dress:'👗', top:'👚' };
+    const colorNames = {
+      blue:'💙 Ocean Blue', green:'💚 Sea Green', pink:'🩷 Coral Pink',
+      purple:'💜 Deep Purple', white:'🤍 Pearl White', rainbow:'🌈 Rainbow',
+    };
+    const jewelryNames = { none:'no jewelry', coral:'🪸 coral', pearl:'⚪ pearls', shell:'🐚 shells' };
+
+    if (looks.length === 0) {
+      list.innerHTML = `
+        <div class="card" style="padding:32px">
+          <p style="font-size:2.5rem;margin-bottom:12px">📖</p>
+          <p style="font-family:'Nunito',sans-serif;color:#cce8ff;font-size:1rem;line-height:1.6">
+            No looks in the magazine yet!!<br>
+            Send an outfit down the runway and it will appear here!!
+          </p>
+        </div>
+      `;
+    } else {
+      looks.forEach((look, i) => {
+        const d = look.design || {};
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.cssText = 'padding:18px 20px;display:flex;align-items:center;gap:16px;text-align:left';
+        card.innerHTML = `
+          <div style="font-size:2.2rem">${garmentEmojis[d.garment] || '✨'}</div>
+          <div style="flex:1">
+            <p style="font-family:'Press Start 2P',cursive;font-size:0.38rem;line-height:1.5;
+                      color:#ffcc44;margin-bottom:6px">
+              LOOK #${i+1} — ${look.score || 0}/30
+            </p>
+            <p style="font-family:'Nunito',sans-serif;font-size:0.9rem;color:#cce8ff;line-height:1.5">
+              ${colorNames[d.color] || ''} with ${jewelryNames[d.jewelry] || ''}
+            </p>
+            <p style="font-family:'Nunito',sans-serif;font-size:0.75rem;color:rgba(150,200,255,0.5)">
+              ${look.date || ''}
+            </p>
+          </div>
+          ${(look.score || 0) >= 25 ? '<div style="font-size:1.5rem">🏆</div>' : ''}
+        `;
+        list.appendChild(card);
+      });
+    }
+  </script>
+</body>
+</html>

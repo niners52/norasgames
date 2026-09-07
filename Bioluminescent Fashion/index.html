@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bioluminescent Fashion</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display:flex; flex-direction:column; align-items:center;
+           justify-content:center; min-height:100vh; overflow:hidden; }
+
+    .hero { position:relative; z-index:1; text-align:center; padding:20px; }
+
+    /* DRESS ANIMATION CANVAS */
+    #dress-canvas {
+      display:block;
+      margin:0 auto 32px;
+      max-width:300px;
+      width:90%;
+    }
+
+    /* TITLE */
+    .main-title {
+      font-family:'Playfair Display',serif;
+      font-size:clamp(1.5rem,6vw,4rem);
+      background:linear-gradient(135deg,#00aaff,#ff44cc,#00ffaa,#aa44ff);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      margin-bottom:8px;
+      opacity:0;
+      animation:titleReveal 2s ease forwards 3s;
+      line-height:1.3;
+    }
+
+    .main-subtitle {
+      font-family:'Dancing Script',cursive;
+      font-size:clamp(1rem,3vw,1.8rem);
+      color:rgba(150,220,255,0.7);
+      margin-bottom:32px;
+      opacity:0;
+      animation:titleReveal 2s ease forwards 3.5s;
+    }
+
+    @keyframes titleReveal {
+      from { opacity:0; transform:translateY(20px); }
+      to { opacity:1; transform:translateY(0); }
+    }
+
+    .start-btn {
+      opacity:0;
+      animation:titleReveal 1s ease forwards 4.5s;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO CONTENT -->
+<div class="hero">
+
+  <!-- DRESS ANIMATION CANVAS -->
+  <canvas id="dress-canvas" width="300" height="350"></canvas>
+
+  <!-- TITLE -->
+  <h1 class="main-title">The Bioluminescent Fashion</h1>
+  <p class="main-subtitle">"Reef colors are queen colors"</p>
+
+  <!-- START BUTTON -->
+  <button class="btn-main start-btn" onclick="window.location.href='intro.html'">
+    ✨ ENTER THE SHOW ✨
+  </button>
+
+</div>
+
+<script src="game.js"></script>
+<script>
+createBubbles(8);
+
+// ============================================================
+// DRESS ANIMATION — lightweight version
+// ============================================================
+let animFrame = 0;
+let rafId = null;
+
+function drawDress(frame) {
+  if (!document.getElementById('dress-canvas')) return;
+  const canvas = document.getElementById('dress-canvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2;
+  const phase = Math.floor(frame/80) % 3;
+  const progress = (frame % 80) / 80;
+
+  // Simple dress outline
+  ctx.strokeStyle = `rgba(0,170,255,${0.5+progress*0.5})`;
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00aaff';
+  ctx.shadowBlur = 10;
+  ctx.beginPath();
+  ctx.moveTo(cx-20, H*0.15);
+  ctx.lineTo(cx-50, H*0.85);
+  ctx.lineTo(cx+50, H*0.85);
+  ctx.lineTo(cx+20, H*0.15);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Phase label
+  const labels = ['SEWING...','CUTTING...','FINISHING...'];
+  ctx.font = '8px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#00aaff';
+  ctx.fillText(labels[phase], cx, H-20);
+
+  // Simple sparkles
+  for (let s=0; s<5; s++) {
+    const alpha = 0.3+Math.sin(frame*0.1+s)*0.2;
+    ctx.fillStyle = `rgba(0,255,170,${alpha})`;
+    ctx.fillText('✦', cx-30+s*15, H*0.5+Math.sin(frame*0.05+s)*20);
+  }
+
+  animFrame++;
+  rafId = requestAnimationFrame(drawDress.bind(null, animFrame));
+}
+
+// Only animate when the tab is visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    cancelAnimationFrame(rafId);
+  } else {
+    rafId = requestAnimationFrame(drawDress.bind(null, animFrame));
+  }
+});
+
+drawDress(0);
+</script>
+</body>
+</html>

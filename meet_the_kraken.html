@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meet the Kraken · Ocean Life &amp; Myths</title>
+<style>
+  *      { margin: 0; padding: 0; box-sizing: border-box; }
+  html,
+  body   { min-height: 100%; }
+  body   {
+    background: #02060f;
+    color: #e8d6ff;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  canvas#ocean-bg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: block;
+  }
+
+  /* ---------- Nav (matches the rest of the site) ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 18px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    background: linear-gradient(to bottom,
+                  rgba(2, 0, 12, 0.92) 0%,
+                  rgba(2, 0, 12, 0.55) 75%,
+                  rgba(2, 0, 12, 0));
+    backdrop-filter: blur(2px);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #aef6ff;
+    text-shadow: 0 0 12px #3af, 0 0 24px rgba(60, 170, 255, 0.6);
+    letter-spacing: 1.5px;
+    user-select: none;
+  }
+  nav ul {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  nav a {
+    color: #cfefff;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    display: block;
+  }
+  nav a:hover {
+    background: rgba(180, 80, 255, 0.18);
+    border-color: rgba(220, 140, 255, 0.55);
+    color: #fff;
+    text-shadow: 0 0 10px #c8f;
+  }
+  nav a.active {
+    background: rgba(170, 60, 220, 0.30);
+    border-color: rgba(220, 140, 255, 0.8);
+    color: #fff;
+    text-shadow: 0 0 12px #c8f;
+  }
+
+  /* ---------- Page content ---------- */
+  main {
+    position: relative;
+    z-index: 10;
+    padding: 130px 24px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* ---------- Hero ---------- */
+  .page-header {
+    text-align: center;
+    margin-bottom: 50px;
+    position: relative;
+  }
+  .page-header h1 {
+    font-size: clamp(48px, 8vw, 90px);
+    font-weight: bold;
+    letter-spacing: 6px;
+    color: #fff;
+    text-shadow:
+      0 0 24px rgba(200, 100, 255, 1),
+      0 0 50px rgba(140, 40, 200, 0.85),
+      0 0 100px rgba(0, 0, 0, 0.95);
+    animation: krakenPulse 3s ease-in-out infinite alternate;
+    margin-bottom: 14px;
+  }
+  @keyframes krakenPulse {
+    0%   { text-shadow: 0 0 24px rgba(200, 100, 255, 1),
+                        0 0 50px rgba(140, 40, 200, 0.85),
+                        0 0 100px rgba(0, 0, 0, 0.95); }
+    100% { text-shadow: 0 0 40px rgba(255, 180, 255, 1),
+                        0 0 80px rgba(180, 80, 255, 1),
+                        0 0 110px rgba(0, 0, 0, 0.95); }
+  }
+  .page-header .tag {
+    font-style: italic;
+    font-size: clamp(16px, 2vw, 24px);
+    color: #d8b8ff;
+    text-shadow: 0 0 14px #000, 0 0 8px rgba(180, 80, 255, 0.8);
+    letter-spacing: 2px;
+  }
+
+  /* hero kraken banner illustration */
+  .hero-kraken {
+    margin: 30px auto 10px;
+    max-width: 720px;
+  }
+  .hero-kraken svg {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 0 50px rgba(170, 60, 220, 0.6));
+  }
+
+  /* ---------- Kraken section cards ---------- */
+  .k-card {
+    background: linear-gradient(135deg,
+                  rgba(15, 0, 30, 0.88),
+                  rgba(30, 0, 50, 0.88));
+    border: 1px solid rgba(180, 80, 255, 0.5);
+    border-radius: 14px;
+    padding: 38px;
+    margin: 50px auto;
+    box-shadow: 0 0 50px rgba(140, 40, 200, 0.25),
+                inset 0 0 80px rgba(140, 40, 200, 0.08);
+    position: relative;
+  }
+  .k-card::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px solid rgba(220, 140, 255, 0.35);
+    border-radius: 10px;
+    pointer-events: none;
+  }
+  .k-card h2 {
+    font-size: clamp(28px, 3.4vw, 42px);
+    font-weight: bold;
+    letter-spacing: 3px;
+    color: #fff;
+    text-shadow: 0 0 16px rgba(200, 100, 255, 0.9);
+    margin-bottom: 8px;
+  }
+  .k-card .sub {
+    font-style: italic;
+    color: #c8a0ff;
+    margin-bottom: 22px;
+    letter-spacing: 1px;
+    font-size: 15px;
+  }
+  .k-card p {
+    color: #e8d6ff;
+    margin-bottom: 16px;
+    font-size: 16px;
+  }
+  .k-card p .em {
+    color: #ffaaff;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba(255, 100, 220, 0.6);
+  }
+
+  .facts {
+    list-style: none;
+    margin: 18px 0;
+  }
+  .facts li {
+    padding: 8px 0 8px 30px;
+    position: relative;
+    color: #e8d6ff;
+    font-size: 15px;
+  }
+  .facts li::before {
+    content: "🐙";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    font-size: 14px;
+  }
+
+  /* card with side illustration */
+  .k-card.split {
+    display: flex;
+    align-items: center;
+    gap: 36px;
+  }
+  .k-card.split.reverse { flex-direction: row-reverse; }
+  .k-card.split .ill {
+    flex: 0 0 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .k-card.split .ill svg {
+    width: 260px;
+    height: 260px;
+    filter: drop-shadow(0 0 26px rgba(170, 60, 220, 0.55));
+  }
+  .k-card.split .body { flex: 1; min-width: 0; }
+
+  /* sailor quote */
+  .quote {
+    margin: 24px 0;
+    padding: 22px 26px;
+    border-left: 4px solid rgba(220, 140, 255, 0.7);
+    background: rgba(60, 0, 100, 0.30);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #f0d8ff;
+    font-size: 17px;
+    line-height: 1.5;
+  }
+  .quote .src {
+    display: block;
+    margin-top: 10px;
+    font-style: normal;
+    color: #c8a0ff;
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* verdict callout */
+  .verdict {
+    margin-top: 22px;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, rgba(40, 100, 60, 0.45), rgba(15, 60, 30, 0.55));
+    border: 1px solid rgba(120, 230, 150, 0.55);
+    border-radius: 8px;
+    color: #d4ffd8;
+    font-size: 16px;
+    box-shadow: 0 0 24px rgba(120, 230, 150, 0.2);
+  }
+  .verdict strong { color: #a0ffb0; text-shadow: 0 0 8px rgba(120, 230, 150, 0.8); }
+
+  /* culture columns */
+  .culture-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin: 22px 0;
+  }
+  .culture-col {
+    background: rgba(15, 0, 30, 0.6);
+    border: 1px solid rgba(180, 80, 255, 0.4);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .culture-col h3 {
+    color: #ffaaff;
+    font-size: 17px;
+    letter-spacing: 1.5px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 100, 220, 0.6);
+  }
+  .culture-col ul {
+    list-style: none;
+  }
+  .culture-col li {
+    padding: 5px 0;
+    color: #e8d6ff;
+    font-size: 14px;
+  }
+  .culture-col li b { color: #fff; }
+
+  /* RELEASE THE KRAKEN banner */
+  .release-banner {
+    text-align: center;
+    margin: 30px 0;
+    padding: 36px 20px;
+    background: radial-gradient(ellipse at center,
+                  rgba(120, 30, 180, 0.55),
+                  rgba(15, 0, 30, 0.55));
+    border: 2px solid rgba(220, 140, 255, 0.75);
+    border-radius: 12px;
+    box-shadow: 0 0 60px rgba(170, 60, 220, 0.55),
+                inset 0 0 80px rgba(140, 40, 200, 0.3);
+    position: relative;
+  }
+  .release-banner h3 {
+    font-size: clamp(34px, 5.5vw, 64px);
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 6px;
+    text-shadow: 0 0 22px rgba(255, 100, 255, 1),
+                 0 0 44px rgba(180, 60, 220, 0.9);
+    animation: shoutPulse 1.6s ease-in-out infinite alternate;
+  }
+  @keyframes shoutPulse {
+    0%   { transform: scale(1); }
+    100% { transform: scale(1.04); }
+  }
+  .release-banner .who {
+    margin-top: 14px;
+    font-style: italic;
+    color: #d8b8ff;
+    font-size: 15px;
+    letter-spacing: 1.2px;
+  }
+
+  /* size comparison */
+  .size-chart {
+    margin: 24px 0;
+    background: rgba(0, 0, 15, 0.55);
+    border: 1px solid rgba(180, 80, 255, 0.4);
+    border-radius: 10px;
+    padding: 22px;
+  }
+  .size-chart svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .size-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 80px;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px dashed rgba(180, 120, 255, 0.2);
+  }
+  .size-row:last-child { border-bottom: none; }
+  .size-row .label { color: #fff; font-weight: bold; letter-spacing: 1px; font-size: 14px; }
+  .size-row .bar {
+    height: 18px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #5a17a0, #c060ff);
+    box-shadow: 0 0 10px rgba(180, 80, 255, 0.6);
+  }
+  .size-row .val { color: #c8a0ff; text-align: right; font-size: 14px; }
+  .size-row.kraken .bar { background: linear-gradient(to right, #500050, #ff30ff); box-shadow: 0 0 18px rgba(255, 80, 255, 0.8); }
+  .size-row.kraken .label { color: #ffaaff; }
+
+  /* closing card */
+  .closing {
+    text-align: center;
+    margin: 60px auto 30px;
+    padding: 50px 30px;
+    background: linear-gradient(135deg, rgba(0,0,15,0.85), rgba(20,0,40,0.85));
+    border: 1px solid rgba(180, 80, 255, 0.45);
+    border-radius: 14px;
+    box-shadow: 0 0 60px rgba(140, 40, 200, 0.25);
+  }
+  .closing h2 {
+    font-size: clamp(28px, 4vw, 44px);
+    color: #fff;
+    text-shadow: 0 0 20px rgba(200, 100, 255, 0.85);
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+  }
+  .closing p {
+    max-width: 700px;
+    margin: 0 auto 12px;
+    font-size: 17px;
+    color: #d8b8ff;
+    font-style: italic;
+  }
+
+  footer {
+    text-align: center;
+    color: rgba(200, 180, 255, 0.5);
+    font-size: 13px;
+    padding: 24px 12px;
+    letter-spacing: 1px;
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 760px) {
+    nav { padding: 10px 14px; flex-direction: column; gap: 8px; }
+    nav a { padding: 6px 10px; font-size: 13px; }
+    main { padding-top: 170px; }
+    .k-card.split, .k-card.split.reverse { flex-direction: column; gap: 20px; }
+    .size-row { grid-template-columns: 100px 1fr 60px; }
+  }
+
+  /* ---------- Scuba diver guide ---------- */
+  .scuba-guide {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 90;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    pointer-events: none;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+  .diver-wrap {
+    width: 140px;
+    animation: diverBob 3.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(170, 60, 220, 0.45));
+  }
+  .diver-wrap svg { width: 100%; height: auto; display: block; }
+  @keyframes diverBob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  .speech-bubble {
+    background: rgba(20, 0, 40, 0.92);
+    border: 2px solid rgba(220, 140, 255, 0.7);
+    border-radius: 16px;
+    padding: 12px 18px;
+    max-width: 260px;
+    color: #e8d6ff;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 0 24px rgba(170, 60, 220, 0.4);
+    letter-spacing: 0.3px;
+    animation: bubbleFloat 3.5s ease-in-out infinite;
+    margin-bottom: 50px;
+  }
+  .speech-bubble p { margin: 0; }
+  @keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .speech-bubble::after {
+    content: "";
+    position: absolute;
+    right: -10px; bottom: 18px;
+    width: 0; height: 0;
+    border-left: 12px solid rgba(220, 140, 255, 0.7);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+  .speech-bubble::before {
+    content: "";
+    position: absolute;
+    right: -6px; bottom: 20px;
+    width: 0; height: 0;
+    border-left: 10px solid rgba(20, 0, 40, 0.92);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    z-index: 1;
+  }
+  @media (max-width: 760px) {
+    .scuba-guide { bottom: 10px; right: 10px; gap: 8px; }
+    .diver-wrap { width: 100px; }
+    .speech-bubble { max-width: 180px; font-size: 12px; padding: 8px 12px; margin-bottom: 30px; }
+  }
+  @media (max-width: 480px) {
+    .speech-bubble { display: none; }
+    .diver-wrap { width: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="ocean-bg"></canvas>
+
+<nav>
+  <div class="logo">🌊 Ocean Life &amp; Myths</div>
+  <ul>
+    <li><a href="ocean_life_and_myths.html">Home</a></li>
+    <li><a href="cephalopods.html">Cephalopods</a></li>
+    <li><a href="meet_the_kraken.html" class="active">Meet the Kraken</a></li>
+    <li><a href="field_guide.html">Field Guide</a></li>
+    <li><a href="gallery.html">Gallery</a></li>
+    <li><a href="about_me.html">About Me</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- ============ HERO ============ -->
+  <header class="page-header">
+    <h1>MEET THE KRAKEN</h1>
+    <div class="tag">Largest. Oldest. Most terrifying creature ever told of…</div>
+
+    <div class="hero-kraken">
+      <svg viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="hkAura" cx="50%" cy="48%" r="55%">
+            <stop offset="0%"  stop-color="#a040c8" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#a040c8" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="hkBody" cx="38%" cy="35%" r="60%">
+            <stop offset="0%"  stop-color="#4a1c70"/>
+            <stop offset="100%" stop-color="#0a0018"/>
+          </radialGradient>
+        </defs>
+        <ellipse cx="300" cy="180" rx="290" ry="135" fill="url(#hkAura)"/>
+        <!-- 8 long curving tentacles spreading dramatically -->
+        <g fill="#0a0018" stroke="#5a2080" stroke-width="0.8">
+          <!-- left -->
+          <path d="M300,180 C220,170 130,140 30,90 C90,150 180,200 290,200 Z"/>
+          <path d="M300,180 C200,200 100,230 10,260 C100,250 200,235 295,210 Z"/>
+          <path d="M300,180 C220,210 140,260 80,310 C170,290 240,260 295,215 Z"/>
+          <!-- right -->
+          <path d="M300,180 C380,170 470,140 570,90 C510,150 420,200 310,200 Z"/>
+          <path d="M300,180 C400,200 500,230 590,260 C500,250 400,235 305,210 Z"/>
+          <path d="M300,180 C380,210 460,260 520,310 C430,290 360,260 305,215 Z"/>
+          <!-- middle reaching up + down -->
+          <path d="M300,180 C290,90 280,40 260,5 C295,40 300,100 305,180 Z"/>
+          <path d="M300,180 C310,90 320,40 340,5 C305,40 300,100 295,180 Z"/>
+        </g>
+        <!-- body bulb -->
+        <ellipse cx="300" cy="180" rx="105" ry="80" fill="url(#hkBody)" stroke="#7a30a0" stroke-width="1.2"/>
+        <!-- glowing eyes -->
+        <circle cx="270" cy="170" r="22" fill="#ff8030" opacity="0.4"/>
+        <circle cx="330" cy="170" r="22" fill="#ff8030" opacity="0.4"/>
+        <circle cx="270" cy="170" r="9" fill="#ffe0a0">
+          <animate attributeName="r" values="8;12;8" dur="1.6s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="330" cy="170" r="9" fill="#ffe0a0">
+          <animate attributeName="r" values="8;12;8" dur="1.6s" repeatCount="indefinite"/>
+        </circle>
+        <ellipse cx="270" cy="170" rx="3" ry="9" fill="#400"/>
+        <ellipse cx="330" cy="170" rx="3" ry="9" fill="#400"/>
+        <!-- angry brows -->
+        <path d="M240,150 L264,162 M336,162 L360,150"
+              stroke="#000" stroke-width="5" stroke-linecap="round" fill="none"/>
+        <!-- beak -->
+        <path d="M285,205 Q300,225 315,205 Q300,215 285,205 Z" fill="#000"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- ============ WHAT IS A KRAKEN ============ -->
+  <article class="k-card">
+    <h2>📖  WHAT IS A KRAKEN?</h2>
+    <div class="sub">Ancient sea monster · Norse mythology · The terror of sailors</div>
+
+    <p>For more than a thousand years, the deepest fear of every Scandinavian sailor wasn't the storm. It wasn't the cold. It was the <span class="em">island that wasn't an island</span> — a vast slumbering shape rising from the dark below the keel.</p>
+
+    <p>The kraken haunted the fjords and the open North Atlantic. Norse sagas spoke of <b>hafgufa</b> and <b>lyngbakr</b> — colossal sea-creatures so big that fishermen mistook their backs for new land, only to be dragged under when the "island" sank back into the abyss.</p>
+
+    <ul class="facts">
+      <li><b>First mentioned</b> in the 13th-century Icelandic saga <i>Örvar-Oddr</i></li>
+      <li>The Norse called the largest sea-beasts <i>hafgufa</i> — "sea-mist"</li>
+      <li>Sailors believed the kraken would surface as a "false island" to lure ships in</li>
+      <li>Its arms were said to reach <b>a mile long</b>, able to drag the largest warship to the bottom</li>
+      <li>The first scientific account was written by <b>Bishop Erik Pontoppidan in 1755</b>, in his <i>Natural History of Norway</i></li>
+      <li>The name "kraken" comes from the Norwegian word <i>krake</i>, meaning twisted or crooked</li>
+    </ul>
+
+    <div class="quote">
+      "It is round, flat, and full of arms or branches… the largest sea-monster in the world."
+      <span class="src">— Bishop Erik Pontoppidan, <i>Natural History of Norway</i> · 1755</span>
+    </div>
+
+    <div class="quote">
+      "And there sometimes hath been seen a beast as it were like an island, with great horns standing out of his head, which a man might sail under."
+      <span class="src">— Olaus Magnus, <i>Carta Marina</i> · 1539</span>
+    </div>
+  </article>
+
+  <!-- ============ IS IT REAL ============ -->
+  <article class="k-card split reverse">
+    <div class="ill">
+      <svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="gsqMantle" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#e85a9a"/>
+            <stop offset="100%" stop-color="#7a2050"/>
+          </linearGradient>
+        </defs>
+        <!-- giant squid shown realistically — pink/red, big eyes, long tentacles -->
+        <ellipse cx="60" cy="60" rx="14" ry="32" fill="#d877a0" opacity="0.75" transform="rotate(-12 60 60)"/>
+        <ellipse cx="140" cy="60" rx="14" ry="32" fill="#d877a0" opacity="0.75" transform="rotate(12 140 60)"/>
+        <path d="M100,18 C130,18 138,80 130,130 C120,140 80,140 70,130 C62,80 70,18 100,18 Z"
+              fill="url(#gsqMantle)" stroke="#a83870" stroke-width="1.5"/>
+        <g stroke="#a83870" stroke-width="3.5" stroke-linecap="round" fill="none">
+          <path d="M76,135 Q72,160 68,185"/>
+          <path d="M86,140 Q82,165 78,190"/>
+          <path d="M95,142 Q93,168 91,194"/>
+          <path d="M105,142 Q107,168 109,194"/>
+          <path d="M114,140 Q118,165 122,190"/>
+          <path d="M124,135 Q128,160 132,185"/>
+        </g>
+        <path d="M88,138 Q72,170 62,210" stroke="#a83870" stroke-width="2.5" fill="none"/>
+        <ellipse cx="62" cy="212" rx="5" ry="9" fill="#a83870"/>
+        <path d="M112,138 Q128,170 138,210" stroke="#a83870" stroke-width="2.5" fill="none"/>
+        <ellipse cx="138" cy="212" rx="5" ry="9" fill="#a83870"/>
+        <!-- DINNER-PLATE eyes -->
+        <circle cx="86" cy="65" r="13" fill="#fff"/>
+        <circle cx="114" cy="65" r="13" fill="#fff"/>
+        <circle cx="86" cy="65" r="6" fill="#222"/>
+        <circle cx="114" cy="65" r="6" fill="#222"/>
+        <circle cx="84" cy="62" r="2" fill="#fff"/>
+        <circle cx="112" cy="62" r="2" fill="#fff"/>
+      </svg>
+    </div>
+
+    <div class="body">
+      <h2>🦑  IS IT REAL?</h2>
+      <div class="sub">Where myth meets marine biology</div>
+
+      <p>For centuries the kraken was dismissed as fishermen's tall tales — until sailors started <span class="em">hauling pieces of one onto the deck</span>. Tentacles longer than rowboats. Eyes the size of dinner plates. Bodies that wouldn't fit in a fishing boat.</p>
+
+      <p>Today scientists know almost certainly what was inspiring those terrified sailors: the very real, very enormous deep-sea squids that share the same dark waters as the legend.</p>
+
+      <ul class="facts">
+        <li>The <b>Giant Squid</b> (<i>Architeuthis dux</i>) grows up to <b>13 metres</b> long</li>
+        <li>The <b>Colossal Squid</b> reaches <b>14 metres</b> and <b>750 kg</b></li>
+        <li>Both live in the cold deep ocean — exactly where the legend was born</li>
+        <li>Beached squid bodies began washing ashore in the <b>1850s</b>, finally giving naturalists evidence</li>
+        <li>The first photo of a live giant squid in the wild was taken in <b>2004</b></li>
+        <li>The first video footage of a live giant squid wasn't captured until <b>2012</b></li>
+      </ul>
+
+      <div class="quote">
+        "I have ever since the year 1853 been fully convinced that some kind of giant cuttlefish exists in our seas, and I am not now to be convinced that the old stories of the kraken are without foundation."
+        <span class="src">— Japetus Steenstrup, Danish zoologist · 1857</span>
+      </div>
+
+      <div class="verdict">
+        <strong>VERDICT:</strong> The kraken legend was almost certainly inspired by terrified encounters with real giant squid surfacing near boats and grabbing at sailors. The mythical version is bigger, smarter, and meaner — but the real animals beneath the waves are honestly close enough.
+      </div>
+    </div>
+  </article>
+
+  <!-- ============ KRAKEN IN CULTURE ============ -->
+  <article class="k-card">
+    <h2>🌊  THE KRAKEN IN CULTURE</h2>
+    <div class="sub">From sailors' nightmare to silver-screen superstar</div>
+
+    <p>The kraken crawled out of the ocean and into our imagination. Today it appears in poems, novels, blockbuster movies, video games, and even sports team logos — and every retelling makes it <span class="em">bigger and more terrifying</span> than the last.</p>
+
+    <div class="culture-grid">
+      <div class="culture-col">
+        <h3>🎬  ON SCREEN</h3>
+        <ul>
+          <li><b>Clash of the Titans</b> (1981 / 2010) — the legendary "Release the Kraken!" moment</li>
+          <li><b>Pirates of the Caribbean: Dead Man's Chest</b> (2006) — Davy Jones's loyal pet</li>
+          <li><b>20,000 Leagues Under the Sea</b> (1954) — attacks the <i>Nautilus</i></li>
+          <li><b>The Meg 2: The Trench</b> (2023) — modern monster cameo</li>
+        </ul>
+      </div>
+
+      <div class="culture-col">
+        <h3>📚  IN BOOKS</h3>
+        <ul>
+          <li>Alfred Lord Tennyson — <b>"The Kraken"</b> (1830 poem)</li>
+          <li>Jules Verne — <b>Twenty Thousand Leagues Under the Sea</b> (1870)</li>
+          <li>Herman Melville — <b>Moby-Dick</b> features a "kraken-like" giant squid</li>
+          <li>China Miéville — <b>Kraken</b> (2010 novel)</li>
+          <li>John Wyndham — <b>The Kraken Wakes</b> (1953)</li>
+        </ul>
+      </div>
+
+      <div class="culture-col">
+        <h3>🎮  IN GAMES</h3>
+        <ul>
+          <li><b>God of War II</b> — battles a kraken on the back of a Titan</li>
+          <li><b>Sea of Thieves</b> — surfaces unpredictably to ruin your voyage</li>
+          <li><b>Subnautica</b> — the Reaper Leviathans channel pure kraken energy</li>
+          <li><b>Final Fantasy</b> series — recurring monster across many games</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="quote">
+      "Below the thunders of the upper deep,<br>
+      Far, far beneath in the abysmal sea,<br>
+      His ancient, dreamless, uninvaded sleep<br>
+      The Kraken sleepeth…"
+      <span class="src">— Alfred Lord Tennyson, <i>The Kraken</i> · 1830</span>
+    </div>
+
+    <div class="release-banner">
+      <h3>RELEASE THE KRAKEN!!</h3>
+      <div class="who">— Zeus, <i>Clash of the Titans</i> · the most famous kraken line ever uttered</div>
+    </div>
+  </article>
+
+  <!-- ============ HOW BIG ============ -->
+  <article class="k-card">
+    <h2>😱  HOW BIG COULD IT BE?</h2>
+    <div class="sub">Could it really sink a ship?</div>
+
+    <p>The mythical kraken was said to be <span class="em">a mile and a half wide</span>. Modern giant squid top out at about 13 metres. So the question every sailor has asked since 1755 is the same one we ask today: <i>how big could it really get?</i></p>
+
+    <div class="size-chart">
+      <div class="size-row">
+        <div class="label">🧍 Human</div>
+        <div class="bar" style="width: 1%;"></div>
+        <div class="val">2 m</div>
+      </div>
+      <div class="size-row">
+        <div class="label">🐋 Orca</div>
+        <div class="bar" style="width: 5%;"></div>
+        <div class="val">8 m</div>
+      </div>
+      <div class="size-row">
+        <div class="label">🦑 Giant Squid</div>
+        <div class="bar" style="width: 9%;"></div>
+        <div class="val">13 m</div>
+      </div>
+      <div class="size-row">
+        <div class="label">🦑 Colossal Squid</div>
+        <div class="bar" style="width: 10%;"></div>
+        <div class="val">14 m</div>
+      </div>
+      <div class="size-row">
+        <div class="label">⛵ Galleon Ship</div>
+        <div class="bar" style="width: 35%;"></div>
+        <div class="val">50 m</div>
+      </div>
+      <div class="size-row">
+        <div class="label">🐳 Blue Whale</div>
+        <div class="bar" style="width: 22%;"></div>
+        <div class="val">30 m</div>
+      </div>
+      <div class="size-row kraken">
+        <div class="label">🐙 KRAKEN</div>
+        <div class="bar" style="width: 100%;"></div>
+        <div class="val">1.5 km!?</div>
+      </div>
+    </div>
+
+    <p>The Bishop's 1755 estimate of <b>1.5 kilometres across</b> was almost certainly a wild exaggeration based on garbled sailor accounts. But scaled up from a real giant squid, even a creature <span class="em">three or four times larger</span> — say 50 metres — would be more than enough to wrap its arms around a sailing ship and drag her down.</p>
+
+    <ul class="facts">
+      <li>A real giant squid can already <b>grab small boats</b> — kayakers in Japan have been pulled at by curious squid</li>
+      <li>Giant squid have been observed in epic battles with <b>sperm whales</b>, leaving circular sucker scars</li>
+      <li>A 50 m kraken would weigh <b>tens of tonnes</b> — enough mass to roll a galleon by itself</li>
+      <li>The strongest known squid suckers can grip with hundreds of newtons each — and they have <b>thousands of them</b></li>
+    </ul>
+
+    <div class="verdict">
+      <strong>COULD IT SINK A SHIP?</strong> A real giant squid? Probably not a galleon — but it could absolutely capsize a small fishing boat. A truly mythical kraken at the legendary scale? Without a doubt. And we've still seen less than <b>20% of the deep ocean</b> in any detail. Whatever's down there… we don't know yet.
+    </div>
+  </article>
+
+  <!-- ============ CLOSING ============ -->
+  <article class="closing">
+    <h2>🌊  THE MYSTERY CONTINUES…</h2>
+    <p>Most of the deep ocean remains unmapped. Sunlight cannot reach more than 1% of it. The pressure is crushing. The dark is absolute.</p>
+    <p>Could something larger than the giant squid still be down there, sleeping in the trenches, waiting to surface?</p>
+    <p style="color:#ffaaff; font-weight:bold; text-shadow: 0 0 12px rgba(255,100,220,0.7); letter-spacing: 2px; margin-top: 18px;">The legend may be old. The truth may be older.</p>
+  </article>
+
+  <footer>
+    🌊  Ocean Life &amp; Myths  ·  Page 3 of 6  ·  Beware the deep…  🌊
+  </footer>
+
+</main>
+
+<script>
+"use strict";
+
+/* Dramatic kraken-themed ocean background — darker gradient, purple light shafts,
+   slow-drifting bubbles, and a faint massive kraken silhouette deep below. */
+const canvas = document.getElementById("ocean-bg");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+const TAU = Math.PI * 2;
+const rand = (a, b) => a + Math.random() * (b - a);
+let frame = 0;
+
+const bubbles = [];
+for (let i = 0; i < 45; i++) {
+  bubbles.push({
+    x: Math.random() * 1600,
+    y: Math.random() * 900,
+    r: 2 + Math.random() * 7,
+    vy: -0.2 - Math.random() * 0.85,
+    wob: Math.random() * TAU,
+    wobSpeed: 0.01 + Math.random() * 0.04
+  });
+}
+
+function loop() {
+  frame++;
+
+  // darker, more menacing gradient than the homepage
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0,    "#103258");
+  g.addColorStop(0.45, "#0a1d40");
+  g.addColorStop(0.85, "#020818");
+  g.addColorStop(1,    "#000000");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // dim purple light shafts
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (let i = 0; i < 6; i++) {
+    const x = (i * 240 + frame * 0.25) % (W + 220) - 110;
+    const intensity = 0.04 + Math.sin(frame * 0.005 + i) * 0.02;
+    ctx.fillStyle = `rgba(160, 80, 220, ${intensity})`;
+    ctx.beginPath();
+    ctx.moveTo(x - 35, 0);
+    ctx.lineTo(x + 35, 0);
+    ctx.lineTo(x + 220, H);
+    ctx.lineTo(x - 220, H);
+    ctx.closePath();
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // faint massive kraken silhouette deep below — looms in the abyss
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  const kx = W / 2;
+  const ky = H + 140 - Math.sin(frame * 0.008) * 12;
+  ctx.fillStyle = "rgba(20, 0, 40, 1)";
+  ctx.beginPath();
+  ctx.ellipse(kx, ky, Math.max(W * 0.55, 600), 220, 0, 0, TAU);
+  ctx.fill();
+  // a few suggested tentacle silhouettes drifting up from the abyss
+  ctx.strokeStyle = "rgba(40, 0, 80, 1)";
+  ctx.lineWidth = 18;
+  ctx.lineCap = "round";
+  for (let i = 0; i < 6; i++) {
+    const tx = kx + (i - 2.5) * 130;
+    const wig = Math.sin(frame * 0.015 + i) * 25;
+    ctx.beginPath();
+    ctx.moveTo(tx, ky);
+    ctx.bezierCurveTo(
+      tx + wig, ky - 100,
+      tx - wig, ky - 200,
+      tx + wig * 1.5, ky - 320
+    );
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // bubbles drifting up
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (const b of bubbles) {
+    b.wob += b.wobSpeed;
+    b.x += Math.sin(b.wob) * 0.3;
+    b.y += b.vy;
+    if (b.y < -20) { b.y = H + 20; b.x = Math.random() * W; }
+    ctx.strokeStyle = "rgba(180, 180, 255, 0.45)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, TAU);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 220, 255, 0.35)";
+    ctx.beginPath();
+    ctx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+<!-- ============ SCUBA DIVER GUIDE ============ -->
+<div class="scuba-guide">
+  <div class="speech-bubble">
+    <p>The Kraken might be <b>REAL</b>!! 🦑  Giant squids grow up to <b>13 metres</b> long — bigger than a school bus!!</p>
+  </div>
+  <div class="diver-wrap">
+    <svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-label="Friendly scuba diver guide">
+      <defs>
+        <radialGradient id="diverGlass" cx="40%" cy="35%" r="65%">
+          <stop offset="0%"   stop-color="#dcf6ff" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#78c8ff" stop-opacity="0.4"/>
+        </radialGradient>
+      </defs>
+      <circle cx="135" cy="92" r="3" fill="rgba(200,240,255,0.85)" stroke="white" stroke-width="0.6">
+        <animate attributeName="cy" values="92;30" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.85;0" dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="142" cy="92" r="2" fill="rgba(200,240,255,0.85)" stroke="white" stroke-width="0.6">
+        <animate attributeName="cy" values="92;25" dur="2.4s" begin="0.7s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.85;0" dur="2.4s" begin="0.7s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="138" cy="92" r="4" fill="rgba(200,240,255,0.85)" stroke="white" stroke-width="0.6">
+        <animate attributeName="cy" values="92;20" dur="2.4s" begin="1.4s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.85;0" dur="2.4s" begin="1.4s" repeatCount="indefinite"/>
+      </circle>
+      <rect x="50" y="98" width="16" height="60" rx="7" fill="#ffd040" stroke="#a0801a" stroke-width="1.5"/>
+      <rect x="50" y="98" width="16" height="10" rx="4" fill="#ff8030"/>
+      <rect x="55" y="92" width="6" height="8" fill="#666"/>
+      <path d="M76,108 Q72,150 78,180 L122,180 Q128,150 124,108 Z" fill="#2086c8" stroke="#0a4080" stroke-width="2"/>
+      <path d="M76,108 L78,140 L122,140 L124,108" fill="rgba(0,40,80,0.4)" stroke="#0a4080" stroke-width="1"/>
+      <circle cx="100" cy="124" r="3" fill="#ff3030" stroke="#800" stroke-width="0.8"/>
+      <line x1="80" y1="118" x2="64" y2="120" stroke="#222" stroke-width="2"/>
+      <line x1="80" y1="138" x2="64" y2="138" stroke="#222" stroke-width="2"/>
+      <path d="M78,118 Q70,145 75,170" stroke="#2086c8" stroke-width="14" fill="none" stroke-linecap="round"/>
+      <circle cx="75" cy="170" r="9" fill="#ffd6b0" stroke="#222" stroke-width="1.2"/>
+      <circle cx="100" cy="68" r="44" fill="url(#diverGlass)" stroke="#aef6ff" stroke-width="3"/>
+      <circle cx="100" cy="68" r="40" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1"/>
+      <ellipse cx="100" cy="76" rx="24" ry="26" fill="#ffd6b0"/>
+      <path d="M82,58 Q90,48 100,52 Q110,48 118,58 Q108,55 100,57 Q92,55 82,58 Z" fill="#6a3010"/>
+      <ellipse cx="91" cy="72" rx="3" ry="3.5" fill="#222"/>
+      <ellipse cx="109" cy="72" rx="3" ry="3.5" fill="#222"/>
+      <circle cx="92" cy="71" r="1" fill="#fff"/>
+      <circle cx="110" cy="71" r="1" fill="#fff"/>
+      <circle cx="84" cy="82" r="3" fill="#ff8a90" opacity="0.55"/>
+      <circle cx="116" cy="82" r="3" fill="#ff8a90" opacity="0.55"/>
+      <path d="M93,88 Q100,94 107,88" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <rect x="93" y="92" width="14" height="6" rx="2" fill="#333"/>
+      <path d="M107,95 Q125,92 132,88" stroke="#333" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <circle cx="132" cy="88" r="2.5" fill="#333"/>
+      <ellipse cx="84" cy="50" rx="14" ry="6" fill="rgba(255,255,255,0.55)" transform="rotate(-30 84 50)"/>
+      <path d="M58,68 Q60,60 65,55" stroke="#222" stroke-width="2.5" fill="none"/>
+      <path d="M58,72 Q56,80 60,88" stroke="#222" stroke-width="2.5" fill="none"/>
+      <g>
+        <animateTransform attributeName="transform" type="rotate"
+          values="-12 124 118; 22 124 118; -12 124 118"
+          dur="1.8s" repeatCount="indefinite"/>
+        <path d="M124,118 Q142,98 152,72" stroke="#2086c8" stroke-width="14" fill="none" stroke-linecap="round"/>
+        <circle cx="152" cy="72" r="10" fill="#ffd6b0" stroke="#222" stroke-width="1.2"/>
+        <line x1="148" y1="64" x2="146" y2="56" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="153" y1="62" x2="155" y2="54" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="158" y1="64" x2="161" y2="58" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="160" y1="70" x2="166" y2="68" stroke="#222" stroke-width="1.5" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="78" cy="208" rx="16" ry="24" fill="#ff8030" stroke="#a04020" stroke-width="1.8" transform="rotate(-15 78 208)"/>
+      <ellipse cx="122" cy="208" rx="16" ry="24" fill="#ff8030" stroke="#a04020" stroke-width="1.8" transform="rotate(15 122 208)"/>
+    </svg>
+  </div>
+</div>
+
+</body>
+</html>

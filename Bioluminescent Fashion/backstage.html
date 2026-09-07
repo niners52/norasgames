@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Backstage Lounge</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="text-align:center;padding:40px 20px 100px">
+
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.5rem,2vw,0.8rem);
+              color:#aa44ff;text-shadow:0 0 15px rgba(170,68,255,0.8);
+              margin-bottom:8px;line-height:1.6">
+      THE BACKSTAGE LOUNGE!! 🎭
+    </p>
+
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(150,220,255,0.7);margin-bottom:32px">
+      "Where the stars relax between shows..."
+    </p>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">💰 <span id="hud-coins">0</span></div>
+      <div class="hud-item">⭐ LVL <span id="hud-level">1</span></div>
+      <div class="hud-item">XP <span id="hud-xp">0/100</span>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- DESIGNER CARD -->
+    <div class="card" style="max-width:400px;margin:0 auto 24px;padding:28px">
+      <p style="font-size:3rem;margin-bottom:12px">🛋️</p>
+      <p class="title-small glow-purple" style="color:#aa44ff;text-shadow:0 0 15px rgba(170,68,255,0.8);margin-bottom:16px"
+         id="designer-name">DESIGNER</p>
+      <div style="font-family:'Nunito',sans-serif;color:#cce8ff;font-size:1rem;line-height:2;text-align:left;max-width:260px;margin:0 auto">
+        <p>👗 Shows performed: <strong id="stat-shows">0</strong></p>
+        <p>🏆 Highest score: <strong id="stat-highscore">0</strong>/30</p>
+        <p>⭐ Level: <strong id="stat-level">1</strong></p>
+        <p>💰 Coins: <strong id="stat-coins">0</strong></p>
+        <p>🎭 Stage: <strong id="stat-stage">-</strong></p>
+      </div>
+    </div>
+
+    <p style="font-family:'Dancing Script',cursive;font-size:1.2rem;
+              color:rgba(150,220,255,0.6)" id="lounge-message">
+      Keep designing to earn your place among the legends!!
+    </p>
+
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="window.location.href='runway.html'">👗 RUNWAY</button>
+    <button class="nav-btn active">🎭 BACKSTAGE</button>
+    <button class="nav-btn" onclick="window.location.href='models.html'">🦑 MODELS</button>
+    <button class="nav-btn" onclick="window.location.href='magazine.html'">📖 MAGAZINE</button>
+  </nav>
+
+  <script src="game.js"></script>
+  <script>
+    createBubbles(6);
+    updateHUD();
+
+    const state = getState();
+    if (state.playerName) {
+      document.getElementById('designer-name').textContent = state.playerName.toUpperCase();
+    }
+    document.getElementById('stat-shows').textContent = state.totalShows || 0;
+    document.getElementById('stat-highscore').textContent = state.highestScore || 0;
+    document.getElementById('stat-level').textContent = state.level || 1;
+    document.getElementById('stat-coins').textContent = state.coins || 0;
+
+    const stageNames = {
+      'coral-reef':'Coral Reef 🪸', 'seaweed-forest':'Seaweed Forest 🌿',
+      'sunken-ship':'Sunken Ship ⚓', 'underwater-palace':'Underwater Palace 🏰',
+      'deep-dark-ocean':'Deep Dark Ocean 🌑',
+    };
+    document.getElementById('stat-stage').textContent = stageNames[state.selectedStage] || 'Not chosen yet';
+
+    if ((state.totalShows || 0) >= 10) {
+      document.getElementById('lounge-message').textContent =
+        'Ten shows!! You are becoming an ocean fashion LEGEND!!';
+    } else if ((state.highestScore || 0) >= 25) {
+      document.getElementById('lounge-message').textContent =
+        'A score over 25?? Even Madam Octopus is impressed!!';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Runway</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="text-align:center;padding:40px 20px 100px">
+
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.5rem,2vw,0.8rem);
+              color:#00aaff;text-shadow:0 0 15px rgba(0,170,255,0.8);
+              margin-bottom:8px;line-height:1.6">
+      THE RUNWAY!! 👗🌊
+    </p>
+
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(150,220,255,0.7);margin-bottom:32px">
+      "Design your outfit and hit the stage!!"
+    </p>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">💰 <span id="hud-coins">0</span></div>
+      <div class="hud-item">⭐ LVL <span id="hud-level">1</span></div>
+      <div class="hud-item">XP <span id="hud-xp">0/100</span>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- RUNWAY CANVAS -->
+    <canvas id="runway-canvas" style="display:block;width:100%;border-radius:16px;
+            border:2px solid rgba(0,170,255,0.2);margin-bottom:24px"></canvas>
+
+    <!-- DESIGN PANEL -->
+    <div style="max-width:600px;margin:0 auto;text-align:left">
+
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.5rem;color:#00aaff;
+                margin-bottom:16px;line-height:1.5;text-align:center">
+        ✦ DESIGN YOUR OUTFIT ✦
+      </p>
+
+      <!-- GARMENT -->
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.38rem;
+                color:rgba(150,200,255,0.7);margin-bottom:10px;line-height:1.5">
+        GARMENT:
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="option-btn" onclick="selectOption('garment','dress',this)">👗 DRESS</button>
+        <button class="option-btn" onclick="selectOption('garment','top',this)">👚 TOP</button>
+      </div>
+
+      <!-- COLOR -->
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.38rem;
+                color:rgba(150,200,255,0.7);margin-bottom:10px;line-height:1.5">
+        BIOLUMINESCENT COLOR:
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="option-btn" onclick="selectOption('color','blue',this)">💙 OCEAN BLUE</button>
+        <button class="option-btn" onclick="selectOption('color','green',this)">💚 SEA GREEN</button>
+        <button class="option-btn" onclick="selectOption('color','pink',this)">🩷 CORAL PINK</button>
+        <button class="option-btn" onclick="selectOption('color','purple',this)">💜 DEEP PURPLE</button>
+        <button class="option-btn" onclick="selectOption('color','white',this)">🤍 PEARL WHITE</button>
+        <button class="option-btn" onclick="selectOption('color','rainbow',this)">🌈 RAINBOW</button>
+        <button class="option-btn" id="bio-gown-btn" onclick="selectOption('color','biogown',this)" style="display:none">
+          ✨ THE BIO GOWN
+        </button>
+      </div>
+
+      <!-- JEWELRY -->
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.38rem;
+                color:rgba(150,200,255,0.7);margin-bottom:10px;line-height:1.5">
+        JEWELRY:
+      </p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <button class="option-btn" onclick="selectOption('jewelry','none',this)">✕ NONE</button>
+        <button class="option-btn" onclick="selectOption('jewelry','coral',this)">🪸 CORAL</button>
+        <button class="option-btn" onclick="selectOption('jewelry','pearl',this)">⚪ PEARLS</button>
+        <button class="option-btn" onclick="selectOption('jewelry','shell',this)">🐚 SHELLS</button>
+      </div>
+
+      <!-- SEND TO RUNWAY -->
+      <div style="text-align:center;margin-top:24px">
+        <button class="btn-main" id="runway-btn" onclick="sendToRunway()" style="display:none">
+          ✨ SEND TO THE RUNWAY!! ✨
+        </button>
+      </div>
+    </div>
+
+    <!-- JUDGES SECTION -->
+    <div id="judges-section" style="display:none;max-width:600px;margin:32px auto 0">
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.5rem;color:#ffcc44;
+                text-shadow:0 0 15px rgba(255,204,68,0.8);margin-bottom:20px;line-height:1.5">
+        THE JUDGES HAVE SPOKEN!! 👑
+      </p>
+
+      <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+        <!-- MADAM OCTOPUS -->
+        <div style="background:rgba(4,21,48,0.9);border:1px solid rgba(255,68,204,0.3);
+                    border-radius:16px;padding:16px;text-align:center;width:160px">
+          <p style="font-size:2rem;margin-bottom:8px">👓🐙</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:0.32rem;
+                    color:#ff44cc;margin-bottom:8px;line-height:1.4">MADAM OCTOPUS</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:1rem;
+                    color:#ff44cc" id="madam-score">-</p>
+          <p style="font-family:'Dancing Script',cursive;font-size:0.9rem;
+                    color:rgba(150,200,255,0.8);margin-top:6px;font-style:italic"
+             id="madam-comment"></p>
+        </div>
+
+        <!-- ARIEL -->
+        <div style="background:rgba(4,21,48,0.9);border:1px solid rgba(0,170,255,0.3);
+                    border-radius:16px;padding:16px;text-align:center;width:160px">
+          <p style="font-size:2rem;margin-bottom:8px">🧜</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:0.32rem;
+                    color:#00aaff;margin-bottom:8px;line-height:1.4">ARIEL</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:1rem;
+                    color:#00aaff" id="ariel-score">-</p>
+          <p style="font-family:'Dancing Script',cursive;font-size:0.9rem;
+                    color:rgba(150,200,255,0.8);margin-top:6px;font-style:italic"
+             id="ariel-comment"></p>
+        </div>
+
+        <!-- BLUBBY -->
+        <div style="background:rgba(4,21,48,0.9);border:1px solid rgba(0,255,136,0.3);
+                    border-radius:16px;padding:16px;text-align:center;width:160px">
+          <p style="font-size:2rem;margin-bottom:8px">🐠</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:0.32rem;
+                    color:#00ff88;margin-bottom:8px;line-height:1.4">BLUBBY</p>
+          <p style="font-family:'Press Start 2P',cursive;font-size:1rem;
+                    color:#00ff88" id="blubby-score">-</p>
+          <p style="font-family:'Dancing Script',cursive;font-size:0.9rem;
+                    color:rgba(150,200,255,0.8);margin-top:6px;font-style:italic"
+             id="blubby-comment"></p>
+        </div>
+      </div>
+
+      <!-- TOTAL -->
+      <p style="font-family:'Press Start 2P',cursive;font-size:0.7rem;color:#ffcc44;
+                text-shadow:0 0 15px rgba(255,204,68,0.6);margin-bottom:16px;line-height:1.5">
+        TOTAL: <span id="total-score">0</span>/30
+      </p>
+
+      <!-- REWARDS -->
+      <div style="background:rgba(4,21,48,0.8);border:1px solid rgba(255,204,68,0.3);
+                  border-radius:16px;padding:20px;margin-bottom:20px">
+        <p style="font-family:'Press Start 2P',cursive;font-size:0.45rem;color:#ffcc44;
+                  margin-bottom:12px;line-height:1.5">YOU EARNED:</p>
+        <p style="font-size:1.3rem">
+          💰 <span id="coins-earned">0</span> COINS &nbsp;
+          ⭐ <span id="xp-earned">0</span> XP
+        </p>
+      </div>
+
+      <button class="btn-main" onclick="resetDesign()">🎨 DESIGN AGAIN!!</button>
+    </div>
+
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <button class="nav-btn active">👗 RUNWAY</button>
+    <button class="nav-btn" onclick="window.location.href='backstage.html'">🎭 BACKSTAGE</button>
+    <button class="nav-btn" onclick="window.location.href='models.html'">🦑 MODELS</button>
+    <button class="nav-btn" onclick="window.location.href='magazine.html'">📖 MAGAZINE</button>
+  </nav>
+
+  <style>
+    .option-btn {
+      background:rgba(4,21,48,0.9);
+      border:2px solid rgba(0,170,255,0.2);
+      border-radius:12px;
+      padding:10px 14px;
+      font-family:'Nunito',sans-serif;
+      font-size:0.85rem;
+      color:#cce8ff;
+      cursor:pointer;
+      transition:all 0.2s;
+    }
+    .option-btn:hover { border-color:rgba(0,170,255,0.5); transform:translateY(-2px); }
+    .option-btn.selected {
+      border-color:#00aaff;
+      background:rgba(0,170,255,0.15);
+      box-shadow:0 0 15px rgba(0,170,255,0.2);
+    }
+  </style>
+
+  <script src="game.js"></script>
+  <script>
+    createBubbles(8);
+    updateHUD();
+
+    // THE BIO GOWN unlocks at level 7!!
+    const state = getState();
+    if (state.level >= 7) {
+      document.getElementById('bio-gown-btn').style.display = 'inline-block';
+    }
+
+    let currentDesign = { garment:null, color:null, jewelry:null };
+
+    function selectOption(type, value, btn) {
+      currentDesign[type] = value;
+      btn.parentElement.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      checkReady();
+      updateRunwayCanvas();
+    }
+
+    function checkReady() {
+      const ready = currentDesign.garment && currentDesign.color && currentDesign.jewelry !== null;
+      document.getElementById('runway-btn').style.display = ready ? 'inline-block' : 'none';
+    }
+
+    // RUNWAY CANVAS
+    const canvas = document.getElementById('runway-canvas');
+    canvas.width = canvas.offsetWidth || 600;
+    canvas.height = 300;
+    const ctx = canvas.getContext('2d');
+    let frame = 0;
+
+    function updateRunwayCanvas() {}
+
+    function drawRunwayLoop() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // Stage background
+      const state = getState();
+      const stageColors = {
+        'coral-reef': ['#0a1520','#1a2530'],
+        'seaweed-forest': ['#020805','#051208'],
+        'sunken-ship': ['#030810','#080f1a'],
+        'underwater-palace': ['#030815','#081228'],
+        'deep-dark-ocean': ['#010305','#020508'],
+      };
+      const colors = stageColors[state.selectedStage] || stageColors['coral-reef'];
+      const bg = ctx.createLinearGradient(0,0,0,canvas.height);
+      bg.addColorStop(0, colors[0]);
+      bg.addColorStop(1, colors[1]);
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // Runway strip
+      ctx.fillStyle = 'rgba(0,150,200,0.06)';
+      ctx.fillRect(canvas.width*0.3, 0, canvas.width*0.4, canvas.height);
+
+      // Stage lights
+      for (let sl=0; sl<5; sl++) {
+        const slx = canvas.width*(0.1+sl*0.2);
+        const alpha = 0.05+Math.sin(frame*0.03+sl)*0.02;
+        ctx.fillStyle = `rgba(200,220,255,${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(slx-8,0); ctx.lineTo(slx+8,0);
+        ctx.lineTo(slx+25,canvas.height); ctx.lineTo(slx-25,canvas.height);
+        ctx.fill();
+      }
+
+      // Judges
+      const judgeEmojis = ['👓','🧜','🐠'];
+      const judgeColors = ['#ff44cc','#00aaff','#00ff88'];
+      [canvas.width*0.25, canvas.width*0.5, canvas.width*0.75].forEach((jx,ji) => {
+        ctx.fillStyle = 'rgba(4,21,48,0.9)';
+        ctx.shadowColor = judgeColors[ji];
+        ctx.shadowBlur = 8+Math.sin(frame*0.04+ji)*4;
+        ctx.beginPath(); ctx.arc(jx, canvas.height*0.15, 18, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur=0;
+        ctx.font='16px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(judgeEmojis[ji], jx, canvas.height*0.15);
+      });
+
+      // Outfit preview in center
+      if (currentDesign.garment || currentDesign.color) {
+        // THE BIO GOWN — the stage goes dark!!
+        if (currentDesign.color === 'biogown') {
+          ctx.fillStyle = 'rgba(0,0,0,0.7)';
+          ctx.fillRect(0,0,canvas.width,canvas.height);
+        }
+
+        // Draw model WITH outfit ON them
+        const cx = canvas.width/2;
+        const cy = canvas.height*0.55;
+
+        const state2 = getState();
+        const modelEmojis = { squid:'🦑', 'tropical-fish':'🐠', seahorse:'🐴' };
+        const modelEmoji = modelEmojis[state2.startingModel] || '🦑';
+
+        // Draw model emoji FIRST at bottom
+        ctx.font='32px serif';
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.fillText(modelEmoji, cx, cy+30);
+
+        // Draw outfit ON TOP of model in the middle
+        const biolumColors = {
+          blue:'rgba(0,170,255,0.6)', green:'rgba(0,255,136,0.6)',
+          pink:'rgba(255,68,204,0.6)', purple:'rgba(170,68,255,0.6)',
+          white:'rgba(238,238,255,0.6)', rainbow:'rgba(255,200,100,0.5)',
+          biogown:'rgba(238,238,255,0.85)',
+        };
+        const color = biolumColors[currentDesign.color] || 'rgba(0,170,255,0.4)';
+
+        if (currentDesign.color === 'biogown') {
+          // ...and the outfit GLOWS!!
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 40+Math.sin(frame*0.05)*15;
+        } else {
+          ctx.shadowColor = color; ctx.shadowBlur = 15;
+        }
+        ctx.fillStyle = color;
+
+        if (currentDesign.garment === 'dress') {
+          // Dress sits over the model
+          ctx.beginPath();
+          ctx.moveTo(cx-15, cy+10);
+          ctx.lineTo(cx+15, cy+10);
+          ctx.lineTo(cx+40, cy+60);
+          ctx.lineTo(cx-40, cy+60);
+          ctx.closePath(); ctx.fill();
+        } else if (currentDesign.garment === 'top') {
+          // Top sits over the model
+          ctx.beginPath();
+          ctx.moveTo(cx-18, cy+10);
+          ctx.lineTo(cx+18, cy+10);
+          ctx.lineTo(cx+15, cy+35);
+          ctx.lineTo(cx-15, cy+35);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.shadowBlur=0;
+
+        // Jewelry sparkle
+        if (currentDesign.jewelry && currentDesign.jewelry !== 'none') {
+          const jEmojis = {coral:'🪸', pearl:'⚪', shell:'🐚'};
+          ctx.font='14px serif';
+          ctx.fillText(jEmojis[currentDesign.jewelry], cx, cy+8);
+        }
+      } else {
+        ctx.font='9px "Press Start 2P",monospace';
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='rgba(150,200,255,0.3)';
+        ctx.fillText('DESIGN YOUR OUTFIT BELOW!!', canvas.width/2, canvas.height*0.6);
+      }
+
+      // Bubbles
+      for (let b=0; b<8; b++) {
+        const bx=(b*77+frame*0.5)%canvas.width;
+        const by=(b*53+frame*0.3)%canvas.height;
+        const alpha=0.1+Math.sin(frame*0.04+b)*0.06;
+        ctx.strokeStyle=`rgba(100,200,255,${alpha})`;
+        ctx.lineWidth=1;
+        ctx.beginPath(); ctx.arc(bx,by,3+b%5,0,Math.PI*2); ctx.stroke();
+      }
+
+      frame++;
+      requestAnimationFrame(drawRunwayLoop);
+    }
+    drawRunwayLoop();
+
+    // JUDGING
+    const madamComments = {
+      high:["Magnifique!! The bioluminescence is PERFECT!!","This is the standard I expect!!","Finally!! Someone with taste!!"],
+      mid:["Acceptable. The color choice was adequate.","I have seen better. I have seen worse.","It needs more drama. But it will do."],
+      low:["*adjusts glasses* ...No.","This is not what I had in mind AT ALL.","Back to the drawing board darling."],
+    };
+    const arielComments = {
+      high:["Oh this is BEAUTIFUL!! I love it so much!!","You have such incredible talent!!","This made me so happy!!"],
+      mid:["Oh this is really lovely!! Good job!!","I think it is wonderful!!","You are doing so great!!"],
+      low:["Oh!! Well the effort was wonderful!!","Every designer grows!! You are learning!!","I love your courage for trying!!"],
+    };
+    const blubbyComments = ["Blub.","Blub blub.","BLUB!!","...blub.","Blub blub blub.","Blub? Blub!"];
+
+    function sendToRunway() {
+      document.getElementById('judges-section').style.display = 'block';
+      document.getElementById('judges-section').scrollIntoView({behavior:'smooth'});
+
+      const state = getState();
+      let base = 5;
+      const stageBonus = {
+        'coral-reef':'pink','seaweed-forest':'green',
+        'underwater-palace':'purple','sunken-ship':'white','deep-dark-ocean':'rainbow'
+      };
+      if (stageBonus[state.selectedStage] === currentDesign.color) base += 1;
+      if (currentDesign.color === 'rainbow' && state.selectedStage === 'deep-dark-ocean') base += 1;
+      if (currentDesign.jewelry !== 'none') base += 0.5;
+      if (currentDesign.color === 'biogown') base += 3;
+
+      const madam = Math.min(10, Math.max(1, Math.round(base-1+Math.random()*3)));
+      const ariel = Math.min(10, Math.max(1, Math.round(base+Math.random()*3)));
+      const blubby = Math.min(10, Math.max(1, Math.round(3+Math.random()*7)));
+      const total = madam+ariel+blubby;
+
+      let d={madam:0,ariel:0,blubby:0};
+      const interval = setInterval(()=>{
+        let done=true;
+        if(d.madam<madam){d.madam++;done=false;}
+        if(d.ariel<ariel){d.ariel++;done=false;}
+        if(d.blubby<blubby){d.blubby++;done=false;}
+        document.getElementById('madam-score').textContent=d.madam+'/10';
+        document.getElementById('ariel-score').textContent=d.ariel+'/10';
+        document.getElementById('blubby-score').textContent=d.blubby+'/10';
+        document.getElementById('total-score').textContent=d.madam+d.ariel+d.blubby;
+        if(done) clearInterval(interval);
+      },100);
+
+      const ml=madam>=8?'high':madam>=5?'mid':'low';
+      const al=ariel>=8?'high':ariel>=5?'mid':'low';
+      setTimeout(()=>{
+        document.getElementById('madam-comment').textContent=madamComments[ml][Math.floor(Math.random()*3)];
+        document.getElementById('ariel-comment').textContent=arielComments[al][Math.floor(Math.random()*3)];
+        document.getElementById('blubby-comment').textContent=blubbyComments[Math.floor(Math.random()*blubbyComments.length)];
+        document.getElementById('coins-earned').textContent=total*5;
+        document.getElementById('xp-earned').textContent=total*3;
+        addCoins(total*5);
+        addXP(total*3);
+        const s=getState();
+        s.totalShows=(s.totalShows||0)+1;
+        if(total>(s.highestScore||0)) s.highestScore=total;
+        if(!s.bestLooks) s.bestLooks=[];
+        s.bestLooks.unshift({design:{...currentDesign},score:total,date:new Date().toLocaleDateString()});
+        if(s.bestLooks.length>10) s.bestLooks.pop();
+        saveState(s);
+      },1500);
+    }
+
+    function resetDesign() {
+      currentDesign={garment:null,color:null,jewelry:null};
+      document.querySelectorAll('.option-btn').forEach(b=>b.classList.remove('selected'));
+      document.getElementById('runway-btn').style.display='none';
+      document.getElementById('judges-section').style.display='none';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+  </script>
+</body>
+</html>

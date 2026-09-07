@@ -1,0 +1,3442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Elemental Forest 🌿</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Dancing+Script:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { background: #020802; }
+    body {
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    button { font-family: inherit; }
+    canvas { display: block; }
+
+    .screen { display: none; min-height: 100vh; padding: 16px; }
+    .screen.active { display: block; }
+
+    /* MAP */
+    #screen-map { padding: 0; }
+    #map-canvas { width: 100%; cursor: default; }
+
+    .top-bar {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 18px; pointer-events: none; z-index: 10;
+    }
+    .mats-pill {
+      background: rgba(10,15,10,0.7);
+      border: 1px solid rgba(100,200,100,0.25);
+      border-radius: 999px;
+      padding: 6px 12px;
+      display: flex; gap: 10px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.42rem;
+      color: #cceecc;
+      pointer-events: auto;
+      backdrop-filter: blur(4px);
+    }
+    .mats-pill span.count { color: #ffcc88; margin-left: 2px; }
+
+    .forest-nav {
+      display: flex; justify-content: center; gap: 14px;
+      padding: 18px; flex-wrap: wrap;
+    }
+    .forest-nav-btn {
+      background: #12122a;
+      border: 2px solid rgba(100,200,100,0.3);
+      border-radius: 30px;
+      padding: 12px 22px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.42rem;
+      color: #88ff88;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 15px rgba(100,200,100,0.1);
+      line-height: 1.6;
+    }
+    .forest-nav-btn:hover {
+      border-color: rgba(100,200,100,0.6);
+      box-shadow: 0 0 25px rgba(100,200,100,0.3);
+      transform: translateY(-2px);
+    }
+    .forest-nav-btn.danger {
+      border-color: rgba(200,80,80,0.3);
+      color: #ffaaaa;
+      box-shadow: 0 0 15px rgba(200,80,80,0.1);
+    }
+
+    /* Generic screen content wrapper */
+    .content {
+      max-width: 760px; margin: 0 auto;
+    }
+    .back-btn {
+      background: none;
+      border: 2px solid rgba(150,150,150,0.3);
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.38rem;
+      color: #aaaacc;
+      cursor: pointer;
+      margin-bottom: 22px;
+      transition: all 0.2s ease;
+      line-height: 1.6;
+    }
+    .back-btn:hover { border-color: rgba(150,150,255,0.5); color: #ccccff; }
+
+    .title-h {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(0.7rem, 3vw, 1.1rem);
+      text-align: center; margin-bottom: 12px; line-height: 1.6;
+    }
+    .subtitle {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.3rem;
+      color: rgba(255,255,255,0.8);
+      text-align: center; margin-bottom: 22px; line-height: 1.6;
+    }
+
+    /* SEARCH */
+    #search-canvas { width: 100%; max-width: 760px; border-radius: 14px; cursor: crosshair; }
+    .search-hint {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.15rem;
+      color: rgba(255,255,255,0.7);
+      text-align: center; margin-top: 12px;
+    }
+
+    /* BUILD HOME */
+    .materials-bar {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin: 14px 0 8px;
+    }
+    .material-chip {
+      background: rgba(20,20,40,0.7);
+      border: 1px solid rgba(200,200,255,0.2);
+      border-radius: 999px;
+      padding: 6px 12px;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.42rem;
+      color: #cceeff;
+    }
+    .material-chip .material-count {
+      color: #ffcc88; min-width: 14px; text-align: right;
+    }
+    #room-canvas { background: #050510; }
+    .furniture-title {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.5rem; text-align: center; margin: 14px 0;
+      color: #ccccee; line-height: 1.5;
+    }
+    .furniture-shop {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    .furniture-card {
+      background: #12122a;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 8px;
+      text-align: center;
+      cursor: grab;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+    }
+    .furniture-card:active { cursor: grabbing; }
+    .furniture-card:hover:not(.built):not(.cant-afford) { transform: translateY(-3px); }
+    .furniture-card.built { cursor: default; opacity: 0.85; }
+    .furniture-card.cant-afford { cursor: not-allowed; opacity: 0.45; }
+    .furniture-emoji { font-size: 2rem; margin-bottom: 6px; }
+    .furniture-name {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.4rem; margin-bottom: 6px; line-height: 1.5;
+    }
+    .furniture-cost {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.4rem; color: #aaaacc; line-height: 1.6;
+    }
+    .adopt-ready-text {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.7rem; color: #ffcc44; text-align: center;
+      text-shadow: 0 0 15px rgba(255,204,68,0.6);
+      margin: 16px 0;
+    }
+    .adopt-btn-big {
+      display: block; margin: 0 auto;
+      background: linear-gradient(135deg, #ffcc44, #ff44cc);
+      border: none; border-radius: 30px;
+      padding: 18px 36px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.6rem; color: white;
+      cursor: pointer;
+      box-shadow: 0 0 30px rgba(255,200,80,0.4);
+      transition: transform 0.2s ease;
+      line-height: 1.6;
+    }
+    .adopt-btn-big:hover { transform: translateY(-3px) scale(1.03); }
+
+    /* ADOPT */
+    #adopt-canvas { width: 100%; max-width: 760px; border-radius: 14px; cursor: pointer; margin: 0 auto; }
+
+    /* PATH */
+    #path-canvas { width: 100%; max-width: 900px; border-radius: 14px; cursor: pointer; margin: 0 auto; }
+
+    /* ADVENTURE */
+    .adv-header {
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .adv-score {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.5rem; color: #ffcc44;
+      background: rgba(20,20,40,0.7);
+      border: 1px solid rgba(255,204,68,0.3);
+      border-radius: 12px; padding: 8px 14px;
+      line-height: 1.6;
+    }
+    #adventure-canvas { width: 100%; max-width: 760px; border-radius: 14px; cursor: pointer; margin: 0 auto; background: #050510; }
+    .adv-reward {
+      text-align: center; margin-top: 16px;
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.4rem; color: #ffcc88;
+    }
+
+    /* HOME VIEW */
+    #homeview-canvas { width: 100%; max-width: 760px; border-radius: 14px; background: #050510; }
+    .home-stats {
+      display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 14px;
+    }
+    .home-stat {
+      background: rgba(20,20,40,0.7);
+      border: 1px solid rgba(200,200,255,0.2);
+      border-radius: 14px;
+      padding: 10px 16px;
+      text-align: center;
+    }
+    .home-stat .lbl {
+      display: block;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.4rem; color: #6666aa; margin-bottom: 6px;
+      line-height: 1.5;
+    }
+    .home-stat .val {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.55rem; color: #ffcc88; line-height: 1.5;
+    }
+    .home-actions { display: flex; gap: 12px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+    .home-action {
+      background: linear-gradient(135deg, #44aaff, #8844ff);
+      border: none; border-radius: 24px;
+      padding: 12px 22px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.45rem; color: white; cursor: pointer;
+      box-shadow: 0 0 15px rgba(80,120,255,0.3);
+      line-height: 1.6;
+    }
+    .home-action:hover { transform: translateY(-2px); }
+
+    /* BREEDING */
+    .breed-instructions {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.2rem; color: #ffcc88; text-align: center; margin-bottom: 16px;
+    }
+    .breed-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px; margin-bottom: 20px;
+    }
+    .breed-card {
+      background: #12122a;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 14px 8px; text-align: center;
+      cursor: pointer; transition: all 0.15s ease;
+    }
+    .breed-card.selected { transform: translateY(-3px); }
+    .breed-emoji { font-size: 2.4rem; margin-bottom: 6px; }
+    .breed-name {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.42rem; line-height: 1.5;
+    }
+    .breed-cost {
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.45rem; color: #ffcc44; line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    .breed-btn {
+      display: block; margin: 0 auto;
+      background: linear-gradient(135deg, #ff44cc, #44aaff);
+      border: none; border-radius: 24px;
+      padding: 14px 26px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.55rem; color: white; cursor: pointer;
+      box-shadow: 0 0 20px rgba(255,80,200,0.3);
+      line-height: 1.6;
+    }
+    .breed-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .babies-section { margin-top: 30px; }
+    .babies-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .baby-card {
+      background: #12122a;
+      border: 2px solid rgba(255,180,255,0.3);
+      border-radius: 14px;
+      padding: 14px 8px; text-align: center;
+      box-shadow: 0 0 14px rgba(255,180,255,0.15);
+    }
+    .baby-emoji { font-size: 2.2rem; margin-bottom: 6px; }
+    .baby-name {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.4rem; color: #ff88ee; line-height: 1.5;
+    }
+    .baby-parents {
+      font-family: 'Nunito'; font-size: 0.8rem; color: #aaaacc; margin-top: 6px;
+    }
+
+    /* COLLECTION */
+    .collection-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .collection-card {
+      background: #12122a;
+      border: 2px solid transparent;
+      border-radius: 18px;
+      padding: 20px 14px;
+      text-align: center;
+      transition: transform 0.2s ease;
+    }
+    .collection-card:hover { transform: translateY(-4px); }
+    .coll-emoji { font-size: 2.6rem; margin-bottom: 8px; }
+    .coll-pet {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.5rem; line-height: 1.5; margin-bottom: 6px;
+    }
+    .coll-meta {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.85rem; color: #aaaacc; line-height: 1.5;
+    }
+    .coll-path {
+      margin-top: 8px;
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.36rem;
+      line-height: 1.5;
+    }
+    .coll-hint {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.2rem; color: #aaffaa;
+      text-align: center; margin-top: 20px;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #12122a; border: 2px solid #88ff88;
+      border-radius: 14px; padding: 14px 22px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 0.42rem; color: #88ff88;
+      text-align: center; line-height: 1.6;
+      box-shadow: 0 0 20px rgba(100,255,100,0.3);
+      z-index: 9999; max-width: 80vw; opacity: 0;
+      pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+    @media (max-width: 600px) {
+      .forest-nav { padding: 12px; gap: 8px; }
+      .forest-nav-btn { padding: 10px 14px; font-size: 0.38rem; }
+      .mats-pill { font-size: 0.36rem; gap: 8px; }
+    }
+
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); }
+    }
+
+    .breed-card .age-bar {
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.75rem;
+      color: #aaaacc;
+      margin-top: 4px;
+    }
+    .breed-card.ready { box-shadow: 0 0 14px rgba(100,255,180,0.25); }
+    .breed-card.not-ready { opacity: 0.55; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<main id="game">
+
+  <!-- MAP -->
+  <section id="screen-map" class="screen active">
+    <div class="top-bar">
+      <div></div>
+      <div class="mats-pill" id="map-mats"></div>
+    </div>
+    <canvas id="map-canvas"></canvas>
+    <nav class="forest-nav">
+      <button class="forest-nav-btn" onclick="showScreen(SCREENS.COLLECTION)">✦ MY PETS</button>
+      <button class="forest-nav-btn" onclick="showScreen(SCREENS.BREEDING)">🥚 BREEDING</button>
+      <button class="forest-nav-btn" onclick="collectMaterials()" style="border-color:rgba(255,204,68,0.3);color:#ffcc44">✦ FORAGE FOR MATERIALS</button>
+      <button class="forest-nav-btn danger" onclick="resetForest()">↻ RESET</button>
+    </nav>
+  </section>
+
+  <!-- SEARCH -->
+  <section id="screen-search" class="screen">
+    <div class="content">
+      <button class="back-btn" onclick="showScreen(SCREENS.MAP)">← BACK TO MAP</button>
+      <p class="title-h" id="search-title"></p>
+      <p class="subtitle" id="search-desc"></p>
+      <canvas id="search-canvas" width="760" height="500"></canvas>
+      <p class="search-hint" id="search-hint"></p>
+    </div>
+  </section>
+
+  <!-- BUILD HOME -->
+  <section id="screen-build" class="screen">
+    <div class="content">
+      <button class="back-btn" onclick="showScreen(SCREENS.MAP)">← BACK TO MAP</button>
+      <p class="title-h" id="build-title"></p>
+      <p class="subtitle">"Build a home for your new friend before adopting them!!"</p>
+      <div class="materials-bar" id="materials-bar"></div>
+      <canvas id="room-canvas" width="760" height="380" style="width:100%;border-radius:16px;margin:14px 0"></canvas>
+      <p class="furniture-title">✦ DRAG OR TAP FURNITURE TO ADD IT ✦</p>
+      <div class="furniture-shop" id="furniture-shop"></div>
+      <div id="adopt-ready" style="display:none">
+        <p class="adopt-ready-text">🌟 HOME IS READY!! 🌟</p>
+        <button class="adopt-btn-big" onclick="startAdoption()">✨ ADOPT YOUR PET!! ✨</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADOPT -->
+  <section id="screen-adopt" class="screen">
+    <div class="content">
+      <canvas id="adopt-canvas" width="760" height="520"></canvas>
+    </div>
+  </section>
+
+  <!-- PATH -->
+  <section id="screen-path" class="screen">
+    <div class="content">
+      <canvas id="path-canvas" width="900" height="500"></canvas>
+    </div>
+  </section>
+
+  <!-- ADVENTURE -->
+  <section id="screen-adventure" class="screen">
+    <div class="content">
+      <div class="adv-header">
+        <button class="back-btn" style="margin:0" onclick="exitAdventure()">← END ADVENTURE</button>
+        <div class="adv-score" id="adv-score"></div>
+      </div>
+      <p class="title-h" id="adv-title"></p>
+      <p class="subtitle" id="adv-desc"></p>
+      <canvas id="adventure-canvas" width="760" height="500"></canvas>
+      <p class="adv-reward" id="adv-reward"></p>
+    </div>
+  </section>
+
+  <!-- HOME VIEW -->
+  <section id="screen-homeview" class="screen">
+    <div class="content">
+      <button class="back-btn" onclick="showScreen(SCREENS.MAP)">← BACK TO MAP</button>
+      <p class="title-h" id="hv-title"></p>
+      <p class="subtitle" id="hv-subtitle"></p>
+      <canvas id="homeview-canvas" width="760" height="420"></canvas>
+      <div class="home-stats" id="hv-stats"></div>
+      <div class="home-actions">
+        <button class="home-action" onclick="startAdventureFromHome()">⚔️ GO ON ADVENTURE!!</button>
+        <button class="home-action" onclick="changePath()">✨ CHANGE PATH</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- BREEDING -->
+  <section id="screen-breeding" class="screen">
+    <div class="content">
+      <button class="back-btn" onclick="showScreen(SCREENS.MAP)">← BACK TO MAP</button>
+      <p class="title-h" style="color:#ff88ee">🥚 BREEDING NEST</p>
+      <p class="subtitle">"Two elements join to make a new magical baby!!"</p>
+      <p class="breed-instructions" id="breed-instructions"></p>
+      <p class="title-h" style="font-size:0.6rem;margin-bottom:10px">CHOOSE TWO PARENTS</p>
+      <div class="breed-grid" id="breed-parents"></div>
+      <div id="breeding-result" style="margin-top:18px"></div>
+      <div class="babies-section">
+        <p class="title-h" style="font-size:0.6rem;color:#ff88ee">YOUR BABIES</p>
+        <div class="babies-grid" id="babies-grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COLLECTION -->
+  <section id="screen-collection" class="screen">
+    <div class="content">
+      <button class="back-btn" onclick="showScreen(SCREENS.MAP)">← BACK TO MAP</button>
+      <p class="title-h" style="color:#88ff88">✦ MY PETS ✦</p>
+      <p class="subtitle">"Your elemental companions"</p>
+      <div class="collection-grid" id="collection-grid"></div>
+      <p class="coll-hint" id="collection-hint"></p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// ============================================================
+// GAME STATE
+// ============================================================
+const defaultState = {
+  adoptedPets: [],
+  petAges: {},
+  petPaths: {},
+  builtHomes: {},
+  materials: {
+    rainbowDust: 5,
+    magicalWater: 5,
+    fireCrystals: 5,
+    shapeshiftingFlowers: 5,
+    cloudInBottle: 5,
+  },
+  forestMaterials: [],
+  adventuresCompleted: {},
+  babies: [],
+  foundPets: [],
+  lastMaterialSpawn: 0,
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('elementalForestState');
+    if (!raw) return JSON.parse(JSON.stringify(defaultState));
+    const parsed = JSON.parse(raw);
+    // Merge with defaults so new fields stay present
+    return {
+      ...JSON.parse(JSON.stringify(defaultState)),
+      ...parsed,
+      materials: { ...defaultState.materials, ...(parsed.materials || {}) },
+    };
+  } catch (_) {
+    return JSON.parse(JSON.stringify(defaultState));
+  }
+}
+
+function saveState() {
+  localStorage.setItem('elementalForestState', JSON.stringify(gameState));
+}
+
+let gameState = loadState();
+
+// ============================================================
+// AREA DATA
+// ============================================================
+const areaData = {
+  fire: {
+    id: 'fire', name: 'FIRE AREA', pet: 'Red', petEmoji: '🔥',
+    color: '#ff4422', glow: '#ff2200', bgColor: '#1a0500',
+    treeColors: ['#cc2200','#aa1100','#dd3300','#bb2200'],
+    floatEmoji: '✦', floatColor: '#ff8844',
+    adoptMessage: 'Red jumps into your arms leaving tiny warm pawprints!! 🔥',
+    primaryMat: 'fireCrystals',
+  },
+  water: {
+    id: 'water', name: 'WATER AREA', pet: 'Wave', petEmoji: '🦑',
+    color: '#2244ff', glow: '#0022ff', bgColor: '#000a1a',
+    treeColors: ['#1133cc','#0022aa','#2244dd','#1133bb'],
+    floatEmoji: '💧', floatColor: '#44aaff',
+    adoptMessage: 'Wave wraps tiny tentacles around your finger!! 🦑',
+    primaryMat: 'magicalWater',
+  },
+  wind: {
+    id: 'wind', name: 'WIND AREA', pet: 'Wind', petEmoji: '🐉',
+    color: '#eeeeff', glow: '#ccccff', bgColor: '#0a0a1a',
+    treeColors: ['#aaaacc','#888899','#ccccee','#bbbbdd'],
+    floatEmoji: '☁️', floatColor: '#ffffff',
+    adoptMessage: 'Wind lands on your shoulder and immediately looks upward!! 🐉',
+    primaryMat: 'cloudInBottle',
+  },
+  earth: {
+    id: 'earth', name: 'EARTH AREA', pet: 'Uni', petEmoji: '🦊',
+    color: '#44cc44', glow: '#22aa22', bgColor: '#051005',
+    treeColors: ['#228822','#1a6618','#2a9928','#1e7720'],
+    floatEmoji: '✿', floatColor: '#88ff88',
+    adoptMessage: 'Uni nuzzles your hand and a tiny flower appears!! 🦊',
+    primaryMat: 'shapeshiftingFlowers',
+  },
+  rainbow: {
+    id: 'rainbow', name: 'RAINBOW CENTER', pet: 'Element', petEmoji: '🌈',
+    color: '#ffcc44', glow: '#ff88cc', bgColor: '#0a0a0a',
+    treeColors: ['#ff4444','#ffcc44','#44cc44','#4488ff','#8844ff','#ff44cc'],
+    floatEmoji: '🌟', floatColor: '#ffffff',
+    adoptMessage: 'Element glides toward you leaving a rainbow trail!! You have been chosen!! 🌈',
+    primaryMat: 'rainbowDust',
+  },
+};
+
+const materialEmojis = {
+  rainbowDust: '🌈',
+  magicalWater: '💧',
+  fireCrystals: '🔥',
+  shapeshiftingFlowers: '🌸',
+  cloudInBottle: '☁️',
+};
+const materialNames = {
+  rainbowDust: 'Rainbow Dust',
+  magicalWater: 'Magical Water',
+  fireCrystals: 'Fire Crystals',
+  shapeshiftingFlowers: 'Shapeshifting Flowers',
+  cloudInBottle: 'Cloud in a Bottle',
+};
+
+// ============================================================
+// SCREEN MANAGER
+// ============================================================
+const SCREENS = {
+  MAP: 'map', SEARCH: 'search', BUILD: 'build', ADOPT: 'adopt',
+  PATH: 'path', ADVENTURE: 'adventure', HOMEVIEW: 'homeview',
+  BREEDING: 'breeding', COLLECTION: 'collection',
+};
+const SCREEN_IDS = {
+  map: 'screen-map', search: 'screen-search', build: 'screen-build',
+  adopt: 'screen-adopt', path: 'screen-path', adventure: 'screen-adventure',
+  homeview: 'screen-homeview', breeding: 'screen-breeding', collection: 'screen-collection',
+};
+
+let currentScreen = SCREENS.MAP;
+let currentArea = null;
+let frame = 0;
+
+function showScreen(screen, area = null) {
+  currentScreen = screen;
+  currentArea = area;
+  Object.values(SCREEN_IDS).forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById(SCREEN_IDS[screen]).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  if (screen === SCREENS.MAP) resizeMapCanvas();
+  if (screen === SCREENS.SEARCH) initSearch(area);
+  if (screen === SCREENS.BUILD) initBuild(area);
+  if (screen === SCREENS.ADOPT) initAdopt(area);
+  if (screen === SCREENS.PATH) initPath(area);
+  if (screen === SCREENS.ADVENTURE) initAdventure(area);
+  if (screen === SCREENS.HOMEVIEW) initHomeView(area);
+  if (screen === SCREENS.BREEDING) initBreeding();
+  if (screen === SCREENS.COLLECTION) initCollection();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer = null;
+function toast(text, color = '#88ff88') {
+  const el = document.getElementById('toast');
+  el.textContent = text;
+  el.style.color = color;
+  el.style.borderColor = color;
+  el.style.boxShadow = `0 0 20px ${color}55`;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// MAP CANVAS
+// ============================================================
+const mapCanvas = document.getElementById('map-canvas');
+const mapCtx = mapCanvas.getContext('2d');
+
+function resizeMapCanvas() {
+  mapCanvas.width = mapCanvas.offsetWidth || window.innerWidth;
+  mapCanvas.height = 600;
+}
+resizeMapCanvas();
+window.addEventListener('resize', () => {
+  if (currentScreen === SCREENS.MAP) resizeMapCanvas();
+});
+
+function getMapAreas() {
+  const W = mapCanvas.width, H = mapCanvas.height;
+  return [
+    { ...areaData.fire,    x: W*0.15, y: H*0.35, r: W*0.13 },
+    { ...areaData.water,   x: W*0.85, y: H*0.35, r: W*0.13 },
+    { ...areaData.wind,    x: W*0.15, y: H*0.72, r: W*0.13 },
+    { ...areaData.earth,   x: W*0.85, y: H*0.72, r: W*0.13 },
+    { ...areaData.rainbow, x: W*0.5,  y: H*0.52, r: W*0.15 },
+  ];
+}
+
+let hoveredArea = null;
+
+function drawDetailedMap(ctx, W, H, frameCount, state, hoveredArea) {
+  // Rich gradient background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+  bgGrad.addColorStop(0, '#020a02');
+  bgGrad.addColorStop(0.4, '#051005');
+  bgGrad.addColorStop(1, '#030803');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Moon
+  ctx.fillStyle = 'rgba(220,220,180,0.9)';
+  ctx.shadowColor = 'rgba(220,220,180,0.4)';
+  ctx.shadowBlur = 30;
+  ctx.beginPath();
+  ctx.arc(W * 0.5, 45, 25, 0, Math.PI * 2);
+  ctx.fill();
+  // Moon craters
+  ctx.fillStyle = 'rgba(180,180,150,0.6)';
+  ctx.shadowBlur = 0;
+  [[W*0.495,40,4],[W*0.51,48,3],[W*0.49,50,2]].forEach(([cx,cy,cr]) => {
+    ctx.beginPath(); ctx.arc(cx,cy,cr,0,Math.PI*2); ctx.fill();
+  });
+
+  // Twinkling stars
+  for (let s = 0; s < 120; s++) {
+    const sx = (s * 173 + 47) % W;
+    const sy = (s * 97 + 23) % (H * 0.45);
+    const alpha = 0.15 + Math.sin(frameCount * 0.03 + s * 0.7) * 0.12;
+    const size = 0.5 + (s % 3) * 0.4;
+    ctx.fillStyle = `rgba(255,255,220,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(sx, sy, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Ground fog
+  const fogGrad = ctx.createLinearGradient(0, H * 0.75, 0, H);
+  fogGrad.addColorStop(0, 'transparent');
+  fogGrad.addColorStop(1, 'rgba(20,40,20,0.6)');
+  ctx.fillStyle = fogGrad;
+  ctx.fillRect(0, H * 0.75, W, H * 0.25);
+
+  // Drifting fireflies
+  for (let f = 0; f < 25; f++) {
+    const fx = (f * 97 + frameCount * (0.3 + f * 0.02)) % W;
+    const fy = H * 0.3 + ((f * 67 + frameCount * (0.15 + f * 0.01)) % (H * 0.5));
+    const alpha = 0.2 + Math.sin(frameCount * 0.08 + f * 1.3) * 0.18;
+    const colors = ['#88ff88','#ffff88','#88ffcc','#ffcc88','#aaffaa'];
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = colors[f % 5];
+    ctx.shadowColor = colors[f % 5];
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+  }
+
+  // Background depth trees
+  for (let bt = 0; bt < 40; bt++) {
+    const btx = (bt * 89 + 20) % W;
+    const bty = H * 0.45 + (bt % 5) * 18;
+    const bth = 35 + bt % 25;
+    const btw = 12 + bt % 8;
+    ctx.fillStyle = 'rgba(10,25,10,0.85)';
+    ctx.beginPath();
+    ctx.moveTo(btx, bty - bth);
+    ctx.lineTo(btx - btw, bty + 5);
+    ctx.lineTo(btx + btw, bty + 5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Mushrooms
+  const mushroomSpots = [[W*0.3,H*0.78],[W*0.45,H*0.82],[W*0.6,H*0.8],[W*0.2,H*0.85],[W*0.75,H*0.83],[W*0.55,H*0.86],[W*0.38,H*0.88]];
+  mushroomSpots.forEach(([mx,my],mi) => {
+    const mColors = ['#ff4444','#ff8844','#ffcc44','#44cc44','#cc44ff','#44ccff','#ff44cc'];
+    ctx.fillStyle = '#5a3010';
+    ctx.fillRect(mx-3, my, 6, 12);
+    ctx.fillStyle = mColors[mi % mColors.length];
+    ctx.shadowColor = mColors[mi % mColors.length]; ctx.shadowBlur = 5;
+    ctx.beginPath();
+    ctx.ellipse(mx, my, 10, 7, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    [[mx-4,my-1],[mx,my-3],[mx+3,my-1]].forEach(([dx,dy]) => {
+      ctx.beginPath(); ctx.arc(dx,dy,1.5,0,Math.PI*2); ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+  });
+
+  // Winding paths
+  ctx.strokeStyle = 'rgba(80,120,80,0.25)';
+  ctx.lineWidth = 8;
+  ctx.setLineDash([12,8]);
+  ctx.lineCap = 'round';
+  const centerX = W * 0.5, centerY = H * 0.52;
+  [[W*0.15, H*0.35],[W*0.85, H*0.35],[W*0.15, H*0.72],[W*0.85, H*0.72]].forEach(([ax,ay]) => {
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.bezierCurveTo(
+      ax + (centerX-ax)*0.4, ay + (centerY-ay)*0.2,
+      centerX - (centerX-ax)*0.3, centerY - (centerY-ay)*0.3,
+      centerX, centerY
+    );
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+
+  // Areas
+  const areas = getMapAreas();
+  areas.forEach(area => {
+    const isAdopted = state.adoptedPets.includes(area.id);
+    const isHovered = hoveredArea === area.id;
+    const isLocked = area.id === 'rainbow' &&
+      !['fire','water','wind','earth'].every(p => state.adoptedPets.includes(p));
+    const scale = isHovered ? 1.06 : 1;
+
+    ctx.save();
+    ctx.translate(area.x, area.y);
+    ctx.scale(scale, scale);
+
+    // Ground glow
+    const groundGrad = ctx.createRadialGradient(0,0,10,0,0,area.r);
+    if (isLocked) {
+      groundGrad.addColorStop(0, 'rgba(30,30,30,0.5)');
+      groundGrad.addColorStop(1, 'transparent');
+    } else {
+      groundGrad.addColorStop(0, area.color + '44');
+      groundGrad.addColorStop(0.6, area.color + '11');
+      groundGrad.addColorStop(1, 'transparent');
+    }
+    ctx.fillStyle = groundGrad;
+    ctx.beginPath(); ctx.arc(0,0,area.r,0,Math.PI*2); ctx.fill();
+
+    // Trees ring
+    const treeCount = area.id === 'rainbow' ? 18 : 14;
+    const rainbowTreeColors = ['#ff4444','#ff8844','#ffcc44','#44cc44','#4488ff','#8844ff','#ff44cc','#ff4488','#44ffcc','#ffaacc'];
+    for (let t = 0; t < treeCount; t++) {
+      const ta = (t / treeCount) * Math.PI * 2 - Math.PI/2;
+      const tr = area.r * 0.7;
+      const tx = Math.cos(ta) * tr;
+      const ty = Math.sin(ta) * tr;
+      const tHeight = 32 + (t % 4) * 10;
+      const tWidth = 14 + (t % 3) * 4;
+      const sway = Math.sin(frameCount * 0.02 + t * 0.5) * 2.5;
+
+      ctx.fillStyle = isLocked ? '#1a1a1a' : '#3a2010';
+      ctx.fillRect(tx + sway - 3, ty - 2, 6, 16);
+
+      for (let layer = 0; layer < 3; layer++) {
+        const layerY = ty - tHeight * 0.3 - layer * tHeight * 0.25;
+        const layerW = tWidth * (1 - layer * 0.2);
+        if (area.id === 'rainbow') {
+          ctx.fillStyle = isLocked ? '#222222' : rainbowTreeColors[(t + layer) % rainbowTreeColors.length];
+        } else {
+          ctx.fillStyle = isLocked ? '#222222' : area.treeColors[t % area.treeColors.length];
+        }
+        ctx.shadowColor = isLocked ? '#222222' : area.color;
+        ctx.shadowBlur = isHovered ? 12 : 5;
+        ctx.beginPath();
+        ctx.moveTo(tx + sway, layerY - tHeight * 0.35);
+        ctx.lineTo(tx + sway - layerW/2, layerY + 4);
+        ctx.lineTo(tx + sway + layerW/2, layerY + 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      if (!isLocked && Math.sin(frameCount * 0.05 + t * 1.2) > 0.7) {
+        const dotColors = area.id === 'rainbow'
+          ? ['#ff4444','#ffcc44','#44ff44','#4488ff','#ff44cc']
+          : [area.floatColor];
+        ctx.fillStyle = dotColors[t % dotColors.length];
+        ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(tx + sway + (t%3-1)*5, ty - tHeight*0.5, 2.5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // Floating elements
+    for (let fe = 0; fe < 5; fe++) {
+      const fea = (fe/5)*Math.PI*2 + frameCount*0.015;
+      const fer = area.r * 0.5;
+      const fex = Math.cos(fea) * fer;
+      const fey = Math.sin(fea) * fer * 0.6;
+      const alpha = isLocked ? 0 : 0.3 + Math.sin(frameCount*0.04+fe)*0.2;
+      ctx.globalAlpha = alpha;
+      ctx.font = '12px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(area.floatEmoji, fex, fey);
+      ctx.globalAlpha = 1;
+    }
+
+    // Center clearing
+    const clearGrad = ctx.createRadialGradient(0,0,5,0,0,40);
+    if (isLocked) {
+      clearGrad.addColorStop(0, '#1a1a1a');
+      clearGrad.addColorStop(1, '#0a0a0a');
+    } else if (area.id === 'rainbow') {
+      clearGrad.addColorStop(0, '#ffffff44');
+      clearGrad.addColorStop(0.5, '#ffcc4433');
+      clearGrad.addColorStop(1, '#ff44cc22');
+    } else {
+      clearGrad.addColorStop(0, area.color + '88');
+      clearGrad.addColorStop(1, area.color + '22');
+    }
+    ctx.fillStyle = clearGrad;
+    ctx.shadowColor = isLocked ? '#333333' : area.glow;
+    ctx.shadowBlur = isHovered ? 30 : 15;
+    ctx.beginPath(); ctx.arc(0,0,40,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Center emoji
+    ctx.font = '26px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (isLocked) ctx.fillText('🔒', 0, -5);
+    else if (isAdopted) {
+      ctx.fillText('✅', 0, -12);
+      ctx.font = '18px serif';
+      ctx.fillText(area.petEmoji, 0, 10);
+    } else ctx.fillText(area.petEmoji, 0, -3);
+
+    // Area name
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = isLocked ? '#333333' : area.color;
+    ctx.shadowColor = isLocked ? 'transparent' : area.color;
+    ctx.shadowBlur = 6;
+    ctx.fillText(area.name, 0, 55);
+    ctx.shadowBlur = 0;
+
+    // Status text
+    ctx.font = '6px "Press Start 2P", monospace';
+    ctx.fillStyle = 'rgba(200,200,200,0.7)';
+    if (!isLocked) {
+      const homeBuilt = state.builtHomes[area.id];
+      const allBuilt = homeBuilt && ['bed','lamp','bookshelf','memoryJar'].every(k => homeBuilt[k]);
+      if (isAdopted) {
+        ctx.fillStyle = area.color;
+        ctx.fillText(area.pet + ' ✓ (TAP)', 0, 67);
+      } else if (allBuilt) {
+        ctx.fillStyle = '#ffcc44';
+        ctx.fillText('HOME READY!! ADOPT!!', 0, 67);
+      } else if (state.foundPets && state.foundPets.includes(area.id)) {
+        ctx.fillStyle = '#ffaa88';
+        ctx.fillText('BUILD HOME FIRST!!', 0, 67);
+      } else {
+        ctx.fillText('TAP TO SEARCH!!', 0, 67);
+      }
+    }
+
+    // Hover ring
+    if (isHovered && !isLocked) {
+      ctx.strokeStyle = area.color;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.4 + Math.sin(frameCount*0.08)*0.2;
+      ctx.setLineDash([6,4]);
+      ctx.beginPath(); ctx.arc(0,0,48,0,Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.restore();
+  });
+
+  // Forest materials
+  if (state.forestMaterials) {
+    state.forestMaterials.forEach(mat => {
+      const x = mat.x * W;
+      const y = mat.y * H + Math.sin(frameCount*0.04 + mat.seed)*4;
+      const alpha = 0.75 + Math.sin(frameCount*0.05 + mat.seed)*0.2;
+      ctx.globalAlpha = alpha;
+      // Glow halo
+      const halo = ctx.createRadialGradient(x,y,2,x,y,16);
+      halo.addColorStop(0, '#ffffff66');
+      halo.addColorStop(1, 'transparent');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(x,y,16,0,Math.PI*2); ctx.fill();
+      // Emoji
+      ctx.font = '18px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(materialEmojis[mat.type] || '✦', x, y);
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  // Title
+  ctx.font = 'bold 16px "Press Start 2P", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#88ff88';
+  ctx.shadowColor = '#44ff44'; ctx.shadowBlur = 15;
+  ctx.fillText('ELEMENTAL FOREST', W/2, 32);
+  ctx.shadowBlur = 0;
+  ctx.font = '14px "Dancing Script", cursive';
+  ctx.fillStyle = 'rgba(150,220,150,0.6)';
+  ctx.fillText('"Five elements. Five pets. One magical forest."', W/2, 52);
+}
+
+// Map interactions
+function getMapTargetAt(x, y) {
+  // Material clicked?
+  const W = mapCanvas.width, H = mapCanvas.height;
+  for (let i = 0; i < gameState.forestMaterials.length; i++) {
+    const mat = gameState.forestMaterials[i];
+    const mx = mat.x * W, my = mat.y * H;
+    if (Math.hypot(x - mx, y - my) < 22) return { kind: 'material', index: i };
+  }
+  // Area clicked?
+  const areas = getMapAreas();
+  for (let area of areas) {
+    if (Math.hypot(x - area.x, y - area.y) < area.r) return { kind: 'area', id: area.id };
+  }
+  return null;
+}
+
+mapCanvas.addEventListener('mousemove', (e) => {
+  const rect = mapCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (mapCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (mapCanvas.height / rect.height);
+  const tgt = getMapTargetAt(x, y);
+  if (tgt && tgt.kind === 'area') {
+    hoveredArea = tgt.id;
+    mapCanvas.style.cursor = 'pointer';
+  } else if (tgt && tgt.kind === 'material') {
+    hoveredArea = null;
+    mapCanvas.style.cursor = 'grab';
+  } else {
+    hoveredArea = null;
+    mapCanvas.style.cursor = 'default';
+  }
+});
+mapCanvas.addEventListener('mouseleave', () => { hoveredArea = null; });
+
+function handleMapClick(x, y) {
+  const tgt = getMapTargetAt(x, y);
+  if (!tgt) return;
+  if (tgt.kind === 'material') {
+    const mat = gameState.forestMaterials[tgt.index];
+    gameState.materials[mat.type] = (gameState.materials[mat.type] || 0) + 1;
+    gameState.forestMaterials.splice(tgt.index, 1);
+    saveState();
+    updateTopMats();
+    toast(`+1 ${materialNames[mat.type]}!!`, '#ffcc88');
+    return;
+  }
+  if (tgt.kind === 'area') {
+    visitArea(tgt.id);
+  }
+}
+
+mapCanvas.addEventListener('click', (e) => {
+  const rect = mapCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (mapCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (mapCanvas.height / rect.height);
+  handleMapClick(x, y);
+});
+mapCanvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = mapCanvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = (touch.clientX - rect.left) * (mapCanvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (mapCanvas.height / rect.height);
+  handleMapClick(x, y);
+}, { passive: false });
+
+function visitArea(areaId) {
+  const isAdopted = gameState.adoptedPets.includes(areaId);
+  const isLocked = areaId === 'rainbow' &&
+    !['fire','water','wind','earth'].every(p => gameState.adoptedPets.includes(p));
+  if (isLocked) {
+    toast('Adopt all four elemental pets first!!', '#ffcc44');
+    return;
+  }
+
+  const homeBuilt = gameState.builtHomes[areaId] || {};
+  const allBuilt = ['bed','lamp','bookshelf','memoryJar'].every(k => homeBuilt[k]);
+
+  if (isAdopted && allBuilt) {
+    // Home built — go to home view (which has Adventure button)
+    showScreen(SCREENS.HOMEVIEW, areaId);
+    return;
+  }
+  if (isAdopted && !allBuilt) {
+    // Adopted but home not built — let her build it now!!
+    showScreen(SCREENS.BUILD, areaId);
+    return;
+  }
+  if (allBuilt) {
+    showScreen(SCREENS.ADOPT, areaId);
+    return;
+  }
+  if (gameState.foundPets && gameState.foundPets.includes(areaId)) {
+    showScreen(SCREENS.BUILD, areaId);
+    return;
+  }
+  showScreen(SCREENS.SEARCH, areaId);
+}
+
+// Material spawning
+function spawnForestMaterial() {
+  if (gameState.forestMaterials.length >= 5) return;
+  const types = Object.keys(materialEmojis);
+  const type = types[Math.floor(Math.random() * types.length)];
+  const x = 0.08 + Math.random() * 0.84;
+  // Place along edges/gaps, not on areas
+  let y;
+  const lane = Math.floor(Math.random() * 3);
+  if (lane === 0) y = 0.12 + Math.random() * 0.08;       // top band
+  else if (lane === 1) y = 0.52 + Math.random() * 0.05;  // middle gap
+  else y = 0.9 + Math.random() * 0.05;                   // bottom
+  gameState.forestMaterials.push({ type, x, y, seed: Math.random() * 100 });
+  saveState();
+}
+
+// ============================================================
+// SEARCH SCENES
+// ============================================================
+const searchCanvas = document.getElementById('search-canvas');
+const searchCtx = searchCanvas.getContext('2d');
+
+let clickSparkles = [];
+let petFound = false;
+
+const searchScenes = {
+  fire: {
+    name: 'Inside the Volcano',
+    description: '"Deep in the magical heart of a volcano!! Red is hiding somewhere in here!! Click around to find her!!"',
+    hint: 'Look near the lava rivers!!',
+    petX: 0.35, petY: 0.6, petAlpha: 0.05,
+    draw(ctx, W, H, frameCount) {
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0a0200'); bg.addColorStop(0.5,'#1a0500'); bg.addColorStop(1,'#2a0800');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+      // Lava rivers
+      for (let r = 0; r < 3; r++) {
+        const ry = H*(0.5 + r*0.15);
+        const lg = ctx.createLinearGradient(0,ry-8,0,ry+8);
+        lg.addColorStop(0,'#ffaa00'); lg.addColorStop(0.5,'#ff4400'); lg.addColorStop(1,'#cc2200');
+        ctx.fillStyle = lg;
+        ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 15;
+        ctx.beginPath();
+        for (let x = 0; x <= W; x += 20) {
+          const y = ry + Math.sin(x*0.02 + frameCount*0.05 + r)*8;
+          if (x === 0) ctx.moveTo(x, y-6); else ctx.lineTo(x, y-6);
+        }
+        for (let x = W; x >= 0; x -= 20) {
+          const y = ry + Math.sin(x*0.02 + frameCount*0.05 + r)*8;
+          ctx.lineTo(x, y+6);
+        }
+        ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+      }
+
+      // Red weeds
+      for (let w = 0; w < 20; w++) {
+        const wx = (w*73+50) % (W-100) + 50;
+        const wy = H*0.3 + (w%5)*40;
+        const wh = 20 + w%20;
+        const sway = Math.sin(frameCount*0.03+w)*4;
+        ctx.strokeStyle = ['#cc2200','#aa1100','#dd3300'][w%3];
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.shadowColor = '#ff2200'; ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.moveTo(wx, wy);
+        ctx.bezierCurveTo(wx+sway, wy-wh*0.4, wx+sway*2, wy-wh*0.7, wx+sway*1.5, wy-wh);
+        ctx.stroke(); ctx.shadowBlur = 0;
+      }
+
+      // Embers
+      for (let e = 0; e < 20; e++) {
+        const ex = (e*53 + frameCount*0.8) % W;
+        const ey = H*0.8 - ((e*31 + frameCount*0.6) % (H*0.6));
+        const alpha = 0.4 + Math.sin(frameCount*0.08+e)*0.3;
+        ctx.fillStyle = `rgba(255,${100+e*5},0,${alpha})`;
+        ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 6;
+        ctx.beginPath(); ctx.arc(ex,ey,2+e%3,0,Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+
+      // Rocky walls
+      ctx.fillStyle = '#2a1005';
+      ctx.beginPath();
+      ctx.moveTo(0,H*0.2); ctx.lineTo(W*0.15,H*0.16); ctx.lineTo(W*0.15,H); ctx.lineTo(0,H);
+      ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(W,H*0.18); ctx.lineTo(W*0.85,H*0.15); ctx.lineTo(W*0.85,H); ctx.lineTo(W,H);
+      ctx.closePath(); ctx.fill();
+
+      // Sparkle hints
+      for (let h = 0; h < 8; h++) {
+        const hx = W*(0.2 + h*0.08);
+        const hy = H*(0.3 + (h%3)*0.15);
+        const alpha = 0.1 + Math.sin(frameCount*0.06+h)*0.08;
+        ctx.fillStyle = `rgba(255,200,100,${alpha})`;
+        ctx.font = '10px serif'; ctx.textAlign = 'center';
+        ctx.fillText('✦', hx, hy);
+      }
+    },
+  },
+  water: {
+    name: 'The Abandoned Pirate Ship',
+    description: '"Deep underwater!! An old pirate ship covered in barnacles and seaweed!! Wave is hiding somewhere inside!! Click to find her!!"',
+    hint: 'Check near the barnacles!!',
+    petX: 0.65, petY: 0.45, petAlpha: 0.05,
+    draw(ctx, W, H, frameCount) {
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#000510'); bg.addColorStop(0.5,'#000a1a'); bg.addColorStop(1,'#001020');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+      for (let r = 0; r < 5; r++) {
+        const rx = W*(0.1 + r*0.2);
+        const rayAlpha = 0.03 + Math.sin(frameCount*0.02+r)*0.02;
+        ctx.fillStyle = `rgba(100,150,255,${rayAlpha})`;
+        ctx.beginPath();
+        ctx.moveTo(rx-20, 0); ctx.lineTo(rx+20, 0);
+        ctx.lineTo(rx+60, H); ctx.lineTo(rx-60, H);
+        ctx.closePath(); ctx.fill();
+      }
+
+      // Hull
+      ctx.fillStyle = '#1a0808';
+      ctx.shadowColor = '#440010'; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.moveTo(W*0.15,H*0.35); ctx.lineTo(W*0.1,H*0.7);
+      ctx.lineTo(W*0.85,H*0.65); ctx.lineTo(W*0.82,H*0.35);
+      ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+
+      // Masts
+      ctx.strokeStyle = '#2a1010'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(W*0.35,H*0.35); ctx.lineTo(W*0.32,H*0.05); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.6,H*0.35); ctx.lineTo(W*0.62,H*0.08); ctx.stroke();
+      ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.moveTo(W*0.22,H*0.18); ctx.lineTo(W*0.45,H*0.22); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W*0.52,H*0.15); ctx.lineTo(W*0.72,H*0.2); ctx.stroke();
+
+      // Tattered sail
+      ctx.fillStyle = 'rgba(60,30,20,0.5)';
+      ctx.beginPath();
+      ctx.moveTo(W*0.32,H*0.08); ctx.lineTo(W*0.45,H*0.14);
+      ctx.lineTo(W*0.43,H*0.22); ctx.lineTo(W*0.32,H*0.18);
+      ctx.closePath(); ctx.fill();
+
+      // Barnacles
+      for (let b = 0; b < 25; b++) {
+        const bx = W*(0.12 + b*0.03);
+        const by = H*(0.45 + (b%3)*0.07);
+        ctx.fillStyle = 'rgba(80,70,50,0.8)';
+        ctx.beginPath(); ctx.arc(bx, by, 3+b%4, 0, Math.PI*2); ctx.fill();
+      }
+
+      // Seaweed
+      for (let sw = 0; sw < 15; sw++) {
+        const swx = W*(0.1 + sw*0.06);
+        const swy = H*0.9;
+        const swh = H*(0.2 + (sw%3)*0.1);
+        const swave = Math.sin(frameCount*0.03+sw)*8;
+        ctx.strokeStyle = `rgba(0,${80+sw*5},0,0.7)`;
+        ctx.lineWidth = 3; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(swx, swy);
+        ctx.bezierCurveTo(swx+swave, swy-swh*0.4, swx-swave, swy-swh*0.7, swx+swave*0.5, swy-swh);
+        ctx.stroke();
+      }
+
+      // Bubbles
+      for (let bu = 0; bu < 12; bu++) {
+        const bux = (bu*57+frameCount*0.2) % W;
+        const buy = H - ((bu*43+frameCount*0.4) % H);
+        const alpha = 0.15 + Math.sin(frameCount*0.04+bu)*0.1;
+        ctx.strokeStyle = `rgba(100,150,255,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(bux, buy, 4+bu%6, 0, Math.PI*2); ctx.stroke();
+      }
+
+      // Portholes
+      [[W*0.25,H*0.5],[W*0.5,H*0.48],[W*0.7,H*0.5]].forEach(([px,py]) => {
+        ctx.strokeStyle = 'rgba(100,80,60,0.6)'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(px,py,15,0,Math.PI*2); ctx.stroke();
+        const portGlow = 0.03 + Math.sin(frameCount*0.05)*0.02;
+        ctx.fillStyle = `rgba(50,50,100,${portGlow})`;
+        ctx.beginPath(); ctx.arc(px,py,13,0,Math.PI*2); ctx.fill();
+      });
+    },
+  },
+  wind: {
+    name: 'The Sweet Puffy Cloud',
+    description: '"Floating high in the sky!! A beautiful puffy cloud!! Wind is hiding somewhere in the fluffiness!! Click to find him!!"',
+    hint: 'Look in the fluffiest parts!!',
+    petX: 0.6, petY: 0.4, petAlpha: 0.05,
+    draw(ctx, W, H, frameCount) {
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0a0a2a'); bg.addColorStop(0.5,'#1a2a4a'); bg.addColorStop(1,'#2a4a6a');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+      for (let s = 0; s < 60; s++) {
+        const sx = (s*137) % W;
+        const sy = (s*79) % (H*0.4);
+        const alpha = 0.2 + Math.sin(frameCount*0.03+s)*0.15;
+        ctx.fillStyle = `rgba(255,255,220,${alpha})`;
+        ctx.beginPath(); ctx.arc(sx,sy,0.8+(s%2)*0.5,0,Math.PI*2); ctx.fill();
+      }
+
+      const cloudParts = [
+        {x:W*0.5, y:H*0.45, r:110},
+        {x:W*0.32, y:H*0.52, r:85},
+        {x:W*0.68, y:H*0.52, r:90},
+        {x:W*0.42, y:H*0.35, r:80},
+        {x:W*0.6, y:H*0.33, r:75},
+        {x:W*0.25, y:H*0.6, r:70},
+        {x:W*0.75, y:H*0.58, r:72},
+        {x:W*0.5, y:H*0.62, r:95},
+        {x:W*0.38, y:H*0.62, r:75},
+        {x:W*0.62, y:H*0.6, r:78},
+      ];
+      cloudParts.forEach(cp => {
+        const g = ctx.createRadialGradient(cp.x-cp.r*0.2, cp.y-cp.r*0.2, cp.r*0.1, cp.x, cp.y, cp.r);
+        g.addColorStop(0, 'rgba(255,255,255,0.95)');
+        g.addColorStop(0.5, 'rgba(240,240,255,0.9)');
+        g.addColorStop(1, 'rgba(200,200,240,0.7)');
+        ctx.fillStyle = g;
+        ctx.shadowColor = 'rgba(150,150,255,0.3)'; ctx.shadowBlur = 15;
+        ctx.beginPath(); ctx.arc(cp.x, cp.y, cp.r, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+
+      for (let sp = 0; sp < 15; sp++) {
+        const spx = W*(0.2 + sp*0.04);
+        const spy = H*(0.3 + (sp%5)*0.07);
+        const alpha = 0.15 + Math.sin(frameCount*0.06+sp)*0.12;
+        ctx.fillStyle = `rgba(180,180,255,${alpha})`;
+        ctx.font = '14px serif'; ctx.textAlign = 'center';
+        ctx.fillText('✦', spx, spy);
+      }
+
+      for (let wl = 0; wl < 8; wl++) {
+        const wly = H*(0.1 + wl*0.1);
+        const alpha = 0.06 + Math.sin(frameCount*0.02+wl)*0.04;
+        ctx.strokeStyle = `rgba(150,150,255,${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, wly);
+        for (let wx = 0; wx <= W; wx += 30) {
+          ctx.lineTo(wx, wly + Math.sin(wx*0.01+frameCount*0.02)*10);
+        }
+        ctx.stroke();
+      }
+    },
+  },
+  earth: {
+    name: 'The Flower Field',
+    description: '"A magical field filled with every kind of flower!! Uni is hiding somewhere in here!! Click through the flowers to find her!!"',
+    hint: 'Look near the tallest flowers!!',
+    petX: 0.4, petY: 0.55, petAlpha: 0.12,
+    draw(ctx, W, H, frameCount) {
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#020802'); bg.addColorStop(0.4,'#051005'); bg.addColorStop(1,'#081808');
+      ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+      const sunGrad = ctx.createRadialGradient(W*0.5,0,0,W*0.5,0,H*0.8);
+      sunGrad.addColorStop(0,'rgba(100,180,100,0.08)');
+      sunGrad.addColorStop(1,'transparent');
+      ctx.fillStyle = sunGrad; ctx.fillRect(0,0,W,H);
+
+      const grassGrad = ctx.createLinearGradient(0,H*0.65,0,H);
+      grassGrad.addColorStop(0,'#1a4a0a'); grassGrad.addColorStop(1,'#0a2a05');
+      ctx.fillStyle = grassGrad; ctx.fillRect(0,H*0.65,W,H*0.35);
+
+      for (let g = 0; g < 60; g++) {
+        const gx = (g*31+5) % W;
+        const gy = H*0.65;
+        const gh = 15 + g%20;
+        const sway = Math.sin(frameCount*0.025+g*0.3)*3;
+        ctx.strokeStyle = `rgba(${40+g%30},${100+g%60},${20+g%20},0.6)`;
+        ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(gx, gy);
+        ctx.quadraticCurveTo(gx+sway, gy-gh*0.5, gx+sway*2, gy-gh);
+        ctx.stroke();
+      }
+
+      const flowerTypes = ['🌸','🌺','🌼','🌻','🌷','💐','🌹','🏵️'];
+      for (let f = 0; f < 40; f++) {
+        const fx = (f*47+30) % (W-60) + 30;
+        const fy = H*(0.4 + (f%6)*0.045);
+        const bob = Math.sin(frameCount*0.03+f*0.5)*3;
+        const size = 14 + f%10;
+        ctx.font = `${size}px serif`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const alpha = 0.7 + Math.sin(frameCount*0.04+f)*0.2;
+        ctx.globalAlpha = alpha;
+        ctx.fillText(flowerTypes[f%flowerTypes.length], fx, fy+bob);
+        ctx.globalAlpha = 1;
+      }
+
+      for (let b = 0; b < 5; b++) {
+        const bx = (b*80 + frameCount*0.5) % W;
+        const by = H*(0.3 + Math.sin(frameCount*0.02+b)*0.1);
+        ctx.font = '16px serif'; ctx.textAlign = 'center';
+        ctx.fillText('🦋', bx, by);
+      }
+
+      for (let sp = 0; sp < 10; sp++) {
+        const spx = W*(0.1+sp*0.08);
+        const spy = H*(0.35 + (sp%4)*0.08);
+        const alpha = 0.1 + Math.sin(frameCount*0.05+sp)*0.08;
+        ctx.fillStyle = `rgba(150,255,150,${alpha})`;
+        ctx.font = '12px serif'; ctx.textAlign = 'center';
+        ctx.fillText('✦', spx, spy);
+      }
+    },
+  },
+  rainbow: {
+    name: 'The Rainbow Camouflage',
+    description: '"Element is hiding IN PLAIN SIGHT!! Camouflaged as part of the rainbow!! Can you spot which part of the rainbow is actually Element?? Click to find!!"',
+    hint: 'Part of the rainbow is shimmering differently!!',
+    petX: 0.55, petY: 0.45, petAlpha: 0.05,
+    draw(ctx, W, H, frameCount) {
+      ctx.fillStyle = '#050510'; ctx.fillRect(0,0,W,H);
+
+      for (let s = 0; s < 80; s++) {
+        const sx = (s*137)%W, sy = (s*79)%H;
+        const alpha = 0.1 + Math.sin(frameCount*0.03+s)*0.08;
+        ctx.fillStyle = `rgba(255,255,220,${alpha})`;
+        ctx.beginPath(); ctx.arc(sx,sy,0.8+(s%2)*0.5,0,Math.PI*2); ctx.fill();
+      }
+
+      const rcolors = [
+        'rgba(255,50,50,', 'rgba(255,150,0,', 'rgba(255,255,0,',
+        'rgba(50,200,50,', 'rgba(50,100,255,', 'rgba(100,50,200,', 'rgba(200,50,200,',
+      ];
+      rcolors.forEach((color, i) => {
+        const r = H*0.8 - i*18;
+        const alpha = 0.25 + Math.sin(frameCount*0.02+i)*0.05;
+        ctx.strokeStyle = color + alpha + ')';
+        ctx.lineWidth = 16; ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.arc(W*0.5, H*1.1, r, Math.PI*1.1, Math.PI*1.9);
+        ctx.stroke();
+      });
+
+      for (let sp = 0; sp < 20; sp++) {
+        const angle = Math.PI*1.1 + (sp/20)*Math.PI*0.8;
+        const radius = H*0.4 + (sp%7)*18;
+        const spx = W*0.5 + Math.cos(angle)*radius;
+        const spy = H*1.1 + Math.sin(angle)*radius;
+        const alpha = 0.15 + Math.sin(frameCount*0.04+sp)*0.12;
+        ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+        ctx.font = '10px serif'; ctx.textAlign = 'center';
+        ctx.fillText('✦', spx, spy);
+      }
+
+      // Subtle shimmer at the pet location
+      const px = W * 0.55, py = H * 0.45;
+      const ripple = ctx.createRadialGradient(px,py,2,px,py,30);
+      ripple.addColorStop(0, `rgba(255,255,255,${0.12 + Math.sin(frameCount*0.07)*0.06})`);
+      ripple.addColorStop(1, 'transparent');
+      ctx.fillStyle = ripple;
+      ctx.beginPath(); ctx.arc(px,py,30,0,Math.PI*2); ctx.fill();
+    },
+  },
+};
+
+function drawElement(ctx, cx, cy, frameCount) {
+  const wingFlap = Math.sin(frameCount * 0.04) * 15;
+  const bob = Math.sin(frameCount * 0.02) * 8;
+  cy += bob;
+
+  // Rainbow trail behind
+  for (let t = 0; t < 10; t++) {
+    const trailX = cx - t * 8;
+    const trailY = cy + 30 + Math.sin(frameCount * 0.04 - t * 0.3) * 5;
+    const trailColors = ['#ff4444','#ff8844','#ffcc44','#44cc44','#4488ff','#8844ff','#ff44cc','#ff4488','#44ffcc','#ffaacc'];
+    const alpha = (1 - t/10) * 0.6;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = trailColors[t];
+    ctx.shadowColor = trailColors[t]; ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.ellipse(trailX, trailY, 4 - t*0.3, 2, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+
+  // TAIL — long and thin
+  ctx.strokeStyle = 'rgba(200,200,255,0.8)';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx + 10, cy + 15);
+  ctx.bezierCurveTo(
+    cx + 40, cy + 25,
+    cx + 70, cy + 20,
+    cx + 100, cy + Math.sin(frameCount * 0.05) * 15
+  );
+  ctx.stroke();
+
+  // LEFT WING — flat and wide
+  const leftWingGrad = ctx.createLinearGradient(cx - 90, cy, cx, cy);
+  leftWingGrad.addColorStop(0, 'rgba(255,68,68,0.85)');
+  leftWingGrad.addColorStop(0.25, 'rgba(255,200,68,0.85)');
+  leftWingGrad.addColorStop(0.5, 'rgba(68,200,68,0.85)');
+  leftWingGrad.addColorStop(0.75, 'rgba(68,136,255,0.85)');
+  leftWingGrad.addColorStop(1, 'rgba(136,68,255,0.85)');
+  ctx.fillStyle = leftWingGrad;
+  ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 12);
+  ctx.bezierCurveTo(cx - 30, cy - 20 - wingFlap, cx - 70, cy - 15 - wingFlap, cx - 90, cy);
+  ctx.bezierCurveTo(cx - 70, cy + 15 + wingFlap, cx - 30, cy + 20 + wingFlap, cx, cy + 15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // RIGHT WING — flat and wide
+  const rightWingGrad = ctx.createLinearGradient(cx, cy, cx + 90, cy);
+  rightWingGrad.addColorStop(0, 'rgba(136,68,255,0.85)');
+  rightWingGrad.addColorStop(0.25, 'rgba(255,68,200,0.85)');
+  rightWingGrad.addColorStop(0.5, 'rgba(255,200,68,0.85)');
+  rightWingGrad.addColorStop(0.75, 'rgba(68,200,68,0.85)');
+  rightWingGrad.addColorStop(1, 'rgba(255,68,68,0.85)');
+  ctx.fillStyle = rightWingGrad;
+  ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 12);
+  ctx.bezierCurveTo(cx + 30, cy - 20 - wingFlap, cx + 70, cy - 15 - wingFlap, cx + 90, cy);
+  ctx.bezierCurveTo(cx + 70, cy + 15 + wingFlap, cx + 30, cy + 20 + wingFlap, cx, cy + 15);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // BODY CENTER — slightly raised diamond shape
+  const bodyGrad = ctx.createRadialGradient(cx - 5, cy - 5, 3, cx, cy, 28);
+  bodyGrad.addColorStop(0, '#ffffff');
+  bodyGrad.addColorStop(0.4, 'rgba(220,220,255,0.95)');
+  bodyGrad.addColorStop(1, 'rgba(180,180,255,0.8)');
+  ctx.fillStyle = bodyGrad;
+  ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, 24, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // EYES — on top of body, cute!!
+  [[cx - 9, cy - 5],[cx + 9, cy - 5]].forEach(([ex, ey]) => {
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.ellipse(ex, ey, 6, 5, 0, 0, Math.PI*2); ctx.fill();
+    const irisGrad = ctx.createRadialGradient(ex-1, ey-1, 0.5, ex, ey, 4);
+    irisGrad.addColorStop(0, '#ffffff');
+    irisGrad.addColorStop(0.4, 'rgba(150,200,255,0.9)');
+    irisGrad.addColorStop(1, 'rgba(100,100,255,0.9)');
+    ctx.fillStyle = irisGrad;
+    ctx.beginPath(); ctx.ellipse(ex, ey, 4, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#050510';
+    ctx.beginPath(); ctx.ellipse(ex+0.5, ey+0.5, 2, 2.5, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.ellipse(ex-1.5, ey-1.5, 1.5, 1.5, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(ex+2, ey-1, 1, 1, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#050510'; ctx.lineWidth = 1.5; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(ex-6, ey-3);
+    ctx.bezierCurveTo(ex-2, ey-8, ex+2, ey-8, ex+6, ey-3);
+    ctx.stroke();
+  });
+
+  // Smile
+  ctx.strokeStyle = 'rgba(150,150,255,0.8)';
+  ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(cx - 8, cy + 6);
+  ctx.bezierCurveTo(cx - 4, cy + 10, cx + 4, cy + 10, cx + 8, cy + 6);
+  ctx.stroke();
+
+  // Blush
+  ctx.fillStyle = 'rgba(255,150,200,0.35)';
+  ctx.beginPath(); ctx.ellipse(cx - 16, cy + 2, 8, 5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + 16, cy + 2, 8, 5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Orbiting rainbow sparkles
+  for (let s = 0; s < 6; s++) {
+    const sa = (s/6)*Math.PI*2 + frameCount*0.03;
+    const sr = 65 + Math.sin(frameCount*0.04+s)*8;
+    const sx = cx + Math.cos(sa)*sr;
+    const sy = cy + Math.sin(sa)*sr*0.5;
+    const sColors = ['#ff4444','#ffcc44','#44cc44','#4488ff','#cc44ff','#ff44cc'];
+    const alpha = 0.4 + Math.sin(frameCount*0.05+s)*0.3;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = sColors[s];
+    ctx.shadowColor = sColors[s]; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // Name
+  ctx.font = 'bold 14px "Press Start 2P", monospace';
+  ctx.textAlign = 'center';
+  const nameGrad = ctx.createLinearGradient(cx-50, 0, cx+50, 0);
+  nameGrad.addColorStop(0, '#ff4444');
+  nameGrad.addColorStop(0.5, '#ffcc44');
+  nameGrad.addColorStop(1, '#4488ff');
+  ctx.fillStyle = nameGrad;
+  ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 10;
+  ctx.fillText('ELEMENT', cx, cy + 55);
+  ctx.shadowBlur = 0;
+}
+
+function initSearch(areaId) {
+  petFound = false;
+  clickSparkles = [];
+  const scene = searchScenes[areaId];
+  document.getElementById('search-title').textContent = scene.name;
+  document.getElementById('search-title').style.color = areaData[areaId].color;
+  document.getElementById('search-desc').textContent = scene.description;
+  document.getElementById('search-hint').textContent = '💡 ' + scene.hint;
+}
+
+function handleSearchClick(clickX, clickY) {
+  const scene = searchScenes[currentArea];
+  const W = searchCanvas.width, H = searchCanvas.height;
+  const petX = scene.petX * W, petY = scene.petY * H;
+  const dist = Math.hypot(clickX - petX, clickY - petY);
+  const found = dist < 55;
+  clickSparkles.push({ x: clickX, y: clickY, time: 0, found });
+  if (found && !petFound) {
+    petFound = true;
+    toast(`✨ Found ${areaData[currentArea].pet}!!`, areaData[currentArea].color);
+    setTimeout(() => {
+      if (!gameState.foundPets.includes(currentArea)) gameState.foundPets.push(currentArea);
+      saveState();
+      showScreen(SCREENS.BUILD, currentArea);
+    }, 1400);
+  } else if (!found) {
+    // small hint indicator
+    if (dist < 130) toast('Getting warmer!!', '#ffcc88');
+  }
+}
+
+searchCanvas.addEventListener('click', (e) => {
+  const rect = searchCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (searchCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (searchCanvas.height / rect.height);
+  if (currentScreen === SCREENS.SEARCH) handleSearchClick(x, y);
+});
+searchCanvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  const rect = searchCanvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = (touch.clientX - rect.left) * (searchCanvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (searchCanvas.height / rect.height);
+  if (currentScreen === SCREENS.SEARCH) handleSearchClick(x, y);
+}, { passive: false });
+
+function drawClickSparkles(ctx, frameCount) {
+  clickSparkles = clickSparkles.filter(sp => sp.time < 30);
+  clickSparkles.forEach(sp => {
+    const alpha = 1 - sp.time/30;
+    const color = sp.found ? '#ffcc44' : '#88ff88';
+    for (let i = 0; i < 6; i++) {
+      const a = (i/6)*Math.PI*2 + sp.time*0.2;
+      const r = sp.time*2;
+      ctx.fillStyle = color;
+      ctx.globalAlpha = alpha;
+      ctx.shadowColor = color; ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(sp.x + Math.cos(a)*r, sp.y + Math.sin(a)*r, 3, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    ctx.globalAlpha = 1;
+    sp.time++;
+  });
+  // Draw revealed pet if found
+  if (petFound) {
+    const scene = searchScenes[currentArea];
+    const px = scene.petX * searchCanvas.width;
+    const py = scene.petY * searchCanvas.height;
+    if (currentArea === 'rainbow') {
+      drawElement(ctx, px, py, frameCount);
+    } else {
+      ctx.font = '54px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = areaData[currentArea].color; ctx.shadowBlur = 25;
+      ctx.fillText(areaData[currentArea].petEmoji, px, py);
+      ctx.shadowBlur = 0;
+    }
+  }
+}
+
+// ============================================================
+// BUILD HOME
+// ============================================================
+const homeData = {
+  fire: {
+    name: "Red's Volcano Home", bg: '#1a0500', accent: '#ff4422',
+    furniture: {
+      bed: { emoji:'🛏️', color:'#cc2200', label:'Lava Bed', materials:{ fireCrystals: 2 } },
+      lamp: { emoji:'💡', color:'#ff6622', label:'Fire Lamp', materials:{ fireCrystals: 1, cloudInBottle: 1 } },
+      bookshelf: { emoji:'📚', color:'#aa1100', label:'Volcano Shelf', materials:{ magicalWater: 1 } },
+      memoryJar: { emoji:'🫙', color:'#ff8844', label:'Memory Jar', materials:{ fireCrystals: 1, rainbowDust: 1 } },
+    },
+    memoryItem: '🔥',
+  },
+  water: {
+    name: "Wave's Pirate Ship Cabin", bg: '#000a1a', accent: '#2244ff',
+    furniture: {
+      bed: { emoji:'🛏️', color:'#1133cc', label:'Ocean Bed', materials:{ magicalWater: 2 } },
+      lamp: { emoji:'💡', color:'#44aaff', label:'Glow Lamp', materials:{ magicalWater: 1, cloudInBottle: 1 } },
+      bookshelf: { emoji:'📚', color:'#0022aa', label:'Barnacle Shelf', materials:{ magicalWater: 1 } },
+      memoryJar: { emoji:'🫙', color:'#2244ff', label:'Memory Jar', materials:{ magicalWater: 1, rainbowDust: 1 } },
+    },
+    memoryItem: '🪸',
+  },
+  wind: {
+    name: "Wind's Cloud Home", bg: '#0a0a1a', accent: '#eeeeff',
+    furniture: {
+      bed: { emoji:'🛏️', color:'#ccccee', label:'Cloud Bed', materials:{ cloudInBottle: 2 } },
+      lamp: { emoji:'💡', color:'#aaaacc', label:'Sky Lamp', materials:{ cloudInBottle: 1, shapeshiftingFlowers: 1 } },
+      bookshelf: { emoji:'📚', color:'#8888aa', label:'Wispy Shelf', materials:{ magicalWater: 1 } },
+      memoryJar: { emoji:'🫙', color:'#ddddff', label:'Memory Jar', materials:{ cloudInBottle: 1, rainbowDust: 1 } },
+    },
+    memoryItem: '☁️',
+  },
+  earth: {
+    name: "Uni's Flower Cottage", bg: '#051005', accent: '#44cc44',
+    furniture: {
+      bed: { emoji:'🛏️', color:'#228822', label:'Flower Bed', materials:{ shapeshiftingFlowers: 2 } },
+      lamp: { emoji:'💡', color:'#88ff88', label:'Horn Lamp', materials:{ shapeshiftingFlowers: 1, cloudInBottle: 1 } },
+      bookshelf: { emoji:'📚', color:'#1a6618', label:'Vine Shelf', materials:{ magicalWater: 1 } },
+      memoryJar: { emoji:'🫙', color:'#44cc44', label:'Memory Jar', materials:{ shapeshiftingFlowers: 1, rainbowDust: 1 } },
+    },
+    memoryItem: '🌈🌸',
+  },
+  rainbow: {
+    name: "Element's Rainbow Palace", bg: '#0a0a0a', accent: '#ffcc44',
+    furniture: {
+      bed: { emoji:'🛏️', color:'#ffcc44', label:'Rainbow Bed', materials:{ rainbowDust: 3 } },
+      lamp: { emoji:'💡', color:'#ff88cc', label:'Rainbow Lamp', materials:{ rainbowDust: 2, cloudInBottle: 1 } },
+      bookshelf: { emoji:'📚', color:'#88aaff', label:'Color-Shift Shelf', materials:{ rainbowDust: 1, magicalWater: 1 } },
+      memoryJar: { emoji:'🫙', color:'#ffffff', label:'Memory Jar', materials:{ rainbowDust: 2, fireCrystals: 1 } },
+    },
+    memoryItem: '🌈',
+  },
+};
+
+let roomFurniturePos = {};
+let draggedItem = null;
+
+const roomCanvas = document.getElementById('room-canvas');
+
+function canAffordFurniture(materials) {
+  return Object.entries(materials).every(([mat, amt]) => (gameState.materials[mat] || 0) >= amt);
+}
+
+function updateMaterialsBar() {
+  const bar = document.getElementById('materials-bar');
+  if (!bar) return;
+  bar.innerHTML = Object.entries(materialEmojis).map(([key, emoji]) => `
+    <div class="material-chip">
+      <span>${emoji}</span>
+      <span class="material-count">${gameState.materials[key] || 0}</span>
+    </div>
+  `).join('');
+}
+
+function updateTopMats() {
+  const bar = document.getElementById('map-mats');
+  if (!bar) return;
+  bar.innerHTML = Object.entries(materialEmojis).map(([key, emoji]) => `
+    <span>${emoji}<span class="count">${gameState.materials[key] || 0}</span></span>
+  `).join('');
+}
+
+function initBuild(areaId) {
+  roomFurniturePos = {};
+  const builtHome = gameState.builtHomes[areaId] || {};
+  const home = homeData[areaId];
+
+  document.getElementById('build-title').textContent = home.name.toUpperCase();
+  document.getElementById('build-title').style.color = home.accent;
+
+  // Pre-place already-built furniture
+  const builtKeys = Object.keys(builtHome).filter(k => builtHome[k]);
+  const positions = { bed: {x:0.25,y:0.6}, lamp: {x:0.55,y:0.45}, bookshelf: {x:0.78,y:0.55}, memoryJar: {x:0.42,y:0.7} };
+  builtKeys.forEach(k => { roomFurniturePos[k] = positions[k]; });
+
+  updateMaterialsBar();
+  refreshFurnitureShop(areaId);
+  drawRoom(areaId);
+
+  const allBuilt = ['bed','lamp','bookshelf','memoryJar'].every(k => (gameState.builtHomes[areaId] || {})[k]);
+  document.getElementById('adopt-ready').style.display = allBuilt ? 'block' : 'none';
+}
+
+function refreshFurnitureShop(areaId) {
+  const home = homeData[areaId];
+  const builtHome = gameState.builtHomes[areaId] || {};
+  const shop = document.getElementById('furniture-shop');
+  shop.innerHTML = '';
+  Object.entries(home.furniture).forEach(([key, item]) => {
+    const isBuilt = !!builtHome[key];
+    const canAfford = canAffordFurniture(item.materials);
+    const card = document.createElement('div');
+    card.className = 'furniture-card' + (isBuilt ? ' built' : '') + (!isBuilt && !canAfford ? ' cant-afford' : '');
+    card.style.borderColor = isBuilt ? '#44ff44' : (canAfford ? home.accent + '55' : '#333344');
+    card.dataset.furnitureKey = key;
+    const cost = Object.entries(item.materials).map(([m,a]) => `${materialEmojis[m]}×${a}`).join(' ');
+    card.innerHTML = `
+      <div class="furniture-emoji">${item.emoji}</div>
+      <p class="furniture-name" style="color:${isBuilt ? '#44ff44' : home.accent}">${item.label}</p>
+      <p class="furniture-cost">${isBuilt ? '✅ BUILT!!' : cost}</p>
+    `;
+    if (!isBuilt) {
+      card.draggable = canAfford;
+      card.addEventListener('dragstart', (e) => {
+        if (!canAfford) { e.preventDefault(); return; }
+        draggedItem = key;
+        e.dataTransfer.setData('text/plain', key);
+      });
+      // Tap to place if can afford (mobile-friendly fallback)
+      card.addEventListener('click', () => {
+        if (!canAfford) {
+          toast('Not enough materials!! Gather more!!', '#ffaaaa');
+          return;
+        }
+        const positions = { bed: {x:0.25,y:0.6}, lamp: {x:0.55,y:0.45}, bookshelf: {x:0.78,y:0.55}, memoryJar: {x:0.42,y:0.7} };
+        placeFurniture(key, positions[key].x, positions[key].y, areaId);
+      });
+    }
+    shop.appendChild(card);
+  });
+}
+
+roomCanvas.addEventListener('dragover', (e) => e.preventDefault());
+roomCanvas.addEventListener('drop', (e) => {
+  e.preventDefault();
+  if (!draggedItem || currentScreen !== SCREENS.BUILD) return;
+  const rect = roomCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+  placeFurniture(draggedItem, x, y, currentArea);
+  draggedItem = null;
+});
+
+function placeFurniture(key, x, y, areaId) {
+  const home = homeData[areaId];
+  const item = home.furniture[key];
+  const builtHome = gameState.builtHomes[areaId] || {};
+  if (builtHome[key]) return;
+  if (!canAffordFurniture(item.materials)) {
+    toast('Not enough materials!!', '#ffaaaa');
+    return;
+  }
+  Object.entries(item.materials).forEach(([mat, amt]) => {
+    gameState.materials[mat] = (gameState.materials[mat] || 0) - amt;
+  });
+  if (!gameState.builtHomes[areaId]) gameState.builtHomes[areaId] = {};
+  gameState.builtHomes[areaId][key] = true;
+  roomFurniturePos[key] = { x: Math.max(0.08, Math.min(0.92, x)), y: Math.max(0.2, Math.min(0.85, y)) };
+  saveState();
+  toast(`${item.label} built!!`, home.accent);
+
+  const allBuilt = ['bed','lamp','bookshelf','memoryJar'].every(k => gameState.builtHomes[areaId][k]);
+  document.getElementById('adopt-ready').style.display = allBuilt ? 'block' : 'none';
+  updateMaterialsBar();
+  updateTopMats();
+  refreshFurnitureShop(areaId);
+}
+
+function drawRoom(areaId) {
+  if (currentScreen !== SCREENS.BUILD) return;
+  const W = roomCanvas.width, H = roomCanvas.height;
+  const ctx = roomCanvas.getContext('2d');
+  const home = homeData[areaId];
+
+  ctx.clearRect(0,0,W,H);
+
+  // Wall gradient
+  const wallGrad = ctx.createLinearGradient(0,0,0,H);
+  wallGrad.addColorStop(0, home.bg);
+  wallGrad.addColorStop(1, '#030305');
+  ctx.fillStyle = wallGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(0,H*0.75,0,H);
+  floorGrad.addColorStop(0, home.accent + '22');
+  floorGrad.addColorStop(1, home.accent + '11');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0,H*0.75,W,H*0.25);
+
+  ctx.strokeStyle = home.accent + '44';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,H*0.75); ctx.lineTo(W,H*0.75); ctx.stroke();
+
+  // Wall pattern (subtle dots)
+  for (let p = 0; p < 30; p++) {
+    const px = (p * 73) % W;
+    const py = (p * 41) % (H*0.75);
+    ctx.fillStyle = home.accent + '0a';
+    ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Drop zone hint
+  const placedCount = Object.keys(roomFurniturePos).length;
+  if (placedCount === 0) {
+    ctx.strokeStyle = home.accent + '44';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8,6]);
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(W*0.1, H*0.15, W*0.8, H*0.7, 12);
+    } else {
+      ctx.rect(W*0.1, H*0.15, W*0.8, H*0.7);
+    }
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = home.accent + '88';
+    ctx.font = '11px "Press Start 2P", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('DRAG OR TAP FURNITURE HERE!!', W/2, H/2);
+  }
+
+  // Furniture
+  Object.entries(roomFurniturePos).forEach(([key, pos]) => {
+    const item = home.furniture[key];
+    const fx = pos.x * W, fy = pos.y * H;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(fx, Math.min(fy+22, H*0.82), 24, 7, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowColor = item.color; ctx.shadowBlur = 18;
+    ctx.font = '36px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(item.emoji, fx, fy);
+    ctx.shadowBlur = 0;
+    ctx.font = '7px "Press Start 2P", monospace';
+    ctx.fillStyle = item.color;
+    ctx.fillText(item.label.split(' ')[0], fx, fy + 30);
+  });
+
+  // Memory jar magical item
+  if (roomFurniturePos.memoryJar) {
+    const pulse = 0.5 + Math.sin(frame*0.05)*0.3;
+    ctx.globalAlpha = pulse;
+    ctx.font = '18px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(home.memoryItem, roomFurniturePos.memoryJar.x*W, roomFurniturePos.memoryJar.y*H - 32);
+    ctx.globalAlpha = 1;
+  }
+
+  // Title overlay
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = home.accent;
+  ctx.shadowColor = home.accent; ctx.shadowBlur = 8;
+  ctx.fillText(home.name.toUpperCase(), W/2, 22);
+  ctx.shadowBlur = 0;
+}
+
+// ============================================================
+// ADOPTION CEREMONY
+// ============================================================
+const adoptCanvas = document.getElementById('adopt-canvas');
+const adoptCtx = adoptCanvas.getContext('2d');
+let adoptStartFrame = 0;
+
+function initAdopt(areaId) {
+  if (!gameState.adoptedPets.includes(areaId)) {
+    gameState.adoptedPets.push(areaId);
+    gameState.petAges[areaId] = 0;
+    saveState();
+  }
+  adoptStartFrame = frame;
+  if (areaId === 'rainbow') {
+    // Spawn celebration toast
+    setTimeout(() => toast('✨ ALL FIVE PETS ADOPTED!! YOU ARE A TRUE FOREST EXPLORER!! ✨', '#ffcc44'), 600);
+  }
+}
+
+function drawAdoptionCeremony(ctx, W, H, frameCount, areaId) {
+  const area = areaData[areaId];
+  ctx.fillStyle = '#05050f'; ctx.fillRect(0,0,W,H);
+
+  // Light beam
+  const beamGrad = ctx.createLinearGradient(0,0,0,H);
+  beamGrad.addColorStop(0, area.color + '44');
+  beamGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = beamGrad;
+  ctx.beginPath();
+  ctx.moveTo(W*0.35, 0); ctx.lineTo(W*0.65, 0);
+  ctx.lineTo(W*0.8, H); ctx.lineTo(W*0.2, H);
+  ctx.closePath(); ctx.fill();
+
+  // Stars
+  for (let s = 0; s < 80; s++) {
+    const sx = (s*137)%W, sy = (s*79)%H;
+    const alpha = 0.1 + Math.sin(frameCount*0.04+s)*0.08;
+    ctx.fillStyle = `rgba(255,255,220,${alpha})`;
+    ctx.beginPath(); ctx.arc(sx,sy,1,0,Math.PI*2); ctx.fill();
+  }
+
+  // Orbiting sparkles
+  for (let s = 0; s < 16; s++) {
+    const sa = (s/16)*Math.PI*2 + frameCount*0.04;
+    const sr = 100 + Math.sin(frameCount*0.03+s)*30;
+    const sx = W/2 + Math.cos(sa)*sr;
+    const sy = H*0.42 + Math.sin(sa)*sr*0.6;
+    const alpha = 0.5 + Math.sin(frameCount*0.05+s)*0.3;
+    ctx.fillStyle = area.color;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = area.color; ctx.shadowBlur = 12;
+    ctx.beginPath(); ctx.arc(sx,sy,3,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+
+  // Pet in center
+  const petBob = Math.sin(frameCount*0.04)*10;
+  if (areaId === 'rainbow') {
+    drawElement(ctx, W/2, H*0.4 + petBob, frameCount);
+  } else {
+    ctx.font = '90px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.shadowColor = area.color; ctx.shadowBlur = 40;
+    ctx.fillText(area.petEmoji, W/2, H*0.4+petBob);
+    ctx.shadowBlur = 0;
+  }
+
+  // Text
+  ctx.font = '13px "Press Start 2P", monospace';
+  ctx.fillStyle = area.color;
+  ctx.shadowColor = area.color; ctx.shadowBlur = 10;
+  ctx.fillText(area.pet.toUpperCase() + ' HAS BEEN ADOPTED!!', W/2, H*0.7);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '20px "Dancing Script", cursive';
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillText(area.adoptMessage, W/2, H*0.8);
+
+  // Continue prompt
+  const elapsed = frameCount - adoptStartFrame;
+  if (elapsed > 90) {
+    ctx.font = '9px "Press Start 2P", monospace';
+    const btnAlpha = 0.5 + Math.sin(frameCount*0.08)*0.4;
+    ctx.fillStyle = `rgba(255,255,255,${btnAlpha})`;
+    ctx.fillText('TAP TO CONTINUE → CHOOSE YOUR PATH!!', W/2, H*0.92);
+  }
+}
+
+adoptCanvas.addEventListener('click', () => {
+  if (currentScreen === SCREENS.ADOPT && frame - adoptStartFrame > 60) {
+    showScreen(SCREENS.PATH, currentArea);
+  }
+});
+
+// ============================================================
+// PATH SELECTION
+// ============================================================
+const paths = [
+  { id:'witch', name:'WITCH', emoji:'🧙', color:'#cc44ff',
+    description:'Masters of spells and potions!! Witches explore magical secrets and brew powerful magic!!' },
+  { id:'knight', name:'KNIGHT', emoji:'⚔️', color:'#ffcc44',
+    description:'Brave defenders of the forest!! Knights protect the elemental creatures and face challenges!!' },
+  { id:'archer', name:'ARCHER', emoji:'🏹', color:'#44ccff',
+    description:'Precise and swift!! Archers explore distant lands and hit impossible targets!!' },
+  { id:'explorer', name:'EXPLORER', emoji:'🗺️', color:'#44ff88',
+    description:'Curious adventurers!! Explorers discover new lands and find hidden treasures!!' },
+  { id:'healer', name:'HEALER', emoji:'💚', color:'#88ffcc',
+    description:'Gentle and caring!! Healers look after all the creatures of Elemental Forest!!' },
+];
+
+const pathCanvas = document.getElementById('path-canvas');
+const pathCtx = pathCanvas.getContext('2d');
+let hoveredPath = null;
+
+function initPath(areaId) {
+  hoveredPath = null;
+}
+
+function getPathCardRects(W, H) {
+  const pathW = W*0.17;
+  const pathH = H*0.5;
+  const gap = W*0.025;
+  const totalW = paths.length*pathW + (paths.length-1)*gap;
+  const startX = (W - totalW)/2;
+  return paths.map((p, i) => ({
+    id: p.id, x: startX + i*(pathW + gap), y: H*0.25, w: pathW, h: pathH
+  }));
+}
+
+function drawPathSelection(ctx, W, H, frameCount) {
+  ctx.fillStyle = '#05050f'; ctx.fillRect(0,0,W,H);
+
+  // Background stars
+  for (let s = 0; s < 70; s++) {
+    const sx = (s*137)%W, sy = (s*79)%H;
+    const alpha = 0.08 + Math.sin(frameCount*0.03+s)*0.06;
+    ctx.fillStyle = `rgba(200,200,255,${alpha})`;
+    ctx.beginPath(); ctx.arc(sx,sy,1,0,Math.PI*2); ctx.fill();
+  }
+
+  const area = areaData[currentArea];
+  ctx.font = '11px "Press Start 2P", monospace';
+  ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#aaaaff'; ctx.shadowBlur = 8;
+  ctx.fillText('CHOOSE YOUR PATH!!', W/2, 38);
+  ctx.shadowBlur = 0;
+
+  ctx.font = '15px "Dancing Script", cursive';
+  ctx.fillStyle = 'rgba(180,180,255,0.75)';
+  ctx.fillText(`"What magical destiny awaits ${area.pet}??"`, W/2, 64);
+
+  const rects = getPathCardRects(W, H);
+  const currentPath = gameState.petPaths[currentArea];
+
+  rects.forEach((rect, i) => {
+    const path = paths[i];
+    const isHovered = hoveredPath === path.id;
+    const isSelected = currentPath === path.id;
+    const scale = isHovered ? 1.04 : 1;
+
+    ctx.save();
+    ctx.translate(rect.x + rect.w/2, rect.y + rect.h/2);
+    ctx.scale(scale, scale);
+    ctx.translate(-(rect.x + rect.w/2), -(rect.y + rect.h/2));
+
+    const cardGrad = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y+rect.h);
+    cardGrad.addColorStop(0, isSelected ? path.color + '33' : '#12122a');
+    cardGrad.addColorStop(1, '#060610');
+    ctx.fillStyle = cardGrad;
+    ctx.shadowColor = isSelected || isHovered ? path.color : 'transparent';
+    ctx.shadowBlur = isSelected ? 22 : (isHovered ? 12 : 0);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 14);
+    else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = isSelected ? path.color : (isHovered ? path.color + '99' : path.color + '44');
+    ctx.lineWidth = isSelected ? 3 : 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 14);
+    else ctx.rect(rect.x, rect.y, rect.w, rect.h);
+    ctx.stroke();
+
+    ctx.font = '36px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor = path.color; ctx.shadowBlur = isHovered ? 15 : 6;
+    ctx.fillText(path.emoji, rect.x + rect.w/2, rect.y + rect.h*0.22);
+    ctx.shadowBlur = 0;
+
+    ctx.font = 'bold 8px "Press Start 2P", monospace';
+    ctx.fillStyle = path.color;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(path.name, rect.x + rect.w/2, rect.y + rect.h*0.45);
+
+    // Wrap description
+    ctx.font = '11px "Nunito", sans-serif';
+    ctx.fillStyle = 'rgba(200,200,220,0.85)';
+    const words = path.description.split(' ');
+    let line = '';
+    let lineY = rect.y + rect.h*0.55;
+    words.forEach(word => {
+      const test = line + word + ' ';
+      const w = ctx.measureText(test).width;
+      if (w > rect.w - 16 && line) {
+        ctx.fillText(line.trim(), rect.x + rect.w/2, lineY);
+        line = word + ' ';
+        lineY += 14;
+      } else {
+        line = test;
+      }
+    });
+    if (line) ctx.fillText(line.trim(), rect.x + rect.w/2, lineY);
+
+    if (isSelected) {
+      ctx.font = '20px serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✅', rect.x + rect.w/2, rect.y + rect.h*0.92);
+    }
+    ctx.restore();
+  });
+
+  // Hint at the bottom
+  ctx.font = '10px "Press Start 2P", monospace';
+  ctx.fillStyle = currentPath ? '#88ff88' : 'rgba(255,255,255,0.45)';
+  ctx.textAlign = 'center';
+  ctx.fillText(currentPath
+    ? 'PATH CHOSEN!! TAP AGAIN OR HEAD HOME →'
+    : 'PICK A PATH FOR YOUR PET!!', W/2, H*0.92);
+}
+
+pathCanvas.addEventListener('mousemove', (e) => {
+  if (currentScreen !== SCREENS.PATH) return;
+  const rect = pathCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (pathCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (pathCanvas.height / rect.height);
+  const rects = getPathCardRects(pathCanvas.width, pathCanvas.height);
+  const hit = rects.find(r => x >= r.x && x <= r.x+r.w && y >= r.y && y <= r.y+r.h);
+  hoveredPath = hit ? hit.id : null;
+  pathCanvas.style.cursor = hit ? 'pointer' : 'default';
+});
+pathCanvas.addEventListener('mouseleave', () => { hoveredPath = null; });
+
+function handlePathClick(x, y) {
+  const rects = getPathCardRects(pathCanvas.width, pathCanvas.height);
+  const hit = rects.find(r => x >= r.x && x <= r.x+r.w && y >= r.y && y <= r.y+r.h);
+  if (hit) {
+    const wasSelected = gameState.petPaths[currentArea] === hit.id;
+    gameState.petPaths[currentArea] = hit.id;
+    saveState();
+    if (wasSelected) {
+      showScreen(SCREENS.HOMEVIEW, currentArea);
+    } else {
+      const p = paths.find(pp => pp.id === hit.id);
+      toast(`${areaData[currentArea].pet} is now a ${p.name}!!`, p.color);
+    }
+  } else {
+    // Tap outside cards goes home if a path is set
+    if (gameState.petPaths[currentArea]) {
+      showScreen(SCREENS.HOMEVIEW, currentArea);
+    }
+  }
+}
+
+pathCanvas.addEventListener('click', (e) => {
+  if (currentScreen !== SCREENS.PATH) return;
+  const rect = pathCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (pathCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (pathCanvas.height / rect.height);
+  handlePathClick(x, y);
+});
+pathCanvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (currentScreen !== SCREENS.PATH) return;
+  const rect = pathCanvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = (touch.clientX - rect.left) * (pathCanvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (pathCanvas.height / rect.height);
+  handlePathClick(x, y);
+}, { passive: false });
+
+// ============================================================
+// HOME VIEW
+// ============================================================
+const homeviewCanvas = document.getElementById('homeview-canvas');
+const homeviewCtx = homeviewCanvas.getContext('2d');
+
+function initHomeView(areaId) {
+  const area = areaData[areaId];
+  const home = homeData[areaId];
+  const path = paths.find(p => p.id === gameState.petPaths[areaId]);
+  document.getElementById('hv-title').textContent = `${area.pet.toUpperCase()}'S HOME`;
+  document.getElementById('hv-title').style.color = area.color;
+  document.getElementById('hv-subtitle').textContent = `"${home.name}"`;
+  // Stats
+  const adventures = gameState.adventuresCompleted[areaId] || 0;
+  const age = gameState.petAges[areaId] || 0;
+  const stats = document.getElementById('hv-stats');
+  stats.innerHTML = `
+    <div class="home-stat"><span class="lbl">AGE</span><span class="val">${age} ${age === 1 ? 'DAY' : 'DAYS'}</span></div>
+    <div class="home-stat"><span class="lbl">PATH</span><span class="val" style="color:${path ? path.color : '#aaaacc'}">${path ? path.emoji + ' ' + path.name : 'NONE'}</span></div>
+    <div class="home-stat"><span class="lbl">ADVENTURES</span><span class="val">${adventures}</span></div>
+    <div class="home-stat"><span class="lbl">MEMORIES</span><span class="val">${home.memoryItem.repeat(Math.min(adventures, 4))}</span></div>
+  `;
+}
+
+function drawHomeView(ctx, W, H, frameCount, areaId) {
+  const home = homeData[areaId];
+  const area = areaData[areaId];
+
+  const wallGrad = ctx.createLinearGradient(0,0,0,H);
+  wallGrad.addColorStop(0, home.bg);
+  wallGrad.addColorStop(1, '#030305');
+  ctx.fillStyle = wallGrad; ctx.fillRect(0,0,W,H);
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(0,H*0.75,0,H);
+  floorGrad.addColorStop(0, home.accent + '33');
+  floorGrad.addColorStop(1, home.accent + '11');
+  ctx.fillStyle = floorGrad; ctx.fillRect(0,H*0.75,W,H*0.25);
+  ctx.strokeStyle = home.accent + '44';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0,H*0.75); ctx.lineTo(W,H*0.75); ctx.stroke();
+
+  // Wall pattern dots
+  for (let p = 0; p < 50; p++) {
+    const px = (p*73)%W, py = (p*41)%(H*0.75);
+    ctx.fillStyle = home.accent + '11';
+    ctx.beginPath(); ctx.arc(px, py, 2, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Furniture
+  const fixedPos = { bed: {x:0.2,y:0.65}, lamp: {x:0.5,y:0.45}, bookshelf: {x:0.82,y:0.6}, memoryJar: {x:0.4,y:0.75} };
+  ['bookshelf','lamp','bed','memoryJar'].forEach(key => {
+    const item = home.furniture[key];
+    const pos = fixedPos[key];
+    const fx = pos.x*W, fy = pos.y*H;
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(fx, Math.min(fy+22, H*0.82), 22, 6, 0, 0, Math.PI*2); ctx.fill();
+    ctx.shadowColor = item.color; ctx.shadowBlur = 16;
+    ctx.font = '38px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(item.emoji, fx, fy);
+    ctx.shadowBlur = 0;
+  });
+
+  // Memory jar contents
+  const memCount = Math.min((gameState.adventuresCompleted[areaId] || 0), 6);
+  const mx = fixedPos.memoryJar.x * W;
+  const my = fixedPos.memoryJar.y * H - 6;
+  for (let i = 0; i < memCount; i++) {
+    const ma = (i / Math.max(memCount,1)) * Math.PI * 2 + frameCount*0.02;
+    const mr = 8 + Math.sin(frameCount*0.05+i)*2;
+    ctx.font = '14px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.85;
+    ctx.fillText(home.memoryItem, mx + Math.cos(ma)*mr, my + Math.sin(ma)*mr*0.5);
+    ctx.globalAlpha = 1;
+  }
+
+  // PET in center
+  const petBob = Math.sin(frameCount*0.03)*6;
+  if (areaId === 'rainbow') {
+    drawElement(ctx, W*0.55, H*0.55 + petBob, frameCount);
+  } else {
+    ctx.shadowColor = area.color; ctx.shadowBlur = 25;
+    ctx.font = '64px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(area.petEmoji, W*0.55, H*0.55 + petBob);
+    ctx.shadowBlur = 0;
+  }
+
+  // Path badge floating above pet
+  const path = paths.find(p => p.id === gameState.petPaths[areaId]);
+  if (path) {
+    ctx.font = '22px serif';
+    ctx.shadowColor = path.color; ctx.shadowBlur = 14;
+    ctx.fillText(path.emoji, W*0.62, H*0.42 + petBob);
+    ctx.shadowBlur = 0;
+  }
+
+  // Floating particles
+  for (let s = 0; s < 8; s++) {
+    const sa = (s/8)*Math.PI*2 + frameCount*0.02;
+    const sr = 50 + Math.sin(frameCount*0.04+s)*15;
+    const sx = W*0.55 + Math.cos(sa)*sr;
+    const sy = H*0.55 + Math.sin(sa)*sr*0.6;
+    const alpha = 0.3 + Math.sin(frameCount*0.06+s)*0.2;
+    ctx.fillStyle = area.color;
+    ctx.globalAlpha = alpha;
+    ctx.shadowColor = area.color; ctx.shadowBlur = 8;
+    ctx.beginPath(); ctx.arc(sx,sy,2,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+  }
+}
+
+function startAdventureFromHome() {
+  if (!gameState.petPaths[currentArea]) {
+    toast('Choose a path first!!', '#ffaaaa');
+    showScreen(SCREENS.PATH, currentArea);
+    return;
+  }
+  showScreen(SCREENS.ADVENTURE, currentArea);
+}
+function changePath() { showScreen(SCREENS.PATH, currentArea); }
+
+// ============================================================
+// ADVENTURE MINI-GAMES
+// ============================================================
+const adventureCanvas = document.getElementById('adventure-canvas');
+const adventureCtx = adventureCanvas.getContext('2d');
+
+const adventureData = {
+  witch:    { title: "🧪 BREW THE POTION!!", desc: "Click the ingredients in the order shown!!", color: '#cc44ff' },
+  knight:   { title: "⚔️ DEFEND THE FOREST!!", desc: "Click shadow creatures before they reach the bottom!!", color: '#ffcc44' },
+  archer:   { title: "🏹 HIT THE MOVING TARGETS!!", desc: "Click each target before they fly off the screen!!", color: '#44ccff' },
+  explorer: { title: "🗺️ FIND THE HIDDEN TREASURES!!", desc: "Click the glowing spots to uncover treasures!!", color: '#44ff88' },
+  healer:   { title: "💚 MATCH THE HEALING HERBS!!", desc: "Match each hurt creature with the right herb!!", color: '#88ffcc' },
+};
+
+let adv = null;
+
+function initAdventure(areaId) {
+  const pathId = gameState.petPaths[areaId];
+  const info = adventureData[pathId];
+  document.getElementById('adv-title').textContent = info.title;
+  document.getElementById('adv-title').style.color = info.color;
+  document.getElementById('adv-desc').textContent = info.desc;
+  document.getElementById('adv-reward').textContent = '';
+  adv = createAdventure(pathId);
+  updateAdvScore();
+}
+
+function updateAdvScore() {
+  document.getElementById('adv-score').textContent = `SCORE: ${adv.score}/${adv.target}  TIME: ${Math.max(0,Math.ceil(adv.timeLeft/60))}s`;
+}
+
+function createAdventure(pathId) {
+  const W = adventureCanvas.width, H = adventureCanvas.height;
+  if (pathId === 'witch') {
+    const ingredients = [
+      { emoji: '🍄', color: '#ff44cc' },
+      { emoji: '🍇', color: '#8844ff' },
+      { emoji: '🐸', color: '#44cc44' },
+      { emoji: '⭐', color: '#ffcc44' },
+      { emoji: '🌿', color: '#44ff88' },
+      { emoji: '🔮', color: '#44ccff' },
+    ];
+    const order = [];
+    for (let i = 0; i < 4; i++) order.push(Math.floor(Math.random()*ingredients.length));
+    return {
+      kind: 'witch', ingredients, order, step: 0, score: 0, target: order.length,
+      timeLeft: 30*60, done: false,
+      slots: ingredients.map((ing, i) => ({
+        ...ing,
+        x: W*(0.1 + (i % 3) * 0.4), y: H*(0.35 + Math.floor(i/3)*0.35), r: 38,
+      })),
+    };
+  }
+  if (pathId === 'knight') {
+    return {
+      kind: 'knight', score: 0, target: 8, timeLeft: 30*60, done: false,
+      creatures: [], spawnCooldown: 0,
+    };
+  }
+  if (pathId === 'archer') {
+    return {
+      kind: 'archer', score: 0, target: 8, timeLeft: 30*60, done: false,
+      targets: [], spawnCooldown: 0,
+    };
+  }
+  if (pathId === 'explorer') {
+    const treasures = [];
+    for (let i = 0; i < 6; i++) {
+      treasures.push({
+        x: W*(0.1 + Math.random()*0.8),
+        y: H*(0.15 + Math.random()*0.7),
+        found: false, seed: Math.random()*100,
+      });
+    }
+    return { kind: 'explorer', score: 0, target: treasures.length, timeLeft: 30*60, done: false, treasures };
+  }
+  if (pathId === 'healer') {
+    const pairs = [
+      { creature: '🐰', herb: '🌿' },
+      { creature: '🦔', herb: '🍄' },
+      { creature: '🦌', herb: '🍃' },
+      { creature: '🐿️', herb: '🌾' },
+    ];
+    // Layout: creatures left column, herbs right column shuffled
+    const creatures = pairs.map((p, i) => ({
+      emoji: p.creature, herb: p.herb, x: W*0.2, y: H*(0.2 + i*0.18), r: 32, healed: false,
+    }));
+    const herbsShuffled = [...pairs].sort(() => Math.random()-0.5);
+    const herbs = herbsShuffled.map((p, i) => ({
+      emoji: p.herb, x: W*0.8, y: H*(0.2 + i*0.18), r: 30, used: false,
+    }));
+    return {
+      kind: 'healer', score: 0, target: pairs.length, timeLeft: 45*60, done: false,
+      creatures, herbs, selectedCreature: null,
+    };
+  }
+}
+
+function drawAdventure(ctx, W, H, frameCount) {
+  if (!adv) return;
+  // Common starry bg
+  ctx.fillStyle = '#050510'; ctx.fillRect(0,0,W,H);
+  for (let s = 0; s < 70; s++) {
+    const sx = (s*137)%W, sy = (s*79)%H;
+    const alpha = 0.08 + Math.sin(frameCount*0.03+s)*0.06;
+    ctx.fillStyle = `rgba(200,200,255,${alpha})`;
+    ctx.beginPath(); ctx.arc(sx,sy,1,0,Math.PI*2); ctx.fill();
+  }
+
+  if (adv.kind === 'witch') {
+    // Cauldron
+    const cx = W*0.5, cy = H*0.85;
+    const cauldronGrad = ctx.createRadialGradient(cx, cy-20, 5, cx, cy, 80);
+    cauldronGrad.addColorStop(0, '#cc44ff');
+    cauldronGrad.addColorStop(0.5, '#552288');
+    cauldronGrad.addColorStop(1, '#1a0822');
+    ctx.fillStyle = cauldronGrad;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 80, 28, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Cauldron bubble
+    ctx.font = '40px serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('🧪', cx, cy);
+    // Order display
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.fillStyle = '#cc44ff';
+    ctx.shadowColor = '#cc44ff'; ctx.shadowBlur = 8;
+    ctx.fillText('BREW IN ORDER:', W/2, 35);
+    ctx.shadowBlur = 0;
+    // Show order
+    adv.order.forEach((idx, i) => {
+      const ing = adv.ingredients[idx];
+      const x = W*(0.3 + i*0.13);
+      const y = 70;
+      const done = i < adv.step;
+      ctx.globalAlpha = done ? 0.35 : 1;
+      ctx.font = '30px serif';
+      ctx.shadowColor = ing.color; ctx.shadowBlur = done ? 4 : 12;
+      ctx.fillText(ing.emoji, x, y);
+      ctx.shadowBlur = 0;
+      if (done) {
+        ctx.font = '22px serif';
+        ctx.fillStyle = '#44ff44';
+        ctx.fillText('✓', x, y+24);
+      }
+      ctx.globalAlpha = 1;
+    });
+    // Slots
+    adv.slots.forEach(slot => {
+      ctx.beginPath();
+      ctx.arc(slot.x, slot.y, slot.r, 0, Math.PI*2);
+      ctx.fillStyle = slot.color + '22';
+      ctx.fill();
+      ctx.strokeStyle = slot.color + '88';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.font = '32px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(slot.emoji, slot.x, slot.y);
+    });
+  }
+
+  if (adv.kind === 'knight') {
+    // Ground
+    ctx.fillStyle = 'rgba(60,40,20,0.3)';
+    ctx.fillRect(0, H-30, W, 30);
+    ctx.fillStyle = '#ffcc44';
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#ffcc44'; ctx.shadowBlur = 10;
+    ctx.fillText('PROTECT THE FOREST!!', W/2, 35);
+    ctx.shadowBlur = 0;
+    // Castle silhouette at bottom
+    ctx.fillStyle = 'rgba(80,80,120,0.4)';
+    ctx.fillRect(W*0.4, H-30, W*0.2, 30);
+    [W*0.42, W*0.5, W*0.58].forEach(x => {
+      ctx.fillRect(x-6, H-44, 12, 14);
+    });
+
+    // Draw and update creatures
+    adv.creatures.forEach(c => {
+      ctx.font = '32px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.shadowColor = '#aa44ff'; ctx.shadowBlur = 10;
+      ctx.fillText(c.emoji, c.x, c.y);
+      ctx.shadowBlur = 0;
+    });
+  }
+
+  if (adv.kind === 'archer') {
+    ctx.fillStyle = '#44ccff';
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#44ccff'; ctx.shadowBlur = 10;
+    ctx.fillText('HIT THE TARGETS!!', W/2, 35);
+    ctx.shadowBlur = 0;
+
+    adv.targets.forEach(t => {
+      // Target rings
+      const colors = ['#ff4444','#ffffff','#ff4444','#ffffff','#44ccff'];
+      colors.forEach((c, i) => {
+        ctx.fillStyle = c;
+        ctx.shadowColor = '#44ccff'; ctx.shadowBlur = i === 0 ? 12 : 0;
+        ctx.beginPath(); ctx.arc(t.x, t.y, 20 - i*3.5, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+    });
+  }
+
+  if (adv.kind === 'explorer') {
+    // Map background
+    ctx.fillStyle = 'rgba(60,40,20,0.2)';
+    for (let i = 0; i < 20; i++) {
+      const tx = (i*73+30)%W, ty = (i*47+30)%H;
+      ctx.beginPath(); ctx.arc(tx,ty,15+i%10,0,Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle = '#44ff88';
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#44ff88'; ctx.shadowBlur = 10;
+    ctx.fillText('FIND THE TREASURES!!', W/2, 35);
+    ctx.shadowBlur = 0;
+    // Treasures
+    adv.treasures.forEach(t => {
+      if (t.found) {
+        ctx.font = '34px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#ffcc44'; ctx.shadowBlur = 16;
+        ctx.fillText('💰', t.x, t.y);
+        ctx.shadowBlur = 0;
+      } else {
+        const pulse = 0.4 + Math.sin(frameCount*0.06 + t.seed)*0.3;
+        ctx.globalAlpha = pulse;
+        const halo = ctx.createRadialGradient(t.x, t.y, 2, t.x, t.y, 28);
+        halo.addColorStop(0, '#44ff88aa');
+        halo.addColorStop(1, 'transparent');
+        ctx.fillStyle = halo;
+        ctx.beginPath(); ctx.arc(t.x, t.y, 28, 0, Math.PI*2); ctx.fill();
+        ctx.font = '14px serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('✦', t.x, t.y);
+        ctx.globalAlpha = 1;
+      }
+    });
+  }
+
+  if (adv.kind === 'healer') {
+    ctx.fillStyle = '#88ffcc';
+    ctx.font = '14px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = '#88ffcc'; ctx.shadowBlur = 10;
+    ctx.fillText('MATCH CREATURES WITH HERBS!!', W/2, 35);
+    ctx.shadowBlur = 0;
+
+    adv.creatures.forEach((c, i) => {
+      const selected = adv.selectedCreature === i;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+      ctx.fillStyle = c.healed ? 'rgba(150,255,180,0.25)' : (selected ? 'rgba(255,200,100,0.3)' : 'rgba(80,80,120,0.25)');
+      ctx.fill();
+      ctx.strokeStyle = c.healed ? '#88ff88' : (selected ? '#ffcc44' : 'rgba(150,150,200,0.6)');
+      ctx.lineWidth = selected ? 3 : 2;
+      ctx.stroke();
+      ctx.font = '30px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(c.emoji, c.x, c.y);
+      if (c.healed) {
+        ctx.font = '20px serif';
+        ctx.fillText('💚', c.x + c.r - 4, c.y - c.r + 4);
+      }
+    });
+    adv.herbs.forEach(h => {
+      ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI*2);
+      ctx.fillStyle = h.used ? 'rgba(80,80,80,0.2)' : 'rgba(100,255,180,0.18)';
+      ctx.fill();
+      ctx.strokeStyle = h.used ? 'rgba(150,150,150,0.3)' : '#88ffcc';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.globalAlpha = h.used ? 0.4 : 1;
+      ctx.font = '28px serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(h.emoji, h.x, h.y);
+      ctx.globalAlpha = 1;
+    });
+    // Draw connecting line if creature selected
+    if (adv.selectedCreature !== null) {
+      const c = adv.creatures[adv.selectedCreature];
+      ctx.strokeStyle = '#ffcc4488';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(c.x, c.y);
+      ctx.lineTo(adv.mouseX || W*0.5, adv.mouseY || H*0.5);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+
+  // Done overlay
+  if (adv.done) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0,0,W,H);
+    ctx.font = '18px "Press Start 2P", monospace';
+    ctx.fillStyle = '#ffcc44';
+    ctx.shadowColor = '#ffcc44'; ctx.shadowBlur = 15;
+    ctx.textAlign = 'center';
+    ctx.fillText(adv.success ? 'ADVENTURE COMPLETE!!' : "TIME'S UP!!", W/2, H*0.45);
+    ctx.shadowBlur = 0;
+    ctx.font = '14px "Dancing Script", cursive';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(adv.success ? '"You did it!!"' : '"Try again next time!!"', W/2, H*0.55);
+    ctx.font = '10px "Press Start 2P", monospace';
+    ctx.fillStyle = '#88ff88';
+    ctx.fillText('TAP TO RETURN HOME', W/2, H*0.75);
+  }
+}
+
+function updateAdventureLogic() {
+  if (!adv || adv.done) return;
+  adv.timeLeft--;
+  const W = adventureCanvas.width, H = adventureCanvas.height;
+
+  if (adv.kind === 'knight') {
+    adv.spawnCooldown--;
+    if (adv.spawnCooldown <= 0 && adv.creatures.length < 5) {
+      adv.creatures.push({
+        emoji: ['👻','🦇','🕷️'][Math.floor(Math.random()*3)],
+        x: 50 + Math.random()*(W-100), y: -30,
+        speed: 0.6 + Math.random()*0.8,
+      });
+      adv.spawnCooldown = 60 + Math.random()*40;
+    }
+    adv.creatures.forEach(c => { c.y += c.speed; });
+    // Remove those that hit ground (with penalty)
+    adv.creatures = adv.creatures.filter(c => {
+      if (c.y > H - 50) {
+        toast('A creature got through!!', '#ffaaaa');
+        return false;
+      }
+      return true;
+    });
+  }
+  if (adv.kind === 'archer') {
+    adv.spawnCooldown--;
+    if (adv.spawnCooldown <= 0 && adv.targets.length < 3) {
+      const fromLeft = Math.random() > 0.5;
+      adv.targets.push({
+        x: fromLeft ? -20 : W+20,
+        y: 80 + Math.random()*(H-160),
+        vx: (fromLeft ? 1 : -1) * (1.2 + Math.random()*1.5),
+        vy: (Math.random()-0.5) * 0.4,
+      });
+      adv.spawnCooldown = 70 + Math.random()*40;
+    }
+    adv.targets.forEach(t => { t.x += t.vx; t.y += t.vy; });
+    adv.targets = adv.targets.filter(t => t.x > -40 && t.x < W+40);
+  }
+
+  // End conditions
+  if (adv.score >= adv.target) {
+    completeAdventure(true);
+  } else if (adv.timeLeft <= 0) {
+    completeAdventure(false);
+  }
+  updateAdvScore();
+}
+
+function completeAdventure(success) {
+  if (adv.done) return;
+  adv.done = true;
+  adv.success = success;
+  if (success) {
+    // Targeted rewards based on path
+    const pathId = gameState.petPaths && gameState.petPaths[currentArea];
+    let rewards;
+    if (pathId === 'witch')        rewards = { rainbowDust: 3, magicalWater: 2 };
+    else if (pathId === 'knight')  rewards = { fireCrystals: 3, rainbowDust: 1 };
+    else if (pathId === 'archer')  rewards = { cloudInBottle: 3, fireCrystals: 1 };
+    else if (pathId === 'explorer')rewards = { shapeshiftingFlowers: 3, cloudInBottle: 1 };
+    else if (pathId === 'healer')  rewards = { magicalWater: 3, shapeshiftingFlowers: 2 };
+    else rewards = { rainbowDust: 1, magicalWater: 1, fireCrystals: 1, shapeshiftingFlowers: 1, cloudInBottle: 1 };
+
+    Object.entries(rewards).forEach(([mat, amt]) => {
+      gameState.materials[mat] = (gameState.materials[mat] || 0) + amt;
+    });
+    gameState.adventuresCompleted[currentArea] = (gameState.adventuresCompleted[currentArea] || 0) + 1;
+    gameState.petAges[currentArea] = (gameState.petAges[currentArea] || 0) + 1;
+    // Babies grow up too when their family goes adventuring
+    if (gameState.babies) {
+      gameState.babies.forEach(b => { b.age = (b.age || 0) + 1; });
+    }
+    saveState();
+    updateTopMats();
+    const rewardText = Object.entries(rewards).map(([m,a]) => `${materialEmojis[m]}×${a}`).join(' ');
+    document.getElementById('adv-reward').textContent = `🌟 Adventure complete!! Got: ${rewardText}`;
+  } else {
+    document.getElementById('adv-reward').textContent = '"Better luck next time!!"';
+  }
+}
+
+function handleAdventureClick(x, y) {
+  if (!adv) return;
+  if (adv.done) {
+    showScreen(SCREENS.HOMEVIEW, currentArea);
+    return;
+  }
+  if (adv.kind === 'witch') {
+    // Find slot
+    for (let slot of adv.slots) {
+      if (Math.hypot(x - slot.x, y - slot.y) < slot.r) {
+        const expected = adv.ingredients[adv.order[adv.step]];
+        if (slot.emoji === expected.emoji) {
+          adv.step++;
+          adv.score++;
+          toast('Correct!!', '#88ff88');
+        } else {
+          toast('Wrong ingredient!! Start over!!', '#ffaaaa');
+          adv.step = 0;
+          adv.score = 0;
+        }
+        return;
+      }
+    }
+  }
+  if (adv.kind === 'knight') {
+    for (let i = 0; i < adv.creatures.length; i++) {
+      const c = adv.creatures[i];
+      if (Math.hypot(x - c.x, y - c.y) < 22) {
+        adv.creatures.splice(i,1);
+        adv.score++;
+        return;
+      }
+    }
+  }
+  if (adv.kind === 'archer') {
+    for (let i = 0; i < adv.targets.length; i++) {
+      const t = adv.targets[i];
+      if (Math.hypot(x - t.x, y - t.y) < 22) {
+        adv.targets.splice(i,1);
+        adv.score++;
+        return;
+      }
+    }
+  }
+  if (adv.kind === 'explorer') {
+    for (let t of adv.treasures) {
+      if (!t.found && Math.hypot(x - t.x, y - t.y) < 28) {
+        t.found = true;
+        adv.score++;
+        return;
+      }
+    }
+  }
+  if (adv.kind === 'healer') {
+    // Click creature first
+    for (let i = 0; i < adv.creatures.length; i++) {
+      const c = adv.creatures[i];
+      if (!c.healed && Math.hypot(x - c.x, y - c.y) < c.r) {
+        adv.selectedCreature = i;
+        return;
+      }
+    }
+    // Or click herb if creature selected
+    if (adv.selectedCreature !== null) {
+      const c = adv.creatures[adv.selectedCreature];
+      for (let h of adv.herbs) {
+        if (!h.used && Math.hypot(x - h.x, y - h.y) < h.r) {
+          if (h.emoji === c.herb) {
+            c.healed = true;
+            h.used = true;
+            adv.score++;
+            adv.selectedCreature = null;
+            toast('Healed!!', '#88ffcc');
+          } else {
+            toast('Wrong herb for this creature!!', '#ffaaaa');
+            adv.selectedCreature = null;
+          }
+          return;
+        }
+      }
+    }
+  }
+}
+
+adventureCanvas.addEventListener('click', (e) => {
+  if (currentScreen !== SCREENS.ADVENTURE) return;
+  const rect = adventureCanvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (adventureCanvas.width / rect.width);
+  const y = (e.clientY - rect.top) * (adventureCanvas.height / rect.height);
+  handleAdventureClick(x, y);
+});
+adventureCanvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  if (currentScreen !== SCREENS.ADVENTURE) return;
+  const rect = adventureCanvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = (touch.clientX - rect.left) * (adventureCanvas.width / rect.width);
+  const y = (touch.clientY - rect.top) * (adventureCanvas.height / rect.height);
+  handleAdventureClick(x, y);
+}, { passive: false });
+adventureCanvas.addEventListener('mousemove', (e) => {
+  if (!adv || adv.kind !== 'healer') return;
+  const rect = adventureCanvas.getBoundingClientRect();
+  adv.mouseX = (e.clientX - rect.left) * (adventureCanvas.width / rect.width);
+  adv.mouseY = (e.clientY - rect.top) * (adventureCanvas.height / rect.height);
+});
+
+function exitAdventure() {
+  if (adv && !adv.done) {
+    toast('Adventure abandoned!!', '#ffaaaa');
+  }
+  showScreen(SCREENS.HOMEVIEW, currentArea);
+}
+
+// ============================================================
+// BREEDING
+// ============================================================
+const BREED_AGE = 5;
+
+// Tier-1: combining two original elemental pets
+const tier1Combos = {
+  'fire+water':    { name:'Steam Dragon',    emoji:'🌫️🐉', color:'#88aacc', description:'A dragon that breathes warm steam clouds!!' },
+  'fire+wind':     { name:'Storm Phoenix',   emoji:'⛈️🔥',  color:'#ffaa44', description:'A phoenix that summons thunderstorms with its wings!!' },
+  'fire+earth':    { name:'Lava Fox',        emoji:'🔥🦊',  color:'#cc4422', description:'A fox whose tail flickers with lava!!' },
+  'fire+rainbow':  { name:'Rainbow Flame',   emoji:'🌈🔥',  color:'#ff88aa', description:'Fire that burns in every color of the rainbow!!' },
+  'water+wind':    { name:'Cloud Squid',     emoji:'☁️🦑',  color:'#aabbdd', description:'A squid whose tentacles float like clouds!!' },
+  'water+earth':   { name:'Coral Unicorn',   emoji:'🌊🦄',  color:'#66ccaa', description:'A unicorn with a horn of living coral!!' },
+  'water+rainbow': { name:'Rainbow Kraken',  emoji:'🌈🦑',  color:'#aa88ff', description:'A kraken with shimmering rainbow tentacles!!' },
+  'wind+earth':    { name:'Petal Dragon',    emoji:'🌸🐉',  color:'#ffcc88', description:'A gentle dragon that scatters flower petals as it flies!!' },
+  'wind+rainbow':  { name:'Sky Stingray',    emoji:'🌤️🌈', color:'#88ccff', description:'A stingray that glides through the sky leaving rainbow trails!!' },
+  'earth+rainbow': { name:'Crystal Fox',     emoji:'💎🦊',  color:'#cceeff', description:'A fox covered in shimmering crystal fur!!' },
+};
+
+function canBreed(petId) {
+  return (gameState.petAges[petId] || 0) >= BREED_AGE;
+}
+
+function getBreedingResult(id1, id2) {
+  const key1 = id1 + '+' + id2;
+  const key2 = id2 + '+' + id1;
+  return tier1Combos[key1] || tier1Combos[key2] || null;
+}
+
+function getBreedingResultByName(name1, name2) {
+  const namedCombos = {
+    'volcanic unicorn+storm kraken': { name:'STORM', emoji:'⚡👑', color:'#ff2200', description:'So magnificent it does not need one.', isStorm:true },
+    'steam dragon+storm phoenix': { name:'Tornado Wyrm', emoji:'🌪️', color:'#aaaaff', description:'A spinning wyrm born from steam and lightning!! Creates tornadoes wherever it flies!!' },
+    'steam dragon+lava fox': { name:'Forest Dragon', emoji:'🌿🐉', color:'#44aa44', description:'A gentle dragon covered in moss and flowers!!' },
+    'steam dragon+rainbow flame': { name:'Rainbow Steam Dragon', emoji:'🌈🌫️', color:'#ff88cc', description:'Breathes rainbow colored steam that smells like flowers!!' },
+    'steam dragon+cloud squid': { name:'Ocean Dragon', emoji:'💧🐉', color:'#4488ff', description:'A dragon that lives between ocean and sky!!' },
+    'steam dragon+coral unicorn': { name:'Crystal Dragon', emoji:'💎🐉', color:'#88ccff', description:'Scales made of pure crystal that refract light!!' },
+    'steam dragon+rainbow kraken': { name:'Inferno Dragon', emoji:'🐉✨', color:'#ff4400', description:'The most powerful dragon form!! Burns with rainbow fire!!' },
+    'steam dragon+petal dragon': { name:'Blossom Steam Dragon', emoji:'🌺🌫️', color:'#ffaacc', description:'Breathes warm flower scented steam!!' },
+    'steam dragon+sky stingray': { name:'Cloud Dragon', emoji:'☁️🐉', color:'#ccddff', description:'A fluffy dragon that floats like a cloud!!' },
+    'steam dragon+crystal fox': { name:'Diamond Dragon', emoji:'💠🐉', color:'#aaddff', description:'The rarest dragon!! Scales made of pure diamond!!' },
+    'storm phoenix+lava fox': { name:'Thunder Flame', emoji:'🔥⚡', color:'#ffaa00', description:'A creature of pure fire and lightning combined!!' },
+    'storm phoenix+rainbow flame': { name:'Rainbow Lightning', emoji:'🌈⚡', color:'#ffcc44', description:'Lightning bolts in every color of the rainbow!!' },
+    'storm phoenix+cloud squid': { name:'Storm Kraken', emoji:'⛈️🦑', color:'#4444ff', description:'A kraken that controls storms and lightning!!' },
+    'storm phoenix+coral unicorn': { name:'Lightning Unicorn', emoji:'⚡🦄', color:'#ffcc44', description:'The fastest creature alive!! Leaves lightning hoofprints!!' },
+    'storm phoenix+rainbow kraken': { name:'Electric Kraken', emoji:'🌩️🦑', color:'#88aaff', description:'Eight electric tentacles that power entire forests!!' },
+    'storm phoenix+petal dragon': { name:'Petal Phoenix', emoji:'🌸⚡', color:'#ffaacc', description:'A phoenix that leaves flower petals instead of fire!!' },
+    'storm phoenix+sky stingray': { name:'Thunder Stingray', emoji:'⚡🌤️', color:'#ffdd44', description:'A stingray that surfs on lightning bolts!!' },
+    'storm phoenix+crystal fox': { name:'Thunder Fox', emoji:'⚡🦊', color:'#ffcc44', description:'A fox that leaves lightning footprints everywhere it walks!!' },
+    'lava fox+rainbow flame': { name:'Volcanic Fox', emoji:'🌋🦊', color:'#ff6622', description:'A fox born from the heart of a volcano!!' },
+    'lava fox+cloud squid': { name:'Magma Squid', emoji:'🌊🔥', color:'#ff4400', description:'A squid that swims through lava like water!!' },
+    'lava fox+coral unicorn': { name:'Volcanic Unicorn', emoji:'🌋🦄', color:'#ff4422', description:'A unicorn with a horn made of hardened lava!!' },
+    'lava fox+rainbow kraken': { name:'Fire Kraken', emoji:'🔥🦑', color:'#ff2200', description:'A kraken with tentacles made of pure flame!!' },
+    'lava fox+petal dragon': { name:'Petal Fire Fox', emoji:'🌸🔥', color:'#ff8844', description:'Flowers that bloom in fire colors wherever it walks!!' },
+    'lava fox+sky stingray': { name:'Solar Stingray', emoji:'☀️🌤️', color:'#ffcc00', description:'Glows as bright as the sun!! Lights up the whole forest!!' },
+    'lava fox+crystal fox': { name:'Obsidian Fox', emoji:'⬛🦊', color:'#884422', description:'Jet black fox with glowing orange cracks like cooling lava!!' },
+    'rainbow flame+cloud squid': { name:'Rainbow Cloud', emoji:'🌈☁️', color:'#ffaaff', description:'A cloud that rains every color simultaneously!!' },
+    'rainbow flame+coral unicorn': { name:'Rainbow Unicorn', emoji:'🌈🦄', color:'#ff88cc', description:'The most colorful unicorn!! Every step leaves rainbow hoof prints!!' },
+    'rainbow flame+rainbow kraken': { name:'Pure Rainbow', emoji:'✨🌈', color:'#ffffff', description:'A creature made of pure rainbow energy!! Almost too bright to look at!!' },
+    'rainbow flame+petal dragon': { name:'Rainbow Blossom Dragon', emoji:'🌺🌈', color:'#ff88aa', description:'A dragon surrounded by rainbow colored flowers at all times!!' },
+    'rainbow flame+sky stingray': { name:'Rainbow Stingray', emoji:'🌈🌤️', color:'#ffaacc', description:'Leaves rainbow trails across the whole sky!!' },
+    'rainbow flame+crystal fox': { name:'Prism Fox', emoji:'🌈💎', color:'#aaddff', description:'Crystals split light into rainbows everywhere it walks!!' },
+    'cloud squid+coral unicorn': { name:'Cloud Unicorn', emoji:'☁️🦄', color:'#ddeeff', description:'A unicorn that floats on clouds and rains softly!!' },
+    'cloud squid+rainbow kraken': { name:'Galaxy Squid', emoji:'🌌🦑', color:'#4422aa', description:'Tentacles contain entire mini galaxies!! Scientists very confused!!' },
+    'cloud squid+petal dragon': { name:'Petal Cloud Squid', emoji:'🌸☁️', color:'#ffccee', description:'A squid that floats on flower scented clouds!!' },
+    'cloud squid+sky stingray': { name:'Fluffy Stingray', emoji:'☁️🌤️', color:'#ddeeff', description:'So fluffy it looks like a flying cloud with eyes!!' },
+    'cloud squid+crystal fox': { name:'Fluffy Fox Squid', emoji:'☁️🦊', color:'#ccddff', description:'Has fox ears and a fluffy tail AND tentacles!! Very confused about what it is!!' },
+    'coral unicorn+rainbow kraken': { name:'Ocean Rainbow Unicorn', emoji:'🌊🌈🦄', color:'#44aaff', description:'Swims AND flies through rainbows!! The most graceful creature!!' },
+    'coral unicorn+petal dragon': { name:'Blossom Unicorn', emoji:'🌸🦄', color:'#ffaacc', description:'Surrounded by blooming flowers at all times!! Smells incredible!!' },
+    'coral unicorn+sky stingray': { name:'Sky Unicorn', emoji:'🌤️🦄', color:'#aaccff', description:'A unicorn that gallops across the sky on clouds!!' },
+    'coral unicorn+crystal fox': { name:'Diamond Unicorn', emoji:'💎🦄', color:'#aaddff', description:'Horn made of pure diamond!! The most precious unicorn!!' },
+    'rainbow kraken+petal dragon': { name:'Blossom Kraken', emoji:'🌺🦑', color:'#ff88aa', description:'A kraken surrounded by floating flowers!! Very pretty and also very powerful!!' },
+    'rainbow kraken+sky stingray': { name:'Sky Rainbow Kraken', emoji:'🌈🌤️🦑', color:'#44ffcc', description:'A kraken that soars through rainbow skies!! Eight rainbow tentacles!!' },
+    'rainbow kraken+crystal fox': { name:'Crystal Kraken', emoji:'💎🦑', color:'#88ccff', description:'Tentacles made of pure crystal that chime like bells!!' },
+    'petal dragon+sky stingray': { name:'Petal Stingray', emoji:'🌸🌤️', color:'#ffccaa', description:'A stingray that glides through flower petals!!' },
+    'petal dragon+crystal fox': { name:'Rose Quartz Fox', emoji:'🌸💎', color:'#ffaacc', description:'Crystals are all pink and smell like roses!!' },
+    'sky stingray+crystal fox': { name:'Crystal Stingray', emoji:'💎🌤️', color:'#aaddff', description:'Wings made of pure transparent crystal!! Blindingly beautiful!!' },
+  };
+
+  const a = (name1 || '').toLowerCase();
+  const b = (name2 || '').toLowerCase();
+  return namedCombos[a + '+' + b] || namedCombos[b + '+' + a] || null;
+}
+
+function initBreeding() {
+  const container = document.getElementById('breed-parents');
+  const result = document.getElementById('breeding-result');
+  container.innerHTML = '';
+  result.innerHTML = '';
+
+  let selectedPets = [];
+
+  // Build full creature list — originals + babies
+  const allCreatures = [
+    ...gameState.adoptedPets.map(petId => ({
+      id: petId,
+      name: areaData[petId].pet,
+      emoji: areaData[petId].petEmoji,
+      color: areaData[petId].color,
+      age: gameState.petAges[petId] || 0,
+      canBreed: canBreed(petId),
+    })),
+    ...((gameState.babies || []).map((baby, i) => ({
+      id: 'baby_' + i,
+      name: baby.name,
+      emoji: baby.emoji,
+      color: baby.color || '#ff88ee',
+      age: baby.age || 0,
+      canBreed: (baby.age || 0) >= BREED_AGE,
+      isBaby: true,
+      babyIndex: i,
+    }))),
+  ];
+
+  const breedableCreatures = allCreatures.filter(c => c.canBreed);
+
+  if (allCreatures.length < 2) {
+    document.getElementById('breed-instructions').textContent =
+      'Adopt at least two pets to start breeding!!';
+  } else {
+    document.getElementById('breed-instructions').textContent =
+      'Pick two creatures (age ' + BREED_AGE + '+) to combine their magic!!';
+  }
+
+  if (breedableCreatures.length < 2) {
+    container.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:20px;background:#12122a;border-radius:14px;border:1px solid rgba(255,180,255,0.2)">
+        <p style="font-family:'Nunito',sans-serif;color:#aaaacc;font-size:0.9rem;line-height:1.8">
+          Your creatures need to go on more adventures to grow older!!<br>
+          Creatures can breed when their age reaches ${BREED_AGE}!!<br><br>
+          ${allCreatures.length === 0
+            ? '<em>No creatures yet — adopt some pets first!!</em>'
+            : allCreatures.map(c =>
+                `${c.emoji} <strong style="color:${c.color}">${c.name}</strong>: Age ${c.age}/${BREED_AGE} ${c.canBreed ? '✅ READY!!' : ''}`
+              ).join('<br>')}
+        </p>
+      </div>
+    `;
+    renderBabiesGrid();
+    return;
+  }
+
+  breedableCreatures.forEach(creature => {
+    const card = document.createElement('div');
+    card.className = 'breed-card ready';
+    card.style.borderColor = creature.color + '55';
+    card.innerHTML = `
+      <div class="breed-emoji">${creature.emoji}</div>
+      <p class="breed-name" style="color:${creature.color}">${creature.name.toUpperCase()}</p>
+      <p class="age-bar">Age ${creature.age}</p>
+    `;
+    card.addEventListener('click', () => {
+      const already = selectedPets.find(p => p.id === creature.id);
+      if (already) {
+        selectedPets = selectedPets.filter(p => p.id !== creature.id);
+        card.classList.remove('selected');
+        card.style.borderColor = creature.color + '55';
+        card.style.boxShadow = '0 0 14px rgba(100,255,180,0.25)';
+        result.innerHTML = '';
+      } else if (selectedPets.length < 2) {
+        selectedPets.push(creature);
+        card.classList.add('selected');
+        card.style.borderColor = creature.color;
+        card.style.boxShadow = `0 0 22px ${creature.color}66`;
+      }
+      if (selectedPets.length === 2) {
+        showBreedingResult(selectedPets[0], selectedPets[1], result);
+      }
+    });
+    container.appendChild(card);
+  });
+
+  renderBabiesGrid();
+}
+
+function renderBabiesGrid() {
+  const grid = document.getElementById('babies-grid');
+  if (!gameState.babies || gameState.babies.length === 0) {
+    grid.innerHTML = `<p style="grid-column:1/-1;font-family:'Dancing Script',cursive;font-size:1.15rem;color:rgba(255,180,255,0.6);text-align:center">"No babies yet!! Try combining!!"</p>`;
+    return;
+  }
+  grid.innerHTML = gameState.babies.map(b => {
+    const color = b.color || '#ff88ee';
+    const age = b.age || 0;
+    return `<div class="baby-card" style="border-color:${color}55;box-shadow:0 0 14px ${color}22">
+      <div class="baby-emoji">${b.emoji}</div>
+      <p class="baby-name" style="color:${color}">${b.name}</p>
+      <p class="baby-parents">Age ${age}${age >= BREED_AGE ? ' ✅' : ''}</p>
+    </div>`;
+  }).join('');
+}
+
+function showBreedingResult(creature1, creature2, resultEl) {
+  let baby = null;
+
+  // Tier-1: two original elements
+  if (!creature1.isBaby && !creature2.isBaby) {
+    baby = getBreedingResult(creature1.id, creature2.id);
+  }
+
+  // Tier-2 (or anything with a baby): match by name
+  if (!baby) {
+    baby = getBreedingResultByName(creature1.name, creature2.name);
+  }
+
+  // Special STORM trigger
+  const names = [creature1.name, creature2.name];
+  if (names.includes('Volcanic Unicorn') && names.includes('Storm Kraken')) {
+    baby = { name:'STORM', emoji:'⚡👑', color:'#ff2200', description:'So magnificent it does not need one.', isStorm:true };
+  }
+
+  if (baby) {
+    resultEl.innerHTML = `
+      <div style="background:#12122a;border:2px solid ${baby.color}55;
+                  border-radius:16px;padding:24px;text-align:center;
+                  box-shadow:0 0 30px ${baby.color}33">
+        <div style="font-size:4rem;margin-bottom:12px">${baby.emoji}</div>
+        <p style="font-family:'Press Start 2P',cursive;font-size:0.55rem;
+                  color:${baby.color};line-height:1.5;margin-bottom:8px;
+                  text-shadow:0 0 15px ${baby.color}">
+          ${baby.name.toUpperCase()}
+        </p>
+        <p style="font-family:'Dancing Script',cursive;font-size:1.2rem;
+                  color:rgba(200,200,255,0.8);margin-bottom:20px;line-height:1.5">
+          ${baby.description}
+        </p>
+        ${baby.isStorm ? `
+          <p style="font-family:'Press Start 2P',cursive;font-size:0.4rem;
+                    color:#ffcc44;line-height:1.6;margin-bottom:16px;
+                    text-shadow:0 0 10px rgba(255,204,68,0.8)">
+            ⚡ THE ULTIMATE CREATURE!! ⚡
+          </p>
+        ` : ''}
+        <button onclick="confirmBreedingCreatures()" style="
+          background:linear-gradient(135deg,${baby.color},${baby.color}88);
+          border:none;border-radius:20px;padding:14px 24px;
+          font-family:'Press Start 2P',cursive;font-size:0.5rem;
+          color:white;cursor:pointer;line-height:1.5;width:100%;
+          box-shadow:0 0 20px ${baby.color}44;">
+          🥚 BREED ${baby.name.toUpperCase()}!!
+        </button>
+      </div>
+    `;
+    window.pendingBreed = { creature1, creature2, baby };
+  } else {
+    resultEl.innerHTML = `
+      <p style="font-family:'Nunito',sans-serif;color:#ff8899;
+                text-align:center;padding:16px;font-size:0.95rem">
+        These two cannot breed together!!<br>Try a different combination!!
+      </p>
+    `;
+  }
+}
+
+function confirmBreedingCreatures() {
+  if (!window.pendingBreed) return;
+  const { creature1, creature2, baby } = window.pendingBreed;
+
+  if (!gameState.babies) gameState.babies = [];
+  gameState.babies.push({
+    name: baby.name,
+    emoji: baby.emoji,
+    color: baby.color,
+    description: baby.description,
+    isStorm: !!baby.isStorm,
+    age: 0,
+    id: 'baby_' + Date.now(),
+  });
+
+  // Age the parents
+  if (!creature1.isBaby) {
+    gameState.petAges[creature1.id] = (gameState.petAges[creature1.id] || 0) + 2;
+  } else if (gameState.babies[creature1.babyIndex]) {
+    gameState.babies[creature1.babyIndex].age = (gameState.babies[creature1.babyIndex].age || 0) + 2;
+  }
+  if (!creature2.isBaby) {
+    gameState.petAges[creature2.id] = (gameState.petAges[creature2.id] || 0) + 2;
+  } else if (gameState.babies[creature2.babyIndex]) {
+    gameState.babies[creature2.babyIndex].age = (gameState.babies[creature2.babyIndex].age || 0) + 2;
+  }
+
+  saveState();
+  window.pendingBreed = null;
+
+  if (baby.isStorm) {
+    triggerStormCelebration();
+  } else {
+    toast('🥚 ' + baby.name + ' has been born!!', baby.color);
+    initBreeding();
+  }
+}
+
+function triggerStormCelebration() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;top:0;left:0;width:100vw;height:100vh;
+    background:#000000;z-index:9999;display:flex;
+    flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:24px;
+  `;
+  overlay.innerHTML = `
+    <div style="font-size:6rem;margin-bottom:20px;animation:pulse 0.5s infinite alternate">⚡👑⚡</div>
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.6rem,3vw,1.2rem);
+              color:#ff2200;text-shadow:0 0 30px #ff2200;line-height:1.6;margin-bottom:16px">
+      STORM HAS ARRIVED!!
+    </p>
+    <p style="font-family:'Dancing Script',cursive;font-size:1.8rem;
+              color:rgba(255,255,255,0.9);margin-bottom:12px;line-height:1.5">
+      "So magnificent it does not need one."
+    </p>
+    <p style="font-family:'Press Start 2P',cursive;font-size:0.45rem;
+              color:#ffcc44;text-shadow:0 0 15px #ffcc44;line-height:1.6;margin-bottom:24px">
+      THE ULTIMATE CREATURE HAS BEEN BORN!!
+    </p>
+    <p style="font-family:'Press Start 2P',cursive;font-size:0.38rem;
+              color:#cc44ff;line-height:1.6;margin-bottom:8px">
+      BUT WAIT...
+    </p>
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(200,200,255,0.8);margin-bottom:24px">
+      Inkblot has been notified...
+    </p>
+    <button id="storm-face-inkblot" style="
+      background:linear-gradient(135deg,#ff2200,#cc0000);
+      border:none;border-radius:20px;padding:16px 32px;
+      font-family:'Press Start 2P',cursive;font-size:0.5rem;
+      color:white;cursor:pointer;line-height:1.5;
+      box-shadow:0 0 30px rgba(255,34,0,0.6);
+      animation:pulse 1s infinite alternate;">
+      ⚡ FACE INKBLOT!! ⚡
+    </button>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#storm-face-inkblot').addEventListener('click', () => {
+    overlay.remove();
+    startInkblotBattle();
+  });
+
+  for (let i = 0; i < 30; i++) {
+    setTimeout(() => {
+      const bolt = document.createElement('div');
+      bolt.textContent = '⚡';
+      bolt.style.cssText = `
+        position:fixed;
+        font-size:${1+Math.random()*3}rem;
+        left:${Math.random()*100}vw;
+        top:${Math.random()*100}vh;
+        z-index:10000;
+        pointer-events:none;
+        opacity:1;
+        transition:opacity 0.5s;
+      `;
+      document.body.appendChild(bolt);
+      setTimeout(() => { bolt.style.opacity='0'; setTimeout(()=>bolt.remove(),500); }, 300);
+    }, i * 100);
+  }
+}
+
+function startInkblotBattle() {
+  // Placeholder boss fight — click 10 times to defeat Inkblot
+  let hp = 10;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed;top:0;left:0;width:100vw;height:100vh;
+    background:radial-gradient(circle at center, #1a0033 0%, #000 80%);
+    z-index:9999;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;text-align:center;padding:24px;
+    cursor:crosshair;
+  `;
+  overlay.innerHTML = `
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.6rem,3vw,1.1rem);
+              color:#cc44ff;text-shadow:0 0 20px #cc44ff;margin-bottom:18px;line-height:1.6">
+      INKBLOT APPROACHES!!
+    </p>
+    <div id="inkblot-sprite" style="font-size:8rem;margin-bottom:18px;
+         filter:drop-shadow(0 0 20px #aa00ff);
+         animation:pulse 0.8s infinite alternate;cursor:pointer">🦑</div>
+    <p style="font-family:'Press Start 2P',cursive;font-size:0.45rem;
+              color:#ff88ee;line-height:1.6;margin-bottom:12px">
+      HP: <span id="inkblot-hp">${hp}</span>/10
+    </p>
+    <p style="font-family:'Dancing Script',cursive;font-size:1.2rem;
+              color:rgba(255,200,255,0.85);max-width:520px;line-height:1.5">
+      "Click Inkblot to attack with Storm's power!!"
+    </p>
+  `;
+  document.body.appendChild(overlay);
+  const sprite = overlay.querySelector('#inkblot-sprite');
+  const hpEl = overlay.querySelector('#inkblot-hp');
+  sprite.addEventListener('click', () => {
+    hp--;
+    hpEl.textContent = hp;
+    sprite.style.transform = `scale(${0.92 + Math.random()*0.1}) rotate(${(Math.random()-0.5)*20}deg)`;
+    setTimeout(() => { sprite.style.transform = ''; }, 80);
+    if (hp <= 0) {
+      overlay.innerHTML = `
+        <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.7rem,3.5vw,1.3rem);
+                  color:#ffcc44;text-shadow:0 0 30px #ffcc44;line-height:1.6;margin-bottom:20px">
+          ⚡ INKBLOT DEFEATED!! ⚡
+        </p>
+        <div style="font-size:5rem;margin-bottom:18px">🏆</div>
+        <p style="font-family:'Dancing Script',cursive;font-size:1.6rem;
+                  color:white;line-height:1.5;max-width:520px;margin-bottom:24px">
+          "Storm has saved the Elemental Forest!!"
+        </p>
+        <button id="inkblot-close" style="
+          background:linear-gradient(135deg,#ffcc44,#ff44cc);
+          border:none;border-radius:20px;padding:14px 28px;
+          font-family:'Press Start 2P',cursive;font-size:0.5rem;
+          color:white;cursor:pointer;line-height:1.5;
+          box-shadow:0 0 30px rgba(255,204,68,0.5)">
+          ✨ RETURN TO FOREST ✨
+        </button>
+      `;
+      // Big reward
+      gameState.materials.rainbowDust = (gameState.materials.rainbowDust || 0) + 20;
+      saveState();
+      updateTopMats();
+      overlay.querySelector('#inkblot-close').addEventListener('click', () => {
+        overlay.remove();
+        showScreen(SCREENS.MAP);
+        toast('+20 Rainbow Dust from defeating Inkblot!!', '#ffcc44');
+      });
+    }
+  });
+}
+
+// ============================================================
+// COLLECTION
+// ============================================================
+function initCollection() {
+  const grid = document.getElementById('collection-grid');
+  grid.innerHTML = '';
+  const ordered = ['fire','water','wind','earth','rainbow'];
+  const allFourAdopted = ['fire','water','wind','earth'].every(p => gameState.adoptedPets.includes(p));
+
+  ordered.forEach(id => {
+    const area = areaData[id];
+    const isAdopted = gameState.adoptedPets.includes(id);
+    const isLocked = id === 'rainbow' && !allFourAdopted;
+    const path = paths.find(p => p.id === gameState.petPaths[id]);
+    const adventures = gameState.adventuresCompleted[id] || 0;
+    const age = gameState.petAges[id] || 0;
+
+    const card = document.createElement('div');
+    card.className = 'collection-card';
+    card.style.borderColor = isAdopted ? area.color + '55' : 'rgba(80,80,80,0.3)';
+    card.style.boxShadow = isAdopted ? `0 0 20px ${area.color}22` : 'none';
+    card.style.opacity = isLocked ? '0.4' : '1';
+    card.innerHTML = `
+      <div class="coll-emoji">${isLocked ? '🔒' : isAdopted ? area.petEmoji : '❓'}</div>
+      <p class="coll-pet" style="color:${isAdopted ? area.color : '#666688'}">${isAdopted ? area.pet.toUpperCase() : isLocked ? 'LOCKED' : '???'}</p>
+      <p class="coll-meta">${isAdopted ? `Age ${age} · ${adventures} adventures` : (isLocked ? 'Adopt all four elemental pets!!' : `Visit ${area.name} to adopt!!`)}</p>
+      ${isAdopted && path ? `<span class="coll-path" style="color:${path.color};border:1px solid ${path.color}55;background:${path.color}15">${path.emoji} ${path.name}</span>` : ''}
+    `;
+    if (isAdopted) {
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', () => showScreen(SCREENS.HOMEVIEW, id));
+    }
+    grid.appendChild(card);
+  });
+
+  const babyCount = (gameState.babies || []).length;
+  const adoptedCount = gameState.adoptedPets.length;
+  const hint = document.getElementById('collection-hint');
+  if (adoptedCount === 0) hint.textContent = 'You have not adopted any pets yet!! Visit the forest to meet them!!';
+  else if (adoptedCount < 4) hint.textContent = `${adoptedCount} pet${adoptedCount>1?'s':''} adopted!! Adopt all four to unlock Element!!`;
+  else if (adoptedCount === 4) hint.textContent = 'All four elemental pets adopted!! The Rainbow Center is now unlocked!!';
+  else hint.textContent = `All five pets adopted${babyCount ? ` and ${babyCount} bab${babyCount>1?'ies':'y'} born` : ''}!! You are a true Elemental Forest Explorer!!`;
+}
+
+// ============================================================
+// RESET
+// ============================================================
+function collectMaterials() {
+  const boost = {
+    rainbowDust: Math.floor(Math.random()*3)+1,
+    magicalWater: Math.floor(Math.random()*3)+1,
+    fireCrystals: Math.floor(Math.random()*3)+1,
+    shapeshiftingFlowers: Math.floor(Math.random()*3)+1,
+    cloudInBottle: Math.floor(Math.random()*3)+1,
+  };
+  Object.entries(boost).forEach(([mat, amt]) => {
+    gameState.materials[mat] = (gameState.materials[mat] || 0) + amt;
+  });
+  saveState();
+  updateTopMats();
+  const total = Object.values(boost).reduce((a,b) => a+b, 0);
+  toast(`🌿 Foraged ${total} materials from the forest!!`, '#88ff88');
+}
+
+function resetForest() {
+  if (!confirm('Release all your pets and reset the forest? This cannot be undone.')) return;
+  gameState = JSON.parse(JSON.stringify(defaultState));
+  saveState();
+  updateTopMats();
+  toast('The forest is fresh again!!', '#88ff88');
+  showScreen(SCREENS.MAP);
+}
+
+// ============================================================
+// MAIN LOOP
+// ============================================================
+function loop() {
+  frame++;
+  // Spawn forest materials every ~10s when on map
+  if (frame - gameState.lastMaterialSpawn > 600 && gameState.forestMaterials.length < 5) {
+    spawnForestMaterial();
+    gameState.lastMaterialSpawn = frame;
+  }
+
+  if (currentScreen === SCREENS.MAP) {
+    drawDetailedMap(mapCtx, mapCanvas.width, mapCanvas.height, frame, gameState, hoveredArea);
+  } else if (currentScreen === SCREENS.SEARCH) {
+    const scene = searchScenes[currentArea];
+    scene.draw(searchCtx, searchCanvas.width, searchCanvas.height, frame);
+    if (!petFound && scene.petAlpha) {
+      const px = scene.petX * searchCanvas.width;
+      const py = scene.petY * searchCanvas.height;
+      searchCtx.save();
+      searchCtx.globalAlpha = scene.petAlpha;
+      searchCtx.font = '46px serif';
+      searchCtx.textAlign = 'center';
+      searchCtx.textBaseline = 'middle';
+      searchCtx.shadowColor = areaData[currentArea].color;
+      searchCtx.shadowBlur = 18;
+      searchCtx.fillText(areaData[currentArea].petEmoji, px, py);
+      searchCtx.restore();
+    }
+    drawClickSparkles(searchCtx, frame);
+  } else if (currentScreen === SCREENS.BUILD) {
+    drawRoom(currentArea);
+  } else if (currentScreen === SCREENS.ADOPT) {
+    drawAdoptionCeremony(adoptCtx, adoptCanvas.width, adoptCanvas.height, frame, currentArea);
+  } else if (currentScreen === SCREENS.PATH) {
+    drawPathSelection(pathCtx, pathCanvas.width, pathCanvas.height, frame);
+  } else if (currentScreen === SCREENS.HOMEVIEW) {
+    drawHomeView(homeviewCtx, homeviewCanvas.width, homeviewCanvas.height, frame, currentArea);
+  } else if (currentScreen === SCREENS.ADVENTURE) {
+    updateAdventureLogic();
+    drawAdventure(adventureCtx, adventureCanvas.width, adventureCanvas.height, frame);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// Init
+updateTopMats();
+showScreen(SCREENS.MAP);
+loop();
+
+// Expose for inline handlers
+window.showScreen = showScreen;
+window.SCREENS = SCREENS;
+window.startAdoption = function() { showScreen(SCREENS.ADOPT, currentArea); };
+window.startAdventureFromHome = startAdventureFromHome;
+window.changePath = changePath;
+window.exitAdventure = exitAdventure;
+window.confirmBreedingCreatures = confirmBreedingCreatures;
+window.startInkblotBattle = startInkblotBattle;
+window.collectMaterials = collectMaterials;
+window.resetForest = resetForest;
+</script>
+</body>
+</html>

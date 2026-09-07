@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Models</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="text-align:center;padding:40px 20px 100px">
+
+    <p style="font-family:'Press Start 2P',cursive;font-size:clamp(0.5rem,2vw,0.8rem);
+              color:#00ffaa;text-shadow:0 0 15px rgba(0,255,170,0.8);
+              margin-bottom:8px;line-height:1.6">
+      YOUR MODELS!! 🦑
+    </p>
+
+    <p style="font-family:'Dancing Script',cursive;font-size:1.3rem;
+              color:rgba(150,220,255,0.7);margin-bottom:32px">
+      "Level up to unlock new stars for your shows!!"
+    </p>
+
+    <!-- HUD -->
+    <div class="hud">
+      <div class="hud-item">💰 <span id="hud-coins">0</span></div>
+      <div class="hud-item">⭐ LVL <span id="hud-level">1</span></div>
+      <div class="hud-item">XP <span id="hud-xp">0/100</span>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div id="models-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));
+                gap:16px;max-width:800px;margin:0 auto"></div>
+
+  </div>
+
+  <!-- NAV -->
+  <nav class="nav-bar">
+    <button class="nav-btn" onclick="window.location.href='runway.html'">👗 RUNWAY</button>
+    <button class="nav-btn" onclick="window.location.href='backstage.html'">🎭 BACKSTAGE</button>
+    <button class="nav-btn active">🦑 MODELS</button>
+    <button class="nav-btn" onclick="window.location.href='magazine.html'">📖 MAGAZINE</button>
+  </nav>
+
+  <script src="game.js"></script>
+  <script>
+    createBubbles(6);
+    updateHUD();
+
+    const state = getState();
+    const level = state.level || 1;
+
+    const allModels = [
+      { id:'squid', name:'SQUID', emoji:'🦑', unlockLevel:1, desc:'Fierce and dramatic!!' },
+      { id:'tropical-fish', name:'TROPICAL FISH', emoji:'🐠', unlockLevel:1, desc:'Colorful and bubbly!!' },
+      { id:'seahorse', name:'SEAHORSE', emoji:'🐴', unlockLevel:1, desc:'Elegant and graceful!!' },
+      { id:'glass-squid', name:'GLASS SQUID', emoji:'🦑', unlockLevel:2, desc:'Completely transparent!!' },
+      { id:'siren', name:'SIREN', emoji:'🎤', unlockLevel:4, desc:'Sings while she struts!!' },
+      { id:'golden-kraken', name:'GOLDEN KRAKEN', emoji:'👑', unlockLevel:5, desc:'The ocean royalty!!' },
+      { id:'custom-mermaid', name:'CUSTOM MERMAID', emoji:'🧜', unlockLevel:6, desc:'Design her yourself!!' },
+    ];
+
+    const grid = document.getElementById('models-grid');
+
+    allModels.forEach(model => {
+      // Starting models: only the one chosen at model-select is unlocked at level 1
+      const isStarter = model.unlockLevel === 1;
+      const chosen = (state.unlockedModels || []).includes(model.id);
+      const unlocked = isStarter ? chosen : level >= model.unlockLevel;
+
+      const card = document.createElement('div');
+      card.className = 'card' + (unlocked ? '' : ' locked');
+      card.style.cssText = 'padding:24px 14px;text-align:center';
+      card.innerHTML = `
+        <div style="font-size:3rem;margin-bottom:10px">${model.emoji}</div>
+        <p style="font-family:'Press Start 2P',cursive;font-size:0.4rem;line-height:1.5;
+                  color:${unlocked ? '#00ffaa' : 'rgba(150,200,255,0.5)'};margin-bottom:8px">
+          ${model.name}
+        </p>
+        <p style="font-family:'Dancing Script',cursive;font-size:0.95rem;color:rgba(150,200,255,0.7)">
+          ${unlocked ? '"' + model.desc + '"' : 'Unlocks at level ' + model.unlockLevel + '!!'}
+        </p>
+      `;
+      grid.appendChild(card);
+    });
+  </script>
+</body>
+</html>

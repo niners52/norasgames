@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Bioluminescent Fashion — Welcome</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { display:flex; align-items:center; justify-content:center;
+           min-height:100vh; padding:20px; }
+
+    .intro-scene {
+      max-width:700px;
+      width:100%;
+      text-align:center;
+      position:relative;
+      z-index:1;
+    }
+
+    /* Stage/curtain background */
+    .stage-bg {
+      position:fixed;top:0;left:0;right:0;bottom:0;
+      background:linear-gradient(180deg,#020a1a 0%,#041530 40%,#020a1a 100%);
+      z-index:0;
+    }
+
+    .curtain-left, .curtain-right {
+      position:fixed;top:0;bottom:0;width:15%;
+      background:linear-gradient(90deg,#1a0a2a,transparent);
+      z-index:1;
+      pointer-events:none;
+    }
+    .curtain-right { right:0; background:linear-gradient(270deg,#1a0a2a,transparent); }
+
+    /* CHARACTER CANVASES */
+    .characters {
+      display:flex;
+      justify-content:center;
+      align-items:flex-end;
+      gap:40px;
+      margin-bottom:32px;
+      min-height:280px;
+    }
+
+    .character-wrap {
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    /* SPEECH BUBBLE */
+    .speech-bubble {
+      background:rgba(4,21,48,0.95);
+      border:2px solid rgba(0,170,255,0.4);
+      border-radius:16px;
+      padding:16px 20px;
+      max-width:500px;
+      margin:0 auto 24px;
+      position:relative;
+      font-family:'Nunito',sans-serif;
+      font-size:1rem;
+      color:#cce8ff;
+      line-height:1.6;
+      min-height:60px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .speech-bubble::before {
+      content:'';
+      position:absolute;
+      bottom:-12px;
+      left:50%;
+      transform:translateX(-50%);
+      border:6px solid transparent;
+      border-top-color:rgba(0,170,255,0.4);
+    }
+
+    /* NAME INPUT */
+    .name-section {
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+
+    .name-input {
+      background:rgba(4,21,48,0.9);
+      border:2px solid rgba(0,170,255,0.4);
+      border-radius:12px;
+      padding:14px 20px;
+      font-family:'Nunito',sans-serif;
+      font-size:1.1rem;
+      color:white;
+      outline:none;
+      text-align:center;
+      width:280px;
+      max-width:90vw;
+      transition:all 0.2s;
+    }
+
+    .name-input:focus {
+      border-color:#00aaff;
+      box-shadow:0 0 15px rgba(0,170,255,0.3);
+    }
+
+    .name-input::placeholder { color:rgba(150,200,255,0.4); }
+
+    /* PANIC ANIMATION */
+    @keyframes panic {
+      0%,100% { transform:rotate(-3deg) translateX(0); }
+      25% { transform:rotate(3deg) translateX(-5px); }
+      50% { transform:rotate(-2deg) translateX(5px); }
+      75% { transform:rotate(2deg) translateX(-3px); }
+    }
+
+    .panicking { animation:panic 0.3s infinite; }
+
+    /* SCENE PHASES */
+    .phase { display:none; }
+    .phase.active { display:block; }
+  </style>
+</head>
+<body>
+
+<div class="stage-bg"></div>
+<div class="curtain-left"></div>
+<div class="curtain-right"></div>
+
+<div class="intro-scene">
+
+  <!-- CHARACTERS -->
+  <div class="characters">
+    <!-- MADAM OCTOPUS -->
+    <div class="character-wrap" id="madam-wrap">
+      <canvas id="madam-canvas" width="160" height="220"></canvas>
+      <p class="title-small glow-pink" style="font-size:0.35rem">MADAM OCTOPUS</p>
+    </div>
+
+    <!-- ARIEL -->
+    <div class="character-wrap" id="ariel-wrap" style="opacity:0;transition:opacity 1s">
+      <canvas id="ariel-canvas" width="140" height="240"></canvas>
+      <p class="title-small glow-blue" style="font-size:0.35rem">ARIEL</p>
+    </div>
+  </div>
+
+  <!-- SPEECH BUBBLE -->
+  <div class="speech-bubble" id="speech-bubble">
+    <span id="speech-text"></span>
+  </div>
+
+  <!-- NAME ENTRY -->
+  <div class="name-section" id="name-section">
+    <p class="script-medium" style="color:rgba(150,220,255,0.8)">
+      What is your name, darling??
+    </p>
+    <input type="text" class="name-input" id="player-name"
+           placeholder="Type your name!!"
+           maxlength="20">
+    <button class="btn-main" onclick="submitName()">
+      ✨ LET'S GO!! ✨
+    </button>
+    <button class="btn-main" onclick="window.location.href='stage-select.html'"
+            style="margin-top:8px;background:rgba(0,170,255,0.2)">
+      SKIP →
+    </button>
+  </div>
+
+  <!-- CONTINUE BUTTON -->
+  <button class="btn-main" id="continue-btn" onclick="nextScene()"
+          style="display:none;margin-top:16px">
+    CONTINUE →
+  </button>
+
+</div>
+
+<script src="game.js"></script>
+<script>
+createBubbles(5);
+
+// ============================================================
+// DRAW MADAM OCTOPUS — simple, dignified
+// ============================================================
+function drawMadamOctopus(canvas, isPanicking, frameCount) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2;
+  const cy = H*0.42;
+  const bodyR = 42;
+  const shake = isPanicking ? Math.sin(frameCount*0.3)*2 : 0;
+
+  // Eight tentacles hanging down neatly underneath
+  ctx.strokeStyle = '#bb7799';
+  ctx.lineWidth = 7;
+  ctx.lineCap = 'round';
+  for (let t = 0; t < 8; t++) {
+    const tx = cx - 28 + t*8 + shake;
+    const sway = Math.sin(frameCount*0.05 + t) * (isPanicking ? 6 : 3);
+    ctx.beginPath();
+    ctx.moveTo(tx, cy + bodyR - 10);
+    ctx.quadraticCurveTo(tx + sway, cy + bodyR + 28, tx + sway*1.5, cy + bodyR + 52);
+    ctx.stroke();
+  }
+
+  // Round smooth body
+  const bodyGrad = ctx.createRadialGradient(cx-12, cy-14, 8, cx, cy, bodyR);
+  bodyGrad.addColorStop(0, '#eeccdd');
+  bodyGrad.addColorStop(1, '#bb7799');
+  ctx.fillStyle = bodyGrad;
+  ctx.beginPath();
+  ctx.arc(cx + shake, cy, bodyR, 0, Math.PI*2);
+  ctx.fill();
+
+  // Gray wig sitting elegantly ON TOP of her head
+  ctx.fillStyle = '#9999aa';
+  ctx.beginPath();
+  ctx.ellipse(cx + shake, cy - bodyR + 6, 30, 16, 0, Math.PI, Math.PI*2);
+  ctx.fill();
+  // Top bun
+  ctx.beginPath();
+  ctx.arc(cx + shake, cy - bodyR - 8, 11, 0, Math.PI*2);
+  ctx.fill();
+  // Small side curls at the wig's edge
+  ctx.beginPath(); ctx.arc(cx - 28 + shake, cy - bodyR + 8, 7, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 28 + shake, cy - bodyR + 8, 7, 0, Math.PI*2); ctx.fill();
+
+  // Small round glasses sitting on her face
+  const eyeY = cy - 6;
+  ctx.strokeStyle = '#444455';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx - 13 + shake, eyeY, 8, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx + 13 + shake, eyeY, 8, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx - 5 + shake, eyeY); ctx.lineTo(cx + 5 + shake, eyeY); ctx.stroke();
+
+  // Eyes behind the glasses
+  ctx.fillStyle = '#332233';
+  ctx.beginPath(); ctx.arc(cx - 13 + shake, eyeY, 3.5, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx + 13 + shake, eyeY, 3.5, 0, Math.PI*2); ctx.fill();
+
+  // Stern brows
+  ctx.strokeStyle = '#775566';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(cx-20+shake, eyeY-13); ctx.lineTo(cx-7+shake, eyeY-11); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+20+shake, eyeY-13); ctx.lineTo(cx+7+shake, eyeY-11); ctx.stroke();
+
+  // Expression
+  if (isPanicking) {
+    // Worried open mouth
+    ctx.fillStyle = '#884466';
+    ctx.beginPath(); ctx.ellipse(cx + shake, cy + 14, 6, 8, 0, 0, Math.PI*2); ctx.fill();
+    // Sweat drop
+    ctx.fillStyle = 'rgba(150,200,255,0.8)';
+    ctx.beginPath(); ctx.arc(cx + bodyR - 4 + shake, cy - 24, 4, 0, Math.PI*2); ctx.fill();
+    // Exclamation marks
+    ctx.font = 'bold 16px sans-serif';
+    ctx.fillStyle = '#ff5555';
+    ctx.textAlign = 'center';
+    ctx.fillText('!!', cx + bodyR + 10 + shake, cy - 34 + Math.sin(frameCount*0.2)*4);
+  } else {
+    // Stern professional line
+    ctx.strokeStyle = '#884466';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(cx - 8 + shake, cy + 14); ctx.lineTo(cx + 8 + shake, cy + 14); ctx.stroke();
+  }
+
+  // Pearl necklace
+  ctx.fillStyle = '#f8f0ff';
+  for (let p = 0; p < 7; p++) {
+    const px = cx - 21 + p*7 + shake;
+    const py = cy + 26 + Math.sin((p/6)*Math.PI)*5;
+    ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+// ============================================================
+// DRAW ARIEL — simple, elegant mermaid
+// ============================================================
+function drawAriel(canvas, frameCount) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cx = W/2;
+  const headY = 56;
+  const waistY = headY + 72;
+  const sway = Math.sin(frameCount*0.03)*4;
+
+  // Long red hair flowing DOWN both sides
+  ctx.fillStyle = '#cc3311';
+  ctx.beginPath(); ctx.ellipse(cx-20, headY+42, 9, 50, 0.12, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+20, headY+42, 9, 50, -0.12, 0, Math.PI*2); ctx.fill();
+
+  // Slim elegant tail
+  const tailGrad = ctx.createLinearGradient(cx, waistY, cx, waistY+80);
+  tailGrad.addColorStop(0, '#00bbcc');
+  tailGrad.addColorStop(1, '#006699');
+  ctx.fillStyle = tailGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx-12, waistY-6);
+  ctx.bezierCurveTo(cx-13, waistY+30, cx-5+sway, waistY+50, cx+sway, waistY+72);
+  ctx.bezierCurveTo(cx+5+sway, waistY+50, cx+13, waistY+30, cx+12, waistY-6);
+  ctx.closePath();
+  ctx.fill();
+
+  // Tail fin — two graceful lobes
+  ctx.fillStyle = '#00ddee';
+  ctx.beginPath();
+  ctx.moveTo(cx+sway, waistY+66);
+  ctx.quadraticCurveTo(cx-20+sway, waistY+80, cx-16+sway, waistY+96);
+  ctx.quadraticCurveTo(cx-2+sway, waistY+86, cx+sway, waistY+76);
+  ctx.quadraticCurveTo(cx+2+sway, waistY+86, cx+16+sway, waistY+96);
+  ctx.quadraticCurveTo(cx+20+sway, waistY+80, cx+sway, waistY+66);
+  ctx.fill();
+
+  // Scale hints
+  ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+  ctx.lineWidth = 1;
+  for (let s = 0; s < 3; s++) {
+    ctx.beginPath();
+    ctx.arc(cx + sway*s/3, waistY + 14 + s*16, 9 - s*2, 0, Math.PI);
+    ctx.stroke();
+  }
+
+  // Slim feminine body
+  ctx.fillStyle = '#ffd6b8';
+  ctx.beginPath(); ctx.ellipse(cx, headY+46, 13, 28, 0, 0, Math.PI*2); ctx.fill();
+
+  // Arms resting at her sides
+  ctx.beginPath(); ctx.ellipse(cx-16, headY+44, 5, 20, 0.15, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+16, headY+44, 5, 20, -0.15, 0, Math.PI*2); ctx.fill();
+
+  // Shell top
+  ctx.fillStyle = '#ff8877';
+  ctx.beginPath(); ctx.arc(cx-7, headY+34, 8, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+7, headY+34, 8, 0, Math.PI*2); ctx.fill();
+
+  // Elegant oval head
+  ctx.fillStyle = '#ffddc2';
+  ctx.beginPath(); ctx.ellipse(cx, headY, 18, 22, 0, 0, Math.PI*2); ctx.fill();
+
+  // Hair crown over the top of her head
+  ctx.fillStyle = '#cc3311';
+  ctx.beginPath(); ctx.ellipse(cx, headY-11, 20, 14, 0, Math.PI, Math.PI*2); ctx.fill();
+  // Soft hair highlight
+  ctx.strokeStyle = 'rgba(255,120,70,0.5)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(cx, headY-8, 15, Math.PI*1.2, Math.PI*1.7); ctx.stroke();
+
+  // Kind warm eyes
+  const eyeY = headY - 1;
+  ctx.fillStyle = 'white';
+  ctx.beginPath(); ctx.ellipse(cx-7, eyeY, 4.5, 5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+7, eyeY, 4.5, 5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#3377bb';
+  ctx.beginPath(); ctx.arc(cx-7, eyeY+1, 2.6, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+7, eyeY+1, 2.6, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#111122';
+  ctx.beginPath(); ctx.arc(cx-7, eyeY+1, 1.2, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx+7, eyeY+1, 1.2, 0, Math.PI*2); ctx.fill();
+
+  // Gentle lashes
+  ctx.strokeStyle = '#331111';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(cx-7, eyeY, 5, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx+7, eyeY, 5, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+
+  // Blush
+  ctx.fillStyle = 'rgba(255,140,110,0.35)';
+  ctx.beginPath(); ctx.ellipse(cx-11, headY+8, 4.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+11, headY+8, 4.5, 2.5, 0, 0, Math.PI*2); ctx.fill();
+
+  // Warm smile
+  ctx.strokeStyle = '#cc6655';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, headY+8, 6, Math.PI*0.15, Math.PI*0.85); ctx.stroke();
+}
+
+// ============================================================
+// DIALOGUE SYSTEM
+// ============================================================
+let currentScene = 0;
+let isTyping = false;
+let typeInterval = null;
+let frameCount = 0;
+let isPanicking = true;
+let madamCanvas = document.getElementById('madam-canvas');
+let arielCanvas = document.getElementById('ariel-canvas');
+
+const scenes = [
+  {
+    speaker: 'madam',
+    text: 'WE NEED A NEW DESIGNER!! THE SHOW IS TOMORROW AND OUR DESIGNER QUIT!!',
+    panicking: true,
+    showAriel: false,
+    showContinue: true,
+  },
+  {
+    speaker: 'madam',
+    text: 'We cannot cancel!! The Bioluminescent Fashion Show is the biggest event in the entire ocean!!',
+    panicking: true,
+    showAriel: false,
+    showContinue: true,
+  },
+  {
+    speaker: 'ariel',
+    text: 'Madam Octopus!! What about...',
+    panicking: false,
+    showAriel: true,
+    showContinue: true,
+  },
+  {
+    speaker: 'name',
+    text: '',
+    panicking: false,
+    showAriel: true,
+    showContinue: false,
+    showName: true,
+  },
+];
+
+function typeText(text, callback) {
+  if (typeInterval) clearInterval(typeInterval);
+  const el = document.getElementById('speech-text');
+  el.textContent = '';
+  let i = 0;
+  isTyping = true;
+  typeInterval = setInterval(() => {
+    el.textContent += text[i];
+    i++;
+    if (i >= text.length) {
+      clearInterval(typeInterval);
+      isTyping = false;
+      if (callback) callback();
+    }
+  }, 35);
+}
+
+function showScene(index) {
+  if (index >= scenes.length) return;
+  const scene = scenes[index];
+
+  // Update characters
+  isPanicking = scene.panicking;
+
+  // Show/hide Ariel
+  if (scene.showAriel) {
+    document.getElementById('ariel-wrap').style.opacity = '1';
+  }
+
+  // Show name input
+  if (scene.showName) {
+    document.getElementById('speech-bubble').innerHTML = `
+      <span style="font-family:'Dancing Script',cursive;font-size:1.3rem;color:#cce8ff">
+        "What about..."
+      </span>
+    `;
+    document.getElementById('name-section').style.display = 'flex';
+    document.getElementById('continue-btn').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('player-name').focus();
+    }, 100);
+    return;
+  }
+
+  // Type dialogue
+  document.getElementById('speech-bubble').innerHTML = '<span id="speech-text"></span>';
+  typeText(scene.text, () => {
+    if (scene.showContinue) {
+      document.getElementById('continue-btn').style.display = 'inline-block';
+    }
+  });
+
+  document.getElementById('continue-btn').style.display = 'none';
+}
+
+function nextScene() {
+  currentScene++;
+  showScene(currentScene);
+}
+
+function submitName() {
+  const name = document.getElementById('player-name').value.trim();
+  if (!name) {
+    document.getElementById('player-name').style.borderColor = '#ff4466';
+    return;
+  }
+
+  // Save name
+  const state = getState();
+  state.playerName = name;
+  saveState(state);
+
+  // Hide name input
+  document.getElementById('name-section').style.display = 'none';
+  document.getElementById('speech-bubble').innerHTML = '<span id="speech-text"></span>';
+  isPanicking = false;
+
+  // Type response then go to next page
+  typeText(name + '?? PERFECT!! Welcome to The Bioluminescent Fashion!! Get to work — the show must go on!!', () => {
+    setTimeout(() => {
+      window.location.href = 'stage-select.html';
+    }, 1500);
+  });
+}
+
+// Handle Enter key on name input
+document.getElementById('player-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') submitName();
+});
+
+// Animation loop
+let rafId = null;
+function animate() {
+  drawMadamOctopus(madamCanvas, isPanicking, frameCount);
+  drawAriel(arielCanvas, frameCount);
+  frameCount++;
+  rafId = requestAnimationFrame(animate);
+}
+
+// Only animate when the tab is visible
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    cancelAnimationFrame(rafId);
+  } else {
+    rafId = requestAnimationFrame(animate);
+  }
+});
+
+animate();
+showScene(0);
+</script>
+</body>
+</html>

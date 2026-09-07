@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>About Me · Ocean Life &amp; Myths</title>
+<style>
+  *      { margin: 0; padding: 0; box-sizing: border-box; }
+  html,
+  body   { min-height: 100%; }
+  body   {
+    background: #031a3a;
+    color: #cfefff;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  canvas#ocean-bg {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+    display: block;
+  }
+
+  /* ---------- Nav ---------- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    padding: 18px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 100;
+    background: linear-gradient(to bottom,
+                  rgba(2, 15, 40, 0.92) 0%,
+                  rgba(2, 15, 40, 0.55) 75%,
+                  rgba(2, 15, 40, 0));
+    backdrop-filter: blur(2px);
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: bold;
+    color: #aef6ff;
+    text-shadow: 0 0 12px #3af, 0 0 24px rgba(60, 170, 255, 0.6);
+    letter-spacing: 1.5px;
+    user-select: none;
+  }
+  nav ul {
+    display: flex;
+    gap: 6px;
+    list-style: none;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  nav a {
+    color: #cfefff;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    display: block;
+  }
+  nav a:hover {
+    background: rgba(120, 220, 255, 0.15);
+    border-color: rgba(170, 235, 255, 0.5);
+    color: #fff;
+    text-shadow: 0 0 10px #0ff;
+  }
+  nav a.active {
+    background: rgba(170, 100, 255, 0.18);
+    border-color: rgba(200, 150, 255, 0.6);
+    color: #fff;
+    text-shadow: 0 0 10px #c8f;
+  }
+
+  /* ---------- Page content ---------- */
+  main {
+    position: relative;
+    z-index: 10;
+    padding: 130px 24px 80px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+  .page-header h1 {
+    font-size: clamp(40px, 6vw, 70px);
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(60, 170, 255, 0.8),
+                 0 0 40px rgba(120, 80, 255, 0.6),
+                 0 0 80px rgba(0, 0, 0, 0.95);
+    animation: heroGlow 4s ease-in-out infinite alternate;
+    margin-bottom: 12px;
+  }
+  @keyframes heroGlow {
+    0%   { text-shadow: 0 0 20px rgba(60,170,255,0.8),
+                        0 0 40px rgba(120,80,255,0.6),
+                        0 0 80px rgba(0,0,0,0.95); }
+    100% { text-shadow: 0 0 30px rgba(120,220,255,1.0),
+                        0 0 60px rgba(180,120,255,0.85),
+                        0 0 90px rgba(0,0,0,0.95); }
+  }
+  .page-header p {
+    font-style: italic;
+    font-size: clamp(16px, 1.7vw, 22px);
+    color: #cfefff;
+    text-shadow: 0 0 14px #000;
+    letter-spacing: 1.5px;
+  }
+
+  /* about card */
+  .about-card {
+    background: rgba(8, 16, 40, 0.78);
+    border: 1px solid rgba(170, 235, 255, 0.5);
+    border-radius: 16px;
+    padding: 50px 40px;
+    margin: 30px auto;
+    box-shadow: 0 0 60px rgba(60, 170, 255, 0.18),
+                inset 0 0 80px rgba(60, 170, 255, 0.05);
+    position: relative;
+    text-align: center;
+  }
+  .about-card::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(180, 120, 255, 0.35);
+    border-radius: 12px;
+    pointer-events: none;
+  }
+
+  .avatar {
+    margin: 0 auto 24px;
+    width: 240px;
+    height: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 30px rgba(120, 230, 255, 0.6));
+  }
+  .avatar svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .nameplate {
+    font-size: clamp(28px, 4vw, 42px);
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 4px;
+    text-shadow: 0 0 18px rgba(120, 220, 255, 0.85);
+    margin-bottom: 6px;
+  }
+  .role {
+    font-style: italic;
+    color: #9bdfff;
+    letter-spacing: 1.5px;
+    margin-bottom: 30px;
+    font-size: 16px;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 26px auto;
+    color: rgba(170, 235, 255, 0.55);
+    letter-spacing: 4px;
+    font-size: 14px;
+  }
+  .divider::before,
+  .divider::after {
+    content: "";
+    flex: 0 0 80px;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(170, 235, 255, 0.5), transparent);
+  }
+
+  .bio {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .bio p {
+    font-size: clamp(18px, 2vw, 22px);
+    line-height: 1.7;
+    color: #e8fbff;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+  }
+  .bio p .glow {
+    color: #aef6ff;
+    font-weight: bold;
+    text-shadow: 0 0 12px rgba(120, 220, 255, 0.85);
+  }
+  .bio p .pulse {
+    color: #ff8aff;
+    font-weight: bold;
+    text-shadow: 0 0 14px rgba(255, 140, 255, 0.85);
+  }
+
+  .signature {
+    margin-top: 36px;
+    font-style: italic;
+    color: #c8a0ff;
+    letter-spacing: 2px;
+    font-size: 17px;
+  }
+  .signature .name {
+    display: block;
+    margin-top: 8px;
+    font-family: "Brush Script MT", "Lucida Handwriting", cursive;
+    font-size: clamp(36px, 5vw, 52px);
+    color: #fff;
+    text-shadow: 0 0 18px rgba(170, 100, 255, 0.85);
+    letter-spacing: 3px;
+    transform: rotate(-3deg);
+  }
+
+  /* loves bar */
+  .loves {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 36px;
+  }
+  .love-pill {
+    background: rgba(170, 100, 255, 0.18);
+    border: 1px solid rgba(200, 150, 255, 0.6);
+    color: #fff;
+    padding: 8px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  footer {
+    text-align: center;
+    color: rgba(200, 230, 255, 0.5);
+    font-size: 13px;
+    padding: 30px 12px;
+    letter-spacing: 1px;
+  }
+
+  @media (max-width: 760px) {
+    nav { padding: 10px 14px; flex-direction: column; gap: 8px; }
+    nav a { padding: 6px 10px; font-size: 13px; }
+    main { padding-top: 170px; }
+    .about-card { padding: 30px 22px; }
+    .avatar { width: 180px; height: 180px; }
+  }
+
+  /* ---------- Scuba diver guide ---------- */
+  .scuba-guide {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 90;
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    pointer-events: none;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  }
+  .diver-wrap {
+    width: 140px;
+    animation: diverBob 3.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 18px rgba(60, 170, 255, 0.45));
+  }
+  .diver-wrap svg { width: 100%; height: auto; display: block; }
+  @keyframes diverBob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  .speech-bubble {
+    background: rgba(8, 16, 40, 0.92);
+    border: 2px solid rgba(170, 235, 255, 0.7);
+    border-radius: 16px;
+    padding: 12px 18px;
+    max-width: 260px;
+    color: #cfefff;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 0 24px rgba(60, 170, 255, 0.4);
+    letter-spacing: 0.3px;
+    animation: bubbleFloat 3.5s ease-in-out infinite;
+    margin-bottom: 50px;
+  }
+  .speech-bubble p { margin: 0; }
+  @keyframes bubbleFloat {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+  .speech-bubble::after {
+    content: "";
+    position: absolute;
+    right: -10px; bottom: 18px;
+    width: 0; height: 0;
+    border-left: 12px solid rgba(170, 235, 255, 0.7);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+  }
+  .speech-bubble::before {
+    content: "";
+    position: absolute;
+    right: -6px; bottom: 20px;
+    width: 0; height: 0;
+    border-left: 10px solid rgba(8, 16, 40, 0.92);
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    z-index: 1;
+  }
+  @media (max-width: 760px) {
+    .scuba-guide { bottom: 10px; right: 10px; gap: 8px; }
+    .diver-wrap { width: 100px; }
+    .speech-bubble { max-width: 180px; font-size: 12px; padding: 8px 12px; margin-bottom: 30px; }
+  }
+  @media (max-width: 480px) {
+    .speech-bubble { display: none; }
+    .diver-wrap { width: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="ocean-bg"></canvas>
+
+<nav>
+  <div class="logo">🌊 Ocean Life &amp; Myths</div>
+  <ul>
+    <li><a href="ocean_life_and_myths.html">Home</a></li>
+    <li><a href="cephalopods.html">Cephalopods</a></li>
+    <li><a href="meet_the_kraken.html">Meet the Kraken</a></li>
+    <li><a href="field_guide.html">Field Guide</a></li>
+    <li><a href="gallery.html">Gallery</a></li>
+    <li><a href="about_me.html" class="active">About Me</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <header class="page-header">
+    <h1>ABOUT ME</h1>
+    <p>The creator of this little corner of the deep…</p>
+  </header>
+
+  <article class="about-card">
+
+    <!-- glass-squid avatar -->
+    <div class="avatar">
+      <svg viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="avHalo" cx="50%" cy="42%" r="60%">
+            <stop offset="0%"  stop-color="#9bdfff" stop-opacity="0.85"/>
+            <stop offset="100%" stop-color="#9bdfff" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="avBody" cx="40%" cy="35%" r="65%">
+            <stop offset="0%"  stop-color="#e8fbff" stop-opacity="0.9"/>
+            <stop offset="55%" stop-color="#9bdfff" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#3fa6e0" stop-opacity="0.2"/>
+          </radialGradient>
+        </defs>
+        <circle cx="100" cy="92" r="92" fill="url(#avHalo)"/>
+        <!-- tentacles -->
+        <g stroke="#9bdfff" stroke-width="3.5" stroke-linecap="round" fill="none">
+          <path d="M70,128 Q60,160 52,190"/>
+          <path d="M82,134 Q78,162 73,194"/>
+          <path d="M94,138 Q92,168 89,198"/>
+          <path d="M106,138 Q108,168 111,198"/>
+          <path d="M118,134 Q122,162 127,194"/>
+          <path d="M130,128 Q140,160 148,190"/>
+          <path d="M64,124 Q54,152 44,180"/>
+          <path d="M136,124 Q146,152 156,180"/>
+        </g>
+        <g stroke="#fff" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="0.85">
+          <path d="M70,128 Q60,160 52,190"/>
+          <path d="M82,134 Q78,162 73,194"/>
+          <path d="M94,138 Q92,168 89,198"/>
+          <path d="M106,138 Q108,168 111,198"/>
+          <path d="M118,134 Q122,162 127,194"/>
+          <path d="M130,128 Q140,160 148,190"/>
+        </g>
+        <!-- transparent body -->
+        <ellipse cx="100" cy="90" rx="42" ry="50" fill="url(#avBody)" stroke="#aef6ff" stroke-width="1.8"/>
+        <!-- THREE pulsing hearts -->
+        <circle cx="100" cy="100" r="6" fill="#ff6090" opacity="0.95">
+          <animate attributeName="r" values="5;8;5" dur="1.2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="86" cy="103" r="4" fill="#ff6090" opacity="0.85">
+          <animate attributeName="r" values="3;5;3" dur="0.9s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="114" cy="103" r="4" fill="#ff6090" opacity="0.85">
+          <animate attributeName="r" values="3;5;3" dur="0.9s" begin="0.45s" repeatCount="indefinite"/>
+        </circle>
+        <!-- brain lobes -->
+        <ellipse cx="91" cy="68" rx="7" ry="5" fill="#d8a8ff" opacity="0.75"/>
+        <ellipse cx="109" cy="68" rx="7" ry="5" fill="#d8a8ff" opacity="0.75"/>
+        <!-- food line through the brain -->
+        <path d="M75,82 Q82,72 100,72 Q118,72 125,82" stroke="#b8ffd6" stroke-width="2" fill="none" opacity="0.55"/>
+        <circle cx="80" cy="80" r="2" fill="#fff5a0">
+          <animate attributeName="cx" values="75;100;125;75" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="cy" values="82;72;82;82" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <!-- eyes -->
+        <circle cx="88" cy="80" r="4.5" fill="#fff"/>
+        <circle cx="112" cy="80" r="4.5" fill="#fff"/>
+        <circle cx="88" cy="80" r="2.2" fill="#063"/>
+        <circle cx="112" cy="80" r="2.2" fill="#063"/>
+        <!-- glass highlight -->
+        <ellipse cx="84" cy="64" rx="6" ry="2.5" fill="#fff" opacity="0.65" transform="rotate(-25 84 64)"/>
+      </svg>
+    </div>
+
+    <div class="nameplate">NORA</div>
+    <div class="role">Creator · Artist · Lover of glass squids</div>
+
+    <div class="divider">✦  ABOUT ME  ✦</div>
+
+    <div class="bio">
+      <p><span class="glow">Hi!</span> I am the creator. My name is <span class="glow">Nora</span> and I love <span class="pulse">glass squids!</span></p>
+      <p>This is not my first website — but it is my <span class="glow">favorite</span>!</p>
+      <p>Enjoy the beauty of this. ✨</p>
+    </div>
+
+    <div class="loves">
+      <div class="love-pill">🦑 Glass Squids</div>
+      <div class="love-pill">🌊 The Deep Ocean</div>
+      <div class="love-pill">🎨 Making Things</div>
+      <div class="love-pill">📖 Sea Myths</div>
+      <div class="love-pill">✨ Magic</div>
+    </div>
+
+    <div class="signature">
+      With love from the deep,
+      <span class="name">~ Nora ~</span>
+    </div>
+
+  </article>
+
+  <footer>
+    🌊  Ocean Life &amp; Myths  ·  Page 6 of 6  ·  Made with love by Nora  🌊
+  </footer>
+
+</main>
+
+<script>
+"use strict";
+const canvas = document.getElementById("ocean-bg");
+const ctx = canvas.getContext("2d");
+let W, H;
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+window.addEventListener("resize", resize);
+resize();
+const TAU = Math.PI * 2;
+let frame = 0;
+const bubbles = [];
+for (let i = 0; i < 50; i++) {
+  bubbles.push({
+    x: Math.random() * 1600,
+    y: Math.random() * 900,
+    r: 2 + Math.random() * 7,
+    vy: -0.25 - Math.random() * 0.9,
+    wob: Math.random() * TAU,
+    wobSpeed: 0.01 + Math.random() * 0.04
+  });
+}
+function loop() {
+  frame++;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0,    "#5dc8ff");
+  g.addColorStop(0.45, "#1d6db8");
+  g.addColorStop(0.85, "#082750");
+  g.addColorStop(1,    "#031530");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (let i = 0; i < 6; i++) {
+    const x = (i * 240 + frame * 0.30) % (W + 220) - 110;
+    const intensity = 0.05 + Math.sin(frame * 0.005 + i) * 0.02;
+    ctx.fillStyle = `rgba(150, 220, 255, ${intensity})`;
+    ctx.beginPath();
+    ctx.moveTo(x - 35, 0); ctx.lineTo(x + 35, 0);
+    ctx.lineTo(x + 220, H); ctx.lineTo(x - 220, H);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  ctx.save();
+  ctx.globalCompositeOperation = "screen";
+  for (const b of bubbles) {
+    b.wob += b.wobSpeed;
+    b.x += Math.sin(b.wob) * 0.3;
+    b.y += b.vy;
+    if (b.y < -20) { b.y = H + 20; b.x = Math.random() * W; }
+    ctx.strokeStyle = "rgba(180, 230, 255, 0.5)"; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.25, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
