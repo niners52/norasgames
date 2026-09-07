@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Glass Squid Aquarium 🦑</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦑</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body {
+    background:#02132e; color:#dff6ff;
+    font-family:"Nunito","Trebuchet MS",sans-serif;
+    touch-action:none; user-select:none; -webkit-user-select:none;
+  }
+  canvas#tank { position:fixed; inset:0; width:100vw; height:100vh; display:block; cursor:pointer; }
+
+  /* ---------- top bar ---------- */
+  .topbar {
+    position:fixed; top:0; left:0; right:0; z-index:10;
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 16px; pointer-events:none;
+  }
+  .topbar > * { pointer-events:auto; }
+  .title {
+    font-family:"Dancing Script",cursive; font-size:clamp(1.4rem,4vw,2.2rem);
+    color:#bff3ff; text-shadow:0 0 14px #3cf, 0 0 30px rgba(60,200,255,.5);
+  }
+  .buttons { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  button {
+    font-family:inherit; font-weight:800; font-size:.95rem; cursor:pointer;
+    color:#eaf9ff; background:rgba(10,50,110,.75);
+    border:1px solid rgba(140,220,255,.45); border-radius:999px;
+    padding:9px 16px; backdrop-filter:blur(6px);
+    box-shadow:0 0 12px rgba(60,180,255,.25);
+    transition:transform .15s, box-shadow .15s, background .15s;
+  }
+  button:hover { transform:translateY(-2px); box-shadow:0 0 20px rgba(80,200,255,.5); background:rgba(20,80,160,.85); }
+  button:active { transform:scale(.96); }
+  button.on { background:rgba(255,80,200,.35); border-color:rgba(255,150,230,.7); }
+
+  /* ---------- hint ---------- */
+  .hint {
+    position:fixed; left:50%; top:74px; transform:translateX(-50%);
+    background:rgba(4,25,60,.7); border:1px solid rgba(140,220,255,.3);
+    padding:8px 16px; border-radius:999px; font-size:.9rem; z-index:9;
+    pointer-events:none; transition:opacity .5s; white-space:nowrap;
+  }
+  .hint.hide { opacity:0; }
+
+  /* ---------- squid card ---------- */
+  .card {
+    position:fixed; right:16px; bottom:16px; z-index:10; width:min(300px, calc(100vw - 32px));
+    background:rgba(4,22,56,.82); border:1px solid rgba(140,220,255,.35);
+    border-radius:18px; padding:16px 18px; backdrop-filter:blur(8px);
+    box-shadow:0 10px 40px rgba(0,60,140,.45), inset 0 0 30px rgba(60,170,255,.06);
+    transform:translateY(130%); transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+  }
+  .card.show { transform:translateY(0); }
+  .card .close { position:absolute; top:8px; right:10px; background:none; border:none; box-shadow:none; font-size:1.2rem; padding:4px 8px; }
+  .card input {
+    width:100%; font-family:inherit; font-weight:800; font-size:1.25rem; color:#fff;
+    background:transparent; border:none; border-bottom:2px dashed rgba(140,220,255,.4);
+    padding:4px 2px; margin-bottom:6px; outline:none;
+  }
+  .card input:focus { border-bottom-color:#ff7de0; }
+  .level { font-size:.85rem; color:#9be7ff; margin-bottom:10px; }
+  .bar { height:10px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin:4px 0 10px; }
+  .bar > div { height:100%; border-radius:999px; transition:width .4s; }
+  .bar.hunger > div { background:linear-gradient(90deg,#ffb347,#ff6a3d); }
+  .bar.happy  > div { background:linear-gradient(90deg,#ff7de0,#aa66ff); }
+  .label { font-size:.8rem; letter-spacing:.5px; text-transform:uppercase; color:rgba(200,240,255,.7); }
+  .card .row { display:flex; gap:8px; margin-top:6px; }
+  .card .row button { flex:1; font-size:.85rem; padding:8px 6px; }
+
+  /* ---------- hatch dialog ---------- */
+  .overlay {
+    position:fixed; inset:0; z-index:20; background:rgba(1,8,24,.6);
+    display:none; align-items:center; justify-content:center; padding:16px;
+  }
+  .overlay.show { display:flex; }
+  .dialog {
+    background:rgba(5,28,70,.95); border:1px solid rgba(140,220,255,.4); border-radius:22px;
+    padding:24px; width:min(380px,100%); text-align:center;
+    box-shadow:0 0 60px rgba(60,180,255,.35);
+  }
+  .dialog h2 { font-family:"Dancing Script",cursive; font-size:2rem; color:#bff3ff; text-shadow:0 0 14px #3cf; margin-bottom:6px; }
+  .dialog p { font-size:.9rem; color:rgba(200,240,255,.8); margin-bottom:14px; }
+  .swatches { display:flex; justify-content:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .swatch {
+    width:44px; height:44px; border-radius:50%; border:3px solid transparent; cursor:pointer;
+    box-shadow:0 0 14px var(--c); background:radial-gradient(circle at 35% 35%, #fff8, var(--c));
+    transition:transform .15s;
+  }
+  .swatch:hover { transform:scale(1.1); }
+  .swatch.pick { border-color:#fff; transform:scale(1.15); }
+  .dialog input {
+    width:100%; font-family:inherit; font-weight:800; font-size:1.1rem; text-align:center;
+    color:#fff; background:rgba(255,255,255,.08); border:1px solid rgba(140,220,255,.4);
+    border-radius:12px; padding:10px; margin-bottom:14px; outline:none;
+  }
+  .dialog .row { display:flex; gap:10px; }
+  .dialog .row button { flex:1; }
+  .dialog .go { background:linear-gradient(135deg,#00aaff,#ff44cc); border:none; }
+
+  .toast {
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(40px);
+    background:rgba(255,80,200,.25); border:1px solid rgba(255,150,230,.6);
+    padding:10px 20px; border-radius:999px; font-weight:800; z-index:30;
+    opacity:0; transition:all .4s; pointer-events:none; white-space:nowrap;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (max-width:600px) {
+    .topbar { flex-direction:column; align-items:flex-start; }
+    .buttons { justify-content:flex-start; }
+    .hint { top:120px; font-size:.8rem; }
+    .card { left:16px; right:16px; width:auto; }
+  }
+</style>
+</head>
+<body>
+<canvas id="tank"></canvas>
+
+<div class="topbar">
+  <div class="title">🦑 Glass Squid Aquarium</div>
+  <div class="buttons">
+    <button id="btn-hatch">🥚 Hatch a squid</button>
+    <button id="btn-night">🌙 Lights off</button>
+    <button id="btn-sound">🔊 Sound</button>
+  </div>
+</div>
+
+<div class="hint" id="hint">Tap the water to drop a snack 🍤 · Tap a squid to pet it 💖</div>
+
+<div class="card" id="card">
+  <button class="close" id="card-close">✕</button>
+  <input id="name-input" maxlength="16" spellcheck="false">
+  <div class="level" id="level"></div>
+  <div class="label">Tummy</div>
+  <div class="bar hunger"><div id="bar-hunger"></div></div>
+  <div class="label">Happiness</div>
+  <div class="bar happy"><div id="bar-happy"></div></div>
+  <div class="row">
+    <button id="btn-pet">💖 Pet</button>
+    <button id="btn-snack">🍤 Snack</button>
+    <button id="btn-bye">👋 Release</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <h2>Hatch a new squid!</h2>
+    <p>Pick a glow color and give your squid a name.</p>
+    <div class="swatches" id="swatches"></div>
+    <input id="hatch-name" maxlength="16" placeholder="Squid's name" spellcheck="false">
+    <div class="row">
+      <button id="hatch-cancel">Not yet</button>
+      <button class="go" id="hatch-go">✨ Hatch! ✨</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   GLASS SQUID AQUARIUM  —  a cozy tank of glowing glass squids
+   ===================================================================== */
+const canvas = document.getElementById("tank");
+const ctx = canvas.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+window.addEventListener("resize", resize);
+resize();
+
+const TAU = Math.PI * 2;
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const SAND = () => H - 70;
+
+/* ---------- colors you can hatch ---------- */
+const COLORS = [
+  { name: "Aqua",     hue: 190 },
+  { name: "Pink",     hue: 320 },
+  { name: "Mint",     hue: 160 },
+  { name: "Violet",   hue: 270 },
+  { name: "Sunny",    hue: 48  },
+  { name: "Coral",    hue: 12  },
+];
+const NAMES = ["Bubbles","Pearl","Glimmer","Inky","Nova","Twinkle","Marina","Sprinkle","Luna","Coral","Jelly","Shimmer","Pip","Blossom","Frosty","Ziggy"];
+
+/* ---------- sound (tiny blips, no files needed) ---------- */
+let soundOn = true, audio = null;
+function blip(freq, dur = .12, type = "sine", vol = .12) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const o = audio.createOscillator(), g = audio.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, audio.currentTime);
+    o.frequency.exponentialRampToValueAtTime(freq * 1.6, audio.currentTime + dur);
+    g.gain.setValueAtTime(vol, audio.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + dur);
+    o.connect(g); g.connect(audio.destination);
+    o.start(); o.stop(audio.currentTime + dur);
+  } catch (e) {}
+}
+
+/* ---------- state ---------- */
+let squids = [], foods = [], eggs = [], sparkles = [], bubbles = [], weeds = [];
+let night = false, selected = null, lastTime = performance.now(), frame = 0;
+
+function makeSquid(o = {}) {
+  return {
+    id: o.id || Math.random().toString(36).slice(2),
+    name: o.name || NAMES[Math.floor(Math.random() * NAMES.length)],
+    hue: o.hue ?? 190,
+    size: o.size ?? 1,            // grows to 2.2
+    hunger: o.hunger ?? 40,       // 0 = full, 100 = starving
+    happy: o.happy ?? 70,         // 0..100
+    x: o.x ?? rand(W * .2, W * .8), y: o.y ?? rand(H * .25, H * .65),
+    vx: 0, vy: 0, angle: 0, tx: 0, ty: 0, retarget: 0,
+    wob: Math.random() * TAU, blink: 0, pulse: Math.random() * TAU, glowBurst: 0,
+    bornAt: o.bornAt || Date.now(),
+  };
+}
+
+function save() {
+  try {
+    localStorage.setItem("glassSquidAquarium", JSON.stringify({
+      night, savedAt: Date.now(),
+      squids: squids.map(s => ({ id: s.id, name: s.name, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
+    }));
+  } catch (e) {}
+}
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem("glassSquidAquarium") || "null");
+    if (!d || !d.squids || !d.squids.length) return false;
+    // squids get a little hungry while you were away (but never starve!)
+    const away = clamp((Date.now() - (d.savedAt || Date.now())) / 3600000, 0, 6); // hours, max 6
+    squids = d.squids.map(s => makeSquid({ ...s, hunger: clamp(s.hunger + away * 8, 0, 85), happy: clamp(s.happy - away * 5, 20, 100) }));
+    night = !!d.night;
+    return true;
+  } catch (e) { return false; }
+}
+
+/* ---------- scenery ---------- */
+function buildScenery() {
+  bubbles = []; weeds = [];
+  for (let i = 0; i < 40; i++) bubbles.push({ x: Math.random() * W, y: Math.random() * H, r: rand(1.5, 5), vy: rand(.2, .7), wob: Math.random() * TAU });
+  const n = Math.max(6, Math.floor(W / 110));
+  for (let i = 0; i < n; i++) weeds.push({ x: (i + .5) * (W / n) + rand(-30, 30), h: rand(60, 170), seg: 6 + Math.floor(rand(0, 5)), phase: Math.random() * TAU, hue: rand(120, 175) });
+}
+
+/* ---------- squid drawing ---------- */
+function drawSquid(s) {
+  const r = 22 * s.size;                    // head radius
+  const L = r * 2.6;                        // mantle length
+  const glowLevel = night ? 1 : .55;
+  const hungryDim = 1 - (s.hunger / 100) * .55;
+  const glow = glowLevel * hungryDim + s.glowBurst;
+  const col = a => `hsla(${s.hue},100%,70%,${a})`;
+  const pulse = .85 + .15 * Math.sin(s.pulse);
+
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.rotate(s.angle);
+
+  /* outer glow */
+  const g = ctx.createRadialGradient(0, 0, r * .3, 0, 0, r * 3.2);
+  g.addColorStop(0, col(.35 * glow * pulse));
+  g.addColorStop(1, col(0));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(L * .3, 0, r * 3.2, 0, TAU); ctx.fill();
+
+  /* tentacles (trail behind the head, toward -x) */
+  const arms = 8;
+  for (let i = 0; i < arms; i++) {
+    const spread = (i - (arms - 1) / 2) / (arms - 1);
+    const len = r * (2.2 + (i % 2) * .7);
+    ctx.beginPath();
+    ctx.moveTo(-r * .6, spread * r * 1.1);
+    let px = -r * .6, py = spread * r * 1.1;
+    for (let k = 1; k <= 5; k++) {
+      const t = k / 5;
+      const wave = Math.sin(s.wob * 1.5 + i + t * 4) * r * .35 * t;
+      px = -r * .6 - len * t; py = spread * r * (1.1 + t * 1.2) + wave;
+      ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = col(.55 * (.5 + glow * .5));
+    ctx.lineWidth = Math.max(1.2, r * .13 * (1 - i % 2 * .3));
+    ctx.lineCap = "round";
+    ctx.stroke();
+  }
+
+  /* fins */
+  ctx.fillStyle = `rgba(200,245,255,${.18 + .12 * glow})`;
+  ctx.strokeStyle = `rgba(230,250,255,${.5})`;
+  ctx.lineWidth = 1.2;
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(L * .45, side * r * .55);
+    ctx.quadraticCurveTo(L * .8, side * r * 1.6 + Math.sin(s.wob * 2) * 3 * side, L * 1.05, side * r * .1);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  }
+
+  /* mantle (the glass body) */
+  ctx.beginPath();
+  ctx.moveTo(0, -r);
+  ctx.bezierCurveTo(L * .5, -r * 1.05, L * .95, -r * .35, L * 1.1, 0);
+  ctx.bezierCurveTo(L * .95, r * .35, L * .5, r * 1.05, 0, r);
+  ctx.closePath();
+  const body = ctx.createLinearGradient(0, -r, 0, r);
+  body.addColorStop(0, `rgba(220,248,255,${.22 + .1 * glow})`);
+  body.addColorStop(.5, `rgba(180,230,255,${.10})`);
+  body.addColorStop(1, `rgba(140,200,255,${.16})`);
+  ctx.fillStyle = body; ctx.fill();
+  ctx.strokeStyle = `rgba(235,252,255,${.6 + .3 * glow})`; ctx.lineWidth = 1.6; ctx.stroke();
+
+  /* glowing organs inside */
+  for (let i = 0; i < 4; i++) {
+    const ox = L * (.2 + i * .2), oy = Math.sin(s.pulse + i) * r * .25;
+    const og = ctx.createRadialGradient(ox, oy, 0, ox, oy, r * .45);
+    og.addColorStop(0, col(.9 * glow * pulse));
+    og.addColorStop(1, col(0));
+    ctx.fillStyle = og; ctx.beginPath(); ctx.arc(ox, oy, r * .45, 0, TAU); ctx.fill();
+  }
+  /* glass highlight */
+  ctx.beginPath();
+  ctx.moveTo(L * .1, -r * .6);
+  ctx.quadraticCurveTo(L * .5, -r * .85, L * .85, -r * .3);
+  ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
+
+  /* head */
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+  ctx.fillStyle = `rgba(200,240,255,${.16 + .08 * glow})`; ctx.fill();
+  ctx.strokeStyle = `rgba(235,252,255,${.55 + .3 * glow})`; ctx.lineWidth = 1.6; ctx.stroke();
+
+  /* eyes (big and cute; blink sometimes) */
+  const blinkY = s.blink > 0 ? .15 : 1;
+  for (const side of [-1, 1]) {
+    const ex = -r * .15, ey = side * r * .5, er = r * .36;
+    ctx.save(); ctx.translate(ex, ey); ctx.scale(1, blinkY);
+    ctx.beginPath(); ctx.arc(0, 0, er, 0, TAU);
+    ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill();
+    ctx.beginPath(); ctx.arc(er * .15, 0, er * .6, 0, TAU);
+    ctx.fillStyle = `hsl(${s.hue},80%,20%)`; ctx.fill();
+    ctx.beginPath(); ctx.arc(er * .35, -er * .25, er * .22, 0, TAU);
+    ctx.fillStyle = "#fff"; ctx.fill();
+    ctx.restore();
+  }
+  /* happy smile */
+  if (s.happy > 45) {
+    ctx.beginPath(); ctx.arc(-r * .55, 0, r * .28, Math.PI * .55, Math.PI * 1.45);
+    ctx.strokeStyle = `rgba(255,255,255,.7)`; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  ctx.restore();
+
+  /* name tag */
+  if (selected === s || s.glowBurst > 0) {
+    ctx.save();
+    ctx.font = `800 ${13 + 3 * s.size}px Nunito, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = `rgba(255,255,255,${.9})`;
+    ctx.shadowColor = `hsl(${s.hue},100%,70%)`; ctx.shadowBlur = 12;
+    ctx.fillText(s.name, s.x, s.y - r * 2.4);
+    ctx.restore();
+  }
+}
+
+/* ---------- scenery drawing ---------- */
+function drawBackground() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  if (night) { g.addColorStop(0, "#04122c"); g.addColorStop(.6, "#020a1e"); g.addColorStop(1, "#010612"); }
+  else       { g.addColorStop(0, "#3fb6ff"); g.addColorStop(.35, "#1a74c8"); g.addColorStop(.8, "#0a3a80"); g.addColorStop(1, "#062756"); }
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  /* light rays */
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  for (let i = 0; i < 7; i++) {
+    const x = (i * 220 + frame * .35) % (W + 300) - 150;
+    const a = (night ? .02 : .07) + Math.sin(frame * .006 + i) * .02;
+    ctx.fillStyle = `rgba(170,230,255,${Math.max(0, a)})`;
+    ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 230, H); ctx.lineTo(x - 230, H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+
+  /* sand */
+  const sy = SAND();
+  const sg = ctx.createLinearGradient(0, sy, 0, H);
+  sg.addColorStop(0, night ? "#25304a" : "#e9d7a3"); sg.addColorStop(1, night ? "#151c2e" : "#b89a5e");
+  ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.moveTo(0, H);
+  for (let x = 0; x <= W; x += 40) ctx.lineTo(x, sy + Math.sin(x * .02 + 1) * 6);
+  ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  /* shells / pebbles */
+  for (let i = 0; i < 12; i++) {
+    const x = (i * 197) % W, y = sy + 20 + (i * 53) % 35;
+    ctx.fillStyle = night ? "rgba(120,150,190,.35)" : ["#ffb6c1","#fff3b0","#b3f0ff","#f6d6ff"][i % 4];
+    ctx.beginPath(); ctx.ellipse(x, y, 7, 4, 0, 0, TAU); ctx.fill();
+  }
+
+  /* seaweed */
+  for (const w of weeds) {
+    ctx.beginPath(); ctx.moveTo(w.x, sy + 8);
+    for (let k = 1; k <= w.seg; k++) {
+      const t = k / w.seg;
+      ctx.lineTo(w.x + Math.sin(frame * .02 + w.phase + t * 3) * 18 * t, sy + 8 - w.h * t);
+    }
+    ctx.strokeStyle = `hsla(${w.hue},70%,${night ? 30 : 45}%,.85)`;
+    ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.stroke();
+  }
+
+  /* bubbles */
+  for (const b of bubbles) {
+    b.y -= b.vy; b.wob += .03;
+    if (b.y < -10) { b.y = sy; b.x = Math.random() * W; }
+    ctx.beginPath(); ctx.arc(b.x + Math.sin(b.wob) * 6, b.y, b.r, 0, TAU);
+    ctx.strokeStyle = "rgba(220,245,255,.45)"; ctx.lineWidth = 1; ctx.stroke();
+  }
+}
+
+function drawFood(f) {
+  ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.spin);
+  ctx.font = "18px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("🍤", 0, 0);
+  ctx.restore();
+}
+function drawEgg(e) {
+  ctx.save(); ctx.translate(e.x, e.y);
+  ctx.rotate(Math.sin(e.t * 12) * .15 * Math.min(1, e.t / 2));
+  const g = ctx.createRadialGradient(-6, -8, 2, 0, 0, 26);
+  g.addColorStop(0, "rgba(255,255,255,.9)"); g.addColorStop(1, `hsla(${e.hue},100%,70%,.55)`);
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(0, 0, 20, 26, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 1.5; ctx.stroke();
+  if (e.t > 1.5) {
+    ctx.strokeStyle = "rgba(20,40,80,.6)"; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.moveTo(-10, -4); ctx.lineTo(-3, 2); ctx.lineTo(3, -5); ctx.lineTo(10, 1); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawSparkles() {
+  for (const p of sparkles) {
+    ctx.save(); ctx.globalAlpha = p.life;
+    ctx.font = `${p.size}px serif`; ctx.textAlign = "center";
+    ctx.fillText(p.ch, p.x, p.y);
+    ctx.restore();
+  }
+}
+function burst(x, y, chars, n = 10) {
+  for (let i = 0; i < n; i++) sparkles.push({ x, y, vx: rand(-1.6, 1.6), vy: rand(-2.5, -.5), life: 1, size: rand(12, 22), ch: chars[i % chars.length] });
+}
+
+/* ---------- update ---------- */
+function update(dt) {
+  const sy = SAND();
+  for (const s of squids) {
+    s.wob += dt * 2.2; s.pulse += dt * 3;
+    s.hunger = clamp(s.hunger + dt * .35, 0, 100);
+    s.happy = clamp(s.happy - dt * .12, 0, 100);
+    s.glowBurst = Math.max(0, s.glowBurst - dt * .8);
+    if (s.blink > 0) s.blink -= dt; else if (Math.random() < dt * .3) s.blink = .15;
+
+    /* where to go: food if hungry, otherwise wander */
+    let goal = null;
+    if (foods.length && s.hunger > 15) {
+      let best = null, bd = 1e9;
+      for (const f of foods) { const d = Math.hypot(f.x - s.x, f.y - s.y); if (d < bd) { bd = d; best = f; } }
+      goal = best;
+    }
+    if (goal) { s.tx = goal.x; s.ty = goal.y; }
+    else {
+      s.retarget -= dt;
+      if (s.retarget <= 0 || Math.hypot(s.tx - s.x, s.ty - s.y) < 30) {
+        s.tx = rand(80, W - 80); s.ty = rand(90, sy - 60); s.retarget = rand(2, 5);
+      }
+    }
+    const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy) || 1;
+    const speed = (goal ? 95 : 32) * (1 - s.hunger / 300);
+    s.vx += (dx / d * speed - s.vx) * dt * 1.5;
+    s.vy += (dy / d * speed - s.vy) * dt * 1.5;
+    s.x += s.vx * dt; s.y += s.vy * dt + Math.sin(s.wob) * .25;
+    s.x = clamp(s.x, 40, W - 40); s.y = clamp(s.y, 70, sy - 30);
+    /* face the way we swim (mantle points where we're going) */
+    const want = Math.atan2(s.vy, s.vx);
+    let diff = want - s.angle; while (diff > Math.PI) diff -= TAU; while (diff < -Math.PI) diff += TAU;
+    s.angle += diff * dt * 3;
+
+    /* eat! */
+    if (goal && Math.hypot(goal.x - s.x, goal.y - s.y) < 24 * s.size + 10) {
+      foods.splice(foods.indexOf(goal), 1);
+      s.hunger = clamp(s.hunger - 30, 0, 100);
+      s.happy = clamp(s.happy + 8, 0, 100);
+      const before = level(s.size);
+      s.size = clamp(s.size + .045, 1, 2.2);
+      s.glowBurst = .8;
+      burst(s.x, s.y, ["✨", "💫"], 6);
+      blip(520, .12, "triangle");
+      if (level(s.size) !== before) { toast(`${s.name} grew! Now a ${level(s.size)} squid! 🎉`); burst(s.x, s.y, ["🎉", "⭐", "✨"], 14); blip(660, .3, "sine", .18); }
+      save();
+    }
+  }
+  for (const f of foods) { f.y += 22 * dt; f.x += Math.sin(f.y * .05) * .3; f.spin += dt; f.age += dt; }
+  foods = foods.filter(f => f.y < sy - 10 && f.age < 40);
+  for (const e of eggs) {
+    e.t += dt;
+    if (e.t > 3) {
+      const s = makeSquid({ name: e.name, hue: e.hue, size: 1, hunger: 30, happy: 90, x: e.x, y: e.y - 30 });
+      squids.push(s); select(s);
+      burst(e.x, e.y, ["✨", "🌟", "💖"], 16); blip(440, .35, "sine", .18);
+      toast(`${s.name} hatched! Say hi! 🦑`);
+      save();
+    }
+  }
+  eggs = eggs.filter(e => e.t <= 3);
+  for (const p of sparkles) { p.x += p.vx; p.y += p.vy; p.vy += .03; p.life -= dt * .8; }
+  sparkles = sparkles.filter(p => p.life > 0);
+  if (selected) refreshCard();
+}
+
+function level(size) {
+  return size < 1.2 ? "Baby" : size < 1.5 ? "Little" : size < 1.8 ? "Big" : size < 2.1 ? "Giant" : "Legendary";
+}
+
+/* ---------- main loop ---------- */
+function loop(now) {
+  const dt = Math.min(.05, (now - lastTime) / 1000); lastTime = now; frame++;
+  update(dt);
+  drawBackground();
+  for (const e of eggs) drawEgg(e);
+  for (const f of foods) drawFood(f);
+  for (const s of [...squids].sort((a, b) => a.size - b.size)) drawSquid(s);
+  drawSparkles();
+  if (night) {
+    ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- interaction ---------- */
+function squidAt(x, y) {
+  let hit = null, bd = 1e9;
+  for (const s of squids) { const d = Math.hypot(s.x - x, s.y - y); if (d < 50 * s.size && d < bd) { bd = d; hit = s; } }
+  return hit;
+}
+canvas.addEventListener("pointerdown", ev => {
+  const x = ev.clientX, y = ev.clientY;
+  const s = squidAt(x, y);
+  if (s) pet(s); else dropFood(x, y);
+  document.getElementById("hint").classList.add("hide");
+});
+function dropFood(x, y) {
+  if (foods.length >= 12) { toast("That's a lot of snacks already! 🍤"); return; }
+  foods.push({ x, y: Math.max(60, y), spin: 0, age: 0 });
+  blip(300, .08, "sine", .08);
+}
+function pet(s) {
+  select(s);
+  s.happy = clamp(s.happy + 12, 0, 100);
+  s.glowBurst = 1;
+  burst(s.x, s.y - 20, ["💖", "💕", "✨"], 8);
+  blip(700, .15, "sine", .1);
+  save();
+}
+function select(s) {
+  selected = s;
+  document.getElementById("card").classList.add("show");
+  document.getElementById("name-input").value = s.name;
+  refreshCard();
+}
+function refreshCard() {
+  const s = selected; if (!s) return;
+  const days = Math.max(0, Math.floor((Date.now() - s.bornAt) / 86400000));
+  const colorName = (COLORS.find(c => c.hue === s.hue) || { name: "Glowy" }).name;
+  const age = days === 0 ? "hatched today" : days + " day" + (days > 1 ? "s" : "") + " old";
+  document.getElementById("level").textContent = `${level(s.size)} squid · ${colorName} glow · ${age}`;
+  document.getElementById("bar-hunger").style.width = (100 - s.hunger) + "%";
+  document.getElementById("bar-happy").style.width = s.happy + "%";
+}
+document.getElementById("card-close").onclick = () => { selected = null; document.getElementById("card").classList.remove("show"); };
+document.getElementById("name-input").addEventListener("input", e => { if (selected) { selected.name = e.target.value.trim() || "Squid"; save(); } });
+document.getElementById("btn-pet").onclick = () => selected && pet(selected);
+document.getElementById("btn-snack").onclick = () => selected && dropFood(selected.x + rand(-60, 60), 60);
+document.getElementById("btn-bye").onclick = () => {
+  if (!selected) return;
+  if (squids.length <= 1) { toast("Your tank would be empty! Hatch a friend first 🥚"); return; }
+  if (!confirm(`Release ${selected.name} back to the ocean? 🌊`)) return;
+  const gone = selected;
+  burst(gone.x, gone.y, ["🌊", "👋", "💙"], 12);
+  squids.splice(squids.indexOf(gone), 1);
+  toast(`Bye bye ${gone.name}! Swim free! 🌊`);
+  selected = null; document.getElementById("card").classList.remove("show");
+  save();
+};
+
+/* hatch dialog */
+let pickHue = COLORS[0].hue;
+const swatchBox = document.getElementById("swatches");
+COLORS.forEach((c, i) => {
+  const d = document.createElement("div");
+  d.className = "swatch" + (i === 0 ? " pick" : ""); d.title = c.name;
+  d.style.setProperty("--c", `hsl(${c.hue},100%,65%)`);
+  d.onclick = () => { pickHue = c.hue; [...swatchBox.children].forEach(x => x.classList.remove("pick")); d.classList.add("pick"); blip(400 + i * 60, .08); };
+  swatchBox.appendChild(d);
+});
+document.getElementById("btn-hatch").onclick = () => {
+  if (squids.length >= 8) { toast("The tank is full! Release a squid to make room 🌊"); return; }
+  document.getElementById("hatch-name").value = NAMES[Math.floor(Math.random() * NAMES.length)];
+  document.getElementById("overlay").classList.add("show");
+};
+document.getElementById("hatch-cancel").onclick = () => document.getElementById("overlay").classList.remove("show");
+document.getElementById("hatch-go").onclick = () => {
+  const name = document.getElementById("hatch-name").value.trim() || "Squid";
+  document.getElementById("overlay").classList.remove("show");
+  eggs.push({ x: rand(W * .25, W * .75), y: SAND() - 22, hue: pickHue, name, t: 0 });
+  blip(350, .2, "triangle");
+  toast("An egg! Watch it wiggle… 🥚");
+};
+
+/* night + sound */
+const nightBtn = document.getElementById("btn-night");
+function applyNight() { nightBtn.textContent = night ? "☀️ Lights on" : "🌙 Lights off"; nightBtn.classList.toggle("on", night); }
+nightBtn.onclick = () => { night = !night; applyNight(); blip(night ? 260 : 520, .2); save(); };
+document.getElementById("btn-sound").onclick = e => { soundOn = !soundOn; e.target.textContent = soundOn ? "🔊 Sound" : "🔇 Muted"; if (soundOn) blip(500, .1); };
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 2600);
+}
+
+/* ---------- start ---------- */
+buildScenery();
+if (!load()) {
+  squids.push(makeSquid({ name: "Pearl", hue: 190, x: W * .4, y: H * .45 }));
+  squids.push(makeSquid({ name: "Glimmer", hue: 320, x: W * .6, y: H * .5, size: 1.1 }));
+  save();
+}
+applyNight();
+window.addEventListener("resize", buildScenery);
+setInterval(save, 15000);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
