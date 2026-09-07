@@ -160,6 +160,10 @@
   .deco { position:relative; }
   .deco .num { position:absolute; top:-7px; right:-7px; background:#ff44cc; color:#fff; border-radius:999px; font-size:.65rem; padding:1px 7px; box-shadow:0 0 8px rgba(255,68,204,.7); }
   #show-start { background:linear-gradient(135deg,#ff9f1c,#ff44cc); border:none; }
+  #cook-btn { background:linear-gradient(135deg,#ff9f1c,#ff4d6d); border:none; }
+  #cook-btn:disabled { opacity:.6; transform:none; cursor:wait; }
+  .recipe-info { font-size:.8rem; color:rgba(200,240,255,.85); margin-top:8px; line-height:1.45; }
+  .recipe-info b { color:#fff; }
   .deco:hover { transform:scale(1.06); background:rgba(255,255,255,.12); }
   .deco.pick { border-color:#fff; background:rgba(255,120,220,.25); transform:scale(1.08); }
   .tray .row { display:flex; gap:8px; }
@@ -185,6 +189,7 @@
     <button id="btn-scene">🌅 Scene</button>
     <button id="btn-booth">📸 Photo Booth</button>
     <button id="btn-show">🎪 Show</button>
+    <button id="btn-kitchen">🍳 Kitchen</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -250,6 +255,17 @@
   <div class="row" style="margin-top:8px">
     <button id="booth-snap">📸 Snap a photo!</button>
     <button id="booth-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="tray" id="kitchen">
+  <div class="tray-title">🍳 Snack Kitchen</div>
+  <div class="tray-tip" id="kitchen-tip">Pick a recipe, cook it, then tap the water to serve!</div>
+  <div class="tray-items" id="recipes"></div>
+  <div class="recipe-info" id="recipe-info"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="cook-btn">🔥 Cook it!</button>
+    <button id="kitchen-done">✅ Done</button>
   </div>
 </div>
 
@@ -356,6 +372,19 @@ const GLASSES = { none: ["🚫", "None"], shades: ["🕶️", "Shades"], hearts:
 const FRAMES  = { none: ["🖼️", "Plain"], hearts: ["💖", "Hearts"], stars: ["🌟", "Stars"], shells: ["🐚", "Shells"], rainbow: ["🌈", "Rainbow"], polaroid: ["📷", "Polaroid"] };
 const booth = { open: false, dressing: null, frame: "none", busy: false, freeze: false, count: 0, countT: 0, flash: 0, dataURL: null };
 let show = { active: false, acts: [] }, rings = [];
+
+/* ---------- snack kitchen ---------- */
+const SNACKS = {
+  shrimp:  { name: "Shrimp",        emoji: "🍤", ing: "Just a shrimp. The classic!",                     power: "Fills tummies and helps friends grow." },
+  rainbow: { name: "Rainbow snack", emoji: "🌈", ing: "Rainbow kelp + sea sparkles + a pinch of magic",   power: "Friends shimmer through every color for a while!" },
+  cake:    { name: "Giant cake",    emoji: "🍰", ing: "Plankton flour + coral frosting + 3 candles",      power: "Friends grow a LOT in one bite." },
+  tea:     { name: "Sleepy tea",    emoji: "🍵", ing: "Moon petals + warm ocean water + honey",            power: "Friends take a cozy nap with Zzz." },
+  berry:   { name: "Zoom berry",    emoji: "⚡", ing: "Lightning berries + fizzy foam",                    power: "Friends zoom around super fast!" },
+  gum:     { name: "Bubble gum",    emoji: "🫧", ing: "Sea foam + pink sugar",                             power: "Friends blow glowing bubble rings." },
+  cookie:  { name: "Love cookie",   emoji: "💗", ing: "Heart-shaped shells + strawberry sand",             power: "Friends feel super loved. Hearts everywhere!" },
+  ice:     { name: "Ice pop",       emoji: "🧊", ing: "Iceberg chips + blueberry juice",                   power: "Brrr! Friends turn frosty blue and shiver." },
+};
+let pantry = { type: "shrimp", left: -1 }, cooking = false;
 const MELODY = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 880, 784, 659, 587];
 const CROWD = ["🐟", "🦀", "🐢", "🐡", "🦐", "🐬", "🐙", "🐠", "🦭"];
 const kindOf = s => KINDS[s.kind] || KINDS.squid;
@@ -424,6 +453,7 @@ function makeSquid(o = {}) {
     buddy: o.buddy || null,
     parents: Array.isArray(o.parents) ? o.parents : [],
     baby: !!o.baby,
+    fx: {},
     face: 1, tilt: 0,
     hue: o.hue ?? 190,
     size: o.size ?? 1,            // grows to 2.2
@@ -439,7 +469,7 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, scene: sceneKey, savedAt: Date.now(),
+      night, decos, scene: sceneKey, pantry, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hat: s.hat, glasses: s.glasses, buddy: s.buddy, parents: s.parents, baby: s.baby, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -453,6 +483,7 @@ function load() {
     squids = d.squids.map(s => makeSquid({ ...s, hunger: clamp(s.hunger + away * 8, 0, 85), happy: clamp(s.happy - away * 5, 20, 100) }));
     night = !!d.night;
     sceneKey = SCENES[d.scene] ? d.scene : "reef";
+    pantry = d.pantry && SNACKS[d.pantry.type] ? d.pantry : { type: "shrimp", left: -1 };
     decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
@@ -499,8 +530,9 @@ function drawCreature(s) {
   const r = 22 * s.size;
   const glowLevel = night ? 1 : .55;
   const hungryDim = 1 - (s.hunger / 100) * .55;
-  const glow = glowLevel * hungryDim + s.glowBurst;
-  const col = a => `hsla(${s.hue},100%,70%,${a})`;
+  const glow = glowLevel * hungryDim + s.glowBurst + (s.fx.rainbow || s.fx.love ? .4 : 0);
+  const hue = s.fx.rainbow ? (frame * 3 + s.x) % 360 : s.fx.ice ? 200 : s.hue;
+  const col = a => `hsla(${hue},100%,70%,${a})`;
   const pulse = .85 + .15 * Math.sin(s.pulse);
 
   ctx.save();
@@ -1182,8 +1214,20 @@ function drawDeco(d) {
 function drawFood(f) {
   ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.spin);
   ctx.font = "18px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("🍤", 0, 0);
+  ctx.fillText((SNACKS[f.type] || SNACKS.shrimp).emoji, 0, 0);
   ctx.restore();
+}
+function applySnack(s, type) {
+  switch (type) {
+    case "rainbow": s.fx.rainbow = 15; toast(`${s.name} is shimmering with rainbow colors! 🌈`); burst(s.x, s.y, ["💖", "💛", "💚", "💙", "💜"], 12); break;
+    case "cake": s.size = clamp(s.size + .15, .7, 2.2); s.happy = clamp(s.happy + 20, 0, 100); toast(`${s.name} grew a LOT! 🍰`); burst(s.x, s.y, ["🎂", "✨", "⭐"], 12); break;
+    case "tea": s.fx.sleepy = 12; s.vx = s.vy = 0; toast(`${s.name} is taking a cozy nap 💤`); break;
+    case "berry": s.fx.zoom = 12; s.retarget = 0; toast(`${s.name} is ZOOMING! ⚡`); break;
+    case "gum": s.fx.gum = 10; toast(`${s.name} is blowing bubble rings! 🫧`); break;
+    case "cookie": s.fx.love = 10; s.happy = 100; toast(`${s.name} feels so loved! 💗`); burst(s.x, s.y, ["💗", "💕"], 10); break;
+    case "ice": s.fx.ice = 10; toast(`Brrr! ${s.name} is frosty! 🧊`); burst(s.x, s.y, ["❄️"], 8); break;
+  }
+  blip(760, .2, "sine", .12);
 }
 function drawEgg(e) {
   ctx.save(); ctx.translate(e.x, e.y);
@@ -1221,6 +1265,20 @@ function update(dt) {
     s.glowBurst = Math.max(0, s.glowBurst - dt * .8);
     if (s.blink > 0) s.blink -= dt; else if (Math.random() < dt * .3) s.blink = .15;
 
+    /* snack powers */
+    for (const k in s.fx) { s.fx[k] -= dt; if (s.fx[k] <= 0) delete s.fx[k]; }
+    if (s.fx.rainbow && Math.random() < dt * 4) sparkles.push(sp(s.x + rand(-30, 30), s.y + rand(-30, 30), ["💖", "💛", "💚", "💙", "💜"][Math.floor(Math.random() * 5)]));
+    if (s.fx.ice && Math.random() < dt * 3) sparkles.push(sp(s.x + rand(-30, 30), s.y + rand(-30, 30), "❄️"));
+    if (s.fx.love && Math.random() < dt * 2.5) sparkles.push(sp(s.x + rand(-20, 20), s.y - 20, "💗"));
+    if (s.fx.gum && Math.random() < dt * 2) rings.push({ x: s.x, y: s.y - 10, r: 6, life: 1, hue: 320 });
+    if (s.fx.zoom && Math.random() < dt * 8) sparkles.push(sp(s.x, s.y, "⚡"));
+    if (s.fx.sleepy) {
+      s.blink = .5; s.hunger = clamp(s.hunger - dt * .35, 0, 100); s.happy = clamp(s.happy + dt * .6, 0, 100);
+      s.vx *= .96; s.vy *= .96; s.x += s.vx * dt; s.y += s.vy * dt + Math.sin(s.wob * .5) * .2;
+      if (Math.random() < dt * 1.2) sparkles.push(sp(s.x + 20, s.y - 25, "💤"));
+      continue;
+    }
+
     /* where to go: food if hungry, otherwise wander */
     let goal = null;
     if (foods.length && s.hunger > 15) {
@@ -1243,7 +1301,7 @@ function update(dt) {
     }
     const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy) || 1;
     const kind = kindOf(s);
-    const speed = (goal ? kind.chase : kind.speed) * (1 - s.hunger / 300);
+    const speed = (goal ? kind.chase : kind.speed) * (1 - s.hunger / 300) * (s.fx.zoom ? 2.6 : s.fx.ice ? .6 : 1);
     s.vx += (dx / d * speed - s.vx) * dt * 1.5;
     s.vy += (dy / d * speed - s.vy) * dt * 1.5;
     s.x += s.vx * dt; s.y += s.vy * dt + Math.sin(s.wob) * .25;
@@ -1259,6 +1317,7 @@ function update(dt) {
       s.tilt += (wantTilt - s.tilt) * dt * 3;
     }
     if (s.kind === "jelly") s.y += Math.sin(s.pulse) * .5;   // jellyfish bob with every pulse
+    if (s.fx.ice) s.x += Math.sin(s.wob * 30) * .8;          // shivering!
 
     /* eat! */
     if (goal && Math.hypot(goal.x - s.x, goal.y - s.y) < 24 * s.size + 10) {
@@ -1271,6 +1330,7 @@ function update(dt) {
       burst(s.x, s.y, ["✨", "💫"], 6);
       blip(520, .12, "triangle");
       if (s.baby && s.size >= 1) { s.baby = false; toast(`${s.name} is all grown up! 🎉👶➡️🦑`); burst(s.x, s.y, ["🎉", "💖", "✨"], 16); blip(700, .3, "sine", .18); }
+      if (goal.type && goal.type !== "shrimp") applySnack(s, goal.type);
       if (level(s.size) !== before) { toast(`${s.name} grew! Now a ${level(s.size)} squid! 🎉`); burst(s.x, s.y, ["🎉", "⭐", "✨"], 14); blip(660, .3, "sine", .18); }
       save();
     }
@@ -1429,7 +1489,13 @@ canvas.addEventListener("pointerdown", ev => {
 });
 function dropFood(x, y) {
   if (foods.length >= 12) { toast("That's a lot of snacks already! 🍤"); return; }
-  foods.push({ x, y: Math.max(60, y), spin: 0, age: 0 });
+  const type = pantry.type;
+  foods.push({ x, y: Math.max(60, y), spin: 0, age: 0, type });
+  if (pantry.left > 0) {
+    pantry.left--;
+    if (pantry.left === 0) { toast(`All out of ${SNACKS[type].name}! Back to shrimp 🍤`); pantry = { type: "shrimp", left: -1 }; }
+    updateKitchenTip(); save();
+  }
   blip(300, .08, "sine", .08);
 }
 function pet(s) {
@@ -1585,9 +1651,54 @@ Object.entries(DECOS).forEach(([key, k], i) => {
 });
 function setDecorating(on) {
   decorating = on; tray.classList.toggle("show", on); decoBtn.classList.toggle("on", on);
-  if (on) { if (booth.open) setBooth(false); setShowTray(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
+  if (on) { if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
   else placing = null;
 }
+
+/* snack kitchen */
+const kitchenEl = document.getElementById("kitchen"), kitchenBtn = document.getElementById("btn-kitchen"), recipeBox = document.getElementById("recipes");
+const recipeInfo = document.getElementById("recipe-info"), cookBtn = document.getElementById("cook-btn");
+let pickedRecipe = "rainbow";
+Object.entries(SNACKS).forEach(([key, sn], i) => {
+  if (key === "shrimp") return;
+  const el = document.createElement("div");
+  el.className = "deco"; el.dataset.key = key; el.innerHTML = `<span>${sn.emoji}</span>${sn.name}`;
+  el.onclick = () => { pickedRecipe = key; renderRecipe(); blip(380 + i * 40, .07); };
+  recipeBox.appendChild(el);
+});
+function renderRecipe() {
+  markPick(recipeBox, pickedRecipe);
+  const sn = SNACKS[pickedRecipe];
+  recipeInfo.innerHTML = `<b>${sn.emoji} ${sn.name}</b><br>Ingredients: ${sn.ing}<br>Power: ${sn.power}`;
+  cookBtn.textContent = cooking ? "🍳 Cooking…" : `🔥 Cook ${sn.name}!`;
+}
+function updateKitchenTip() {
+  const sn = SNACKS[pantry.type];
+  document.getElementById("kitchen-tip").textContent = pantry.left > 0
+    ? `Serving now: ${sn.emoji} ${sn.name} · ${pantry.left} left. Tap the water to serve!`
+    : "Serving now: 🍤 Shrimp. Pick a recipe and cook something special!";
+}
+function setKitchen(on) {
+  kitchenEl.classList.toggle("show", on); kitchenBtn.classList.toggle("on", on);
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); renderRecipe(); updateKitchenTip(); }
+}
+kitchenBtn.onclick = () => { setKitchen(!kitchenEl.classList.contains("show")); blip(500, .1); };
+document.getElementById("kitchen-done").onclick = () => setKitchen(false);
+cookBtn.onclick = () => {
+  if (cooking) return;
+  cooking = true; cookBtn.disabled = true; renderRecipe();
+  const type = pickedRecipe, sn = SNACKS[type];
+  toast(`Cooking ${sn.emoji} ${sn.name}… 🍳`);
+  let sizzles = 0;
+  const sizzle = setInterval(() => { blip(200 + Math.random() * 300, .06, "sawtooth", .03); burst(W / 2, 140, ["♨️", "✨"], 2); if (++sizzles >= 6) clearInterval(sizzle); }, 250);
+  setTimeout(() => {
+    cooking = false; cookBtn.disabled = false;
+    pantry = { type, left: 3 };
+    renderRecipe(); updateKitchenTip(); save();
+    burst(W / 2, 140, [sn.emoji, "✨", "⭐"], 14); blip(880, .3, "sine", .14);
+    toast(`${sn.emoji} ${sn.name} is ready! 3 servings. Tap the water to serve!`);
+  }, 1700);
+};
 
 /* photo booth */
 const boothEl = document.getElementById("booth"), boothBtn = document.getElementById("btn-booth");
@@ -1617,7 +1728,7 @@ function setBooth(on) {
   booth.open = on; boothEl.classList.toggle("show", on); boothBtn.classList.toggle("on", on);
   if (on) {
     if (decorating) setDecorating(false);
-    setShowTray(false);
+    setShowTray(false); setKitchen(false);
     selected = null; document.getElementById("card").classList.remove("show");
     booth.dressing = null; dressSec.hidden = true; boothTip.textContent = "Tap a friend to dress them up!";
   } else booth.dressing = null;
@@ -1694,7 +1805,7 @@ function renderActs() {
 }
 function setShowTray(on) {
   showTrayEl.classList.toggle("show", on); showBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); selected = null; document.getElementById("card").classList.remove("show"); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setKitchen(false); selected = null; document.getElementById("card").classList.remove("show"); }
 }
 showBtn.onclick = () => { setShowTray(!showTrayEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("show-done").onclick = () => setShowTray(false);
