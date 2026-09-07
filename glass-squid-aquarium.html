@@ -157,6 +157,9 @@
     transition:transform .15s, border-color .15s, background .15s;
   }
   .deco span { font-size:1.5rem; line-height:1; }
+  .deco { position:relative; }
+  .deco .num { position:absolute; top:-7px; right:-7px; background:#ff44cc; color:#fff; border-radius:999px; font-size:.65rem; padding:1px 7px; box-shadow:0 0 8px rgba(255,68,204,.7); }
+  #show-start { background:linear-gradient(135deg,#ff9f1c,#ff44cc); border:none; }
   .deco:hover { transform:scale(1.06); background:rgba(255,255,255,.12); }
   .deco.pick { border-color:#fff; background:rgba(255,120,220,.25); transform:scale(1.08); }
   .tray .row { display:flex; gap:8px; }
@@ -181,6 +184,7 @@
     <button id="btn-deco">🏰 Decorate</button>
     <button id="btn-scene">🌅 Scene</button>
     <button id="btn-booth">📸 Photo Booth</button>
+    <button id="btn-show">🎪 Show</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -246,6 +250,27 @@
   <div class="row" style="margin-top:8px">
     <button id="booth-snap">📸 Snap a photo!</button>
     <button id="booth-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="tray" id="showtray">
+  <div class="tray-title">🎪 Show Time!</div>
+  <div class="tray-tip" id="show-tip">Tap the acts your friends will perform, in order.</div>
+  <div class="tray-items" id="acts"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="show-start">🎬 Start the show!</button>
+    <button id="show-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="overlay" id="show-overlay">
+  <div class="dialog">
+    <h2>That's a wrap! 🎬</h2>
+    <p id="show-sub"></p>
+    <div class="row">
+      <button class="go" id="show-encore">🎬 Encore!</button>
+      <button id="show-close">Close</button>
+    </div>
   </div>
 </div>
 
@@ -330,6 +355,9 @@ const HATS    = { none: ["🚫", "None"], party: ["🎉", "Party"], crown: ["�
 const GLASSES = { none: ["🚫", "None"], shades: ["🕶️", "Shades"], hearts: ["💕", "Hearts"], stars: ["⭐", "Stars"] };
 const FRAMES  = { none: ["🖼️", "Plain"], hearts: ["💖", "Hearts"], stars: ["🌟", "Stars"], shells: ["🐚", "Shells"], rainbow: ["🌈", "Rainbow"], polaroid: ["📷", "Polaroid"] };
 const booth = { open: false, dressing: null, frame: "none", busy: false, freeze: false, count: 0, countT: 0, flash: 0, dataURL: null };
+let show = { active: false, acts: [] }, rings = [];
+const MELODY = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 880, 784, 659, 587];
+const CROWD = ["🐟", "🦀", "🐢", "🐡", "🦐", "🐬", "🐙", "🐠", "🦭"];
 const kindOf = s => KINDS[s.kind] || KINDS.squid;
 
 /* ---------- sound (tiny blips, no files needed) ---------- */
@@ -1260,9 +1288,22 @@ function update(dt) {
     }
   }
   eggs = eggs.filter(e => e.t <= 3);
+  updateSparkles(dt); updateRings(dt);
+  if (selected) refreshCard();
+}
+function updateSparkles(dt) {
   for (const p of sparkles) { p.x += p.vx; p.y += p.vy; p.vy += .03; p.life -= dt * .8; }
   sparkles = sparkles.filter(p => p.life > 0);
-  if (selected) refreshCard();
+}
+function updateRings(dt) {
+  for (const r of rings) { r.r += dt * 40; r.y -= dt * 25; r.life -= dt * .5; }
+  rings = rings.filter(r => r.life > 0);
+}
+function drawRings() {
+  for (const r of rings) {
+    ctx.strokeStyle = `hsla(${r.hue},100%,80%,${r.life * .8})`; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, TAU); ctx.stroke();
+  }
 }
 
 function level(size) {
@@ -1278,15 +1319,17 @@ function mixHue(a, b) {
 /* ---------- main loop ---------- */
 function loop(now) {
   const dt = Math.min(.05, (now - lastTime) / 1000); lastTime = now; frame++;
-  if (!booth.freeze) update(dt);
+  if (show.active) showUpdate(dt); else if (!booth.freeze) update(dt);
   drawBackground();
+  if (show.active) drawSpotlights();
   for (const e of eggs) drawEgg(e);
   for (const f of foods) drawFood(f);
   for (const s of [...squids].sort((a, b) => a.size - b.size)) drawCreature(s);
-  drawSparkles();
+  drawSparkles(); drawRings();
   if (night) {
     ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
   }
+  if (show.active) drawShowStage();
   boothStep(dt);
   requestAnimationFrame(loop);
 }
@@ -1360,6 +1403,10 @@ function squidAt(x, y) {
 canvas.addEventListener("pointerdown", ev => {
   const x = ev.clientX, y = ev.clientY;
   document.getElementById("hint").classList.add("hide");
+  if (show.active) {
+    show.claps++; burst(x, y, ["👏"], 4); blip(900 + Math.random() * 300, .05, "square", .04);
+    return;
+  }
   if (booth.busy) return;
   if (booth.open) {
     const s = squidAt(x, y);
@@ -1538,7 +1585,7 @@ Object.entries(DECOS).forEach(([key, k], i) => {
 });
 function setDecorating(on) {
   decorating = on; tray.classList.toggle("show", on); decoBtn.classList.toggle("on", on);
-  if (on) { if (booth.open) setBooth(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
+  if (on) { if (booth.open) setBooth(false); setShowTray(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
   else placing = null;
 }
 
@@ -1570,9 +1617,185 @@ function setBooth(on) {
   booth.open = on; boothEl.classList.toggle("show", on); boothBtn.classList.toggle("on", on);
   if (on) {
     if (decorating) setDecorating(false);
+    setShowTray(false);
     selected = null; document.getElementById("card").classList.remove("show");
     booth.dressing = null; dressSec.hidden = true; boothTip.textContent = "Tap a friend to dress them up!";
   } else booth.dressing = null;
+}
+
+/* ---------- show time ---------- */
+const showTrayEl = document.getElementById("showtray"), showBtn = document.getElementById("btn-show"), actBox = document.getElementById("acts");
+let pickedActs = [];
+function faceDir(s, dx, dy) {
+  const kind = kindOf(s);
+  if (kind.mode === "heading") s.angle = Math.atan2(dy, dx);
+  else if (kind.mode === "flip") { if (Math.abs(dx) > .01) s.face = dx > 0 ? 1 : -1; s.tilt = Math.atan2(dy, Math.abs(dx) + .001) * Math.max(.4, kind.tiltK * 1.5); }
+}
+const sp = (x, y, ch) => ({ x, y, vx: rand(-1, 1), vy: rand(-1.5, -.5), life: 1, size: rand(12, 18), ch });
+const ACTS = {
+  loop:   { name: "Loop-de-loop", emoji: "🔁", run(s, i, t, slot, dt) {
+    const a = t * TAU / 2.5 + i * .4, R = 60;
+    s.x = slot.x + Math.sin(a) * R; s.y = slot.y - (1 - Math.cos(a)) * R;
+    faceDir(s, Math.cos(a), -Math.sin(a));
+    if (Math.random() < dt * 3) sparkles.push(sp(s.x, s.y, "✨"));
+  } },
+  spin:   { name: "Super spin", emoji: "🌀", run(s, i, t, slot, dt) {
+    s.x += (slot.x - s.x) * dt * 4; s.y = slot.y + Math.sin(t * 6 + i) * 6;
+    if (kindOf(s).mode === "heading") s.angle += dt * 10; else { s.face = Math.sin(t * 12 + i) > 0 ? 1 : -1; s.tilt = Math.sin(t * 12 + i) * .35; }
+    if (Math.random() < dt * 4) sparkles.push(sp(s.x + rand(-30, 30), s.y + rand(-30, 30), "✨"));
+  } },
+  jump:   { name: "Big jump", emoji: "🐬", run(s, i, t, slot, dt) {
+    s.x += (slot.x - s.x) * dt * 4;
+    const ph = (t * 1.1 + i * .3) % 2;
+    if (ph < 1) {
+      s.y = slot.y - Math.sin(ph * Math.PI) * H * .28;
+      faceDir(s, .25 * (s.face || 1), ph < .5 ? -(1 - ph * 2) - .2 : (ph - .5) * 2 + .2);
+      if ((ph < .06 || ph > .94) && Math.random() < dt * 25) burst(s.x, slot.y + 24, ["💦"], 3);
+    } else { s.y += (slot.y - s.y) * dt * 6; faceDir(s, s.face || 1, 0); }
+  } },
+  bubble: { name: "Bubble rings", emoji: "🫧", run(s, i, t, slot, dt) {
+    s.x += (slot.x - s.x) * dt * 4; s.y = slot.y + Math.sin(t * 2 + i) * 10;
+    faceDir(s, s.face || 1, Math.sin(t * 2 + i) * .1);
+    if (Math.random() < dt * 2.5) rings.push({ x: s.x, y: s.y - 10, r: 6, life: 1, hue: s.hue });
+  } },
+  glow:   { name: "Glow dance", emoji: "🌈",
+    start() { show.prevNight = night; night = true; applyNight(); for (const s of squids) s.baseHue = s.hue; },
+    run(s, i, t, slot, dt) {
+      s.hue = (s.baseHue + t * 100) % 360; s.glowBurst = .6 + .6 * Math.abs(Math.sin(t * 6 + i));
+      s.x += (slot.x - s.x) * dt * 3; s.y = slot.y + Math.sin(t * 4 + i) * 35;
+      if (kindOf(s).mode === "heading") s.angle = Math.sin(t * 4 + i) * .6; else s.tilt = Math.sin(t * 4 + i) * .3;
+      if (Math.random() < dt * 3) sparkles.push(sp(s.x + rand(-40, 40), s.y + rand(-40, 40), ["💖", "💙", "💚", "💛", "💜"][i % 5]));
+    },
+    end() { night = show.prevNight; applyNight(); for (const s of squids) { if (s.baseHue != null) s.hue = s.baseHue; } } },
+  conga:  { name: "Conga line", emoji: "🎶", run(s, i, t, slot, dt) {
+    const path = tt => ({ x: W * (.5 + .38 * Math.sin(tt * .9)), y: H * .45 + Math.sin(tt * 3) * 50 });
+    const tt = t - i * .35, p = path(tt), q = path(tt + .05);
+    s.x = p.x; s.y = p.y; faceDir(s, q.x - p.x, q.y - p.y);
+    if (Math.random() < dt * 2) sparkles.push(sp(s.x, s.y + 20, "🎶"));
+  } },
+};
+Object.entries(ACTS).forEach(([key, a], i) => {
+  const el = document.createElement("div");
+  el.className = "deco"; el.dataset.key = key; el.innerHTML = `<span>${a.emoji}</span>${a.name}`;
+  el.onclick = () => {
+    const at = pickedActs.indexOf(key);
+    if (at >= 0) pickedActs.splice(at, 1); else if (pickedActs.length < 4) pickedActs.push(key); else { toast("Four acts is plenty for one show! 🎪"); return; }
+    renderActs(); blip(400 + i * 40, .07);
+  };
+  actBox.appendChild(el);
+});
+function renderActs() {
+  [...actBox.children].forEach(el => {
+    const at = pickedActs.indexOf(el.dataset.key);
+    el.classList.toggle("pick", at >= 0);
+    const old = el.querySelector(".num"); if (old) old.remove();
+    if (at >= 0) { const n = document.createElement("span"); n.className = "num"; n.textContent = at + 1; el.appendChild(n); }
+  });
+}
+function setShowTray(on) {
+  showTrayEl.classList.toggle("show", on); showBtn.classList.toggle("on", on);
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); selected = null; document.getElementById("card").classList.remove("show"); }
+}
+showBtn.onclick = () => { setShowTray(!showTrayEl.classList.contains("show")); blip(500, .1); };
+document.getElementById("show-done").onclick = () => setShowTray(false);
+document.getElementById("show-start").onclick = () => {
+  if (!pickedActs.length) { const keys = Object.keys(ACTS); pickedActs = [...keys].sort(() => Math.random() - .5).slice(0, 3); renderActs(); toast("I picked three acts for you! 🎪"); }
+  startShow([...pickedActs]);
+};
+document.getElementById("show-close").onclick = () => document.getElementById("show-overlay").classList.remove("show");
+document.getElementById("show-encore").onclick = () => { document.getElementById("show-overlay").classList.remove("show"); startShow(show.acts); };
+
+function startShow(acts) {
+  if (!squids.length) return;
+  setShowTray(false); setDecorating(false); setBooth(false);
+  selected = null; document.getElementById("card").classList.remove("show");
+  show = { active: true, acts, i: -1, t: 0, clock: 0, phase: "open", claps: 0, beatT: 0, note: -1, prevNight: night };
+  for (const s of squids) { s.glowBurst = 0; s.baseHue = s.hue; }
+  foods = []; rings = [];
+  blip(392, .2, "triangle", .1); toast("🎪 Ladies and gentlefish… the show is starting!");
+}
+function showSlots() {
+  const n = squids.length, gap = Math.min(.16, .8 / Math.max(1, n - 1));
+  return squids.map((s, i) => ({ x: W * (.5 + (i - (n - 1) / 2) * gap), y: H * .45 }));
+}
+function showUpdate(dt) {
+  show.t += dt; show.clock += dt; show.beatT += dt;
+  const slots = showSlots();
+  for (const s of squids) { s.wob += dt * 2.2; s.pulse += dt * 3; s.glowBurst = Math.max(0, s.glowBurst - dt * .8); }
+  updateSparkles(dt); updateRings(dt);
+  const beatLen = show.phase === "finale" ? .17 : .25;
+  if (show.beatT >= beatLen) { show.beatT = 0; show.note = (show.note + 1) % MELODY.length; blip(MELODY[show.note], .16, "triangle", .045); }
+  if (show.phase === "open") {
+    squids.forEach((s, i) => { s.x += (slots[i].x - s.x) * dt * 3; s.y += (slots[i].y - s.y) * dt * 3; faceDir(s, 1, 0); if (kindOf(s).mode === "heading") s.angle += (0 - s.angle) * dt * 4; });
+    if (show.t > 2) nextAct();
+  } else if (show.phase === "act") {
+    const act = ACTS[show.acts[show.i]];
+    squids.forEach((s, i) => act.run(s, i, show.t, slots[i], dt));
+    if (show.t > 5) { if (act.end) act.end(); nextAct(); }
+  } else if (show.phase === "finale") {
+    squids.forEach((s, i) => { s.x += (slots[i].x - s.x) * dt * 3; s.y = slots[i].y - Math.abs(Math.sin(show.t * 5 + i)) * 25; s.glowBurst = 1; faceDir(s, s.face || 1, 0); if (kindOf(s).mode === "heading") s.angle += (0 - s.angle) * dt * 4; });
+    if (Math.random() < dt * 4) burst(rand(W * .1, W * .9), rand(H * .1, H * .4), ["🎆", "✨", "🎉", "⭐"], 10);
+    if (Math.random() < dt * 6) burst(rand(0, W), H - 30, ["👏"], 2);
+    if (show.t > 4.5) endShow();
+  }
+}
+function nextAct() {
+  show.i++; show.t = 0;
+  if (show.i >= show.acts.length) { show.phase = "finale"; toast("Grand finale! 🎆"); blip(1047, .3, "triangle", .1); return; }
+  const act = ACTS[show.acts[show.i]]; show.phase = "act";
+  toast(`${act.emoji} ${act.name}!`); if (act.start) act.start();
+}
+function endShow() {
+  show.active = false;
+  night = show.prevNight; applyNight();
+  for (const s of squids) { if (s.baseHue != null) s.hue = s.baseHue; s.happy = clamp(s.happy + 20, 0, 100); s.glowBurst = 1; s.retarget = 0; s.tilt = 0; }
+  const stars = Math.min(5, 3 + Math.floor(show.claps / 4));
+  const star = squids[Math.floor(Math.random() * squids.length)];
+  document.getElementById("show-sub").innerHTML =
+    `<span style="font-size:1.6rem">${"⭐".repeat(stars)}</span><br>` +
+    (stars === 5 ? "AMAZING! The crowd went wild!" : stars === 4 ? "Wonderful! The crowd loved it!" : "Great show! Clap more next time for extra stars!") +
+    `<br>🌟 Star of the show: <b>${star.name}</b> · 👏 ${show.claps} claps`;
+  document.getElementById("show-overlay").classList.add("show");
+  save();
+}
+function drawSpotlights() {
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  for (const [ox, hue, ph] of [[W * .12, 320, 0], [W * .88, 190, 2]]) {
+    const bx = W * .5 + Math.sin(show.clock * .8 + ph) * W * .3;
+    ctx.fillStyle = `hsla(${hue},100%,70%,.14)`;
+    ctx.beginPath(); ctx.moveTo(ox, -10); ctx.lineTo(bx - 110, H); ctx.lineTo(bx + 110, H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawShowStage() {
+  const excited = show.phase === "finale";
+  /* audience */
+  ctx.fillStyle = "rgba(0,0,20,.35)"; ctx.fillRect(0, H - 48, W, 48);
+  ctx.font = "26px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const n = Math.floor(W / 46) + 1;
+  for (let i = 0; i < n; i++) {
+    const bounce = Math.abs(Math.sin(show.clock * (excited ? 9 : 3) + i)) * (excited ? 10 : 4);
+    ctx.fillText(CROWD[i % CROWD.length], 23 + i * 46, H - 22 - bounce);
+  }
+  /* curtains */
+  const open = show.phase === "open" ? Math.min(1, show.t / 1.6) : 1;
+  const w = W * .5 * (1 - open);
+  if (w > 0) for (const side of [0, 1]) {
+    const x0 = side ? W - w : 0;
+    const g = ctx.createLinearGradient(x0, 0, x0 + w, 0); g.addColorStop(0, "#8b0f2a"); g.addColorStop(.5, "#c41e3a"); g.addColorStop(1, "#8b0f2a");
+    ctx.fillStyle = g; ctx.fillRect(x0, 0, w, H);
+    ctx.fillStyle = "rgba(0,0,0,.18)"; for (let x = x0 + 18; x < x0 + w; x += 36) ctx.fillRect(x, 0, 10, H);
+  }
+  ctx.fillStyle = "#c41e3a"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 30);
+  for (let x = W; x > 0; x -= 60) ctx.quadraticCurveTo(x - 30, 64, x - 60, 30);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#ffd75e"; ctx.fillRect(0, 0, W, 8);
+  /* headline */
+  const msg = show.phase === "open" ? "🎪 SHOW TIME! 🎪" : show.phase === "finale" ? "🎉 GRAND FINALE 🎉" : `${ACTS[show.acts[show.i]].emoji} ${ACTS[show.acts[show.i]].name}`;
+  ctx.save(); ctx.font = "800 30px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = "#fff"; ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 8; ctx.fillText(msg, W / 2, 96);
+  ctx.font = "700 15px Nunito, sans-serif"; ctx.fillText(`👏 Tap anywhere to clap! · ${show.claps} claps`, W / 2, 124);
+  ctx.restore();
 }
 boothBtn.onclick = () => { setBooth(!booth.open); blip(booth.open ? 520 : 300, .1); };
 document.getElementById("booth-done").onclick = () => setBooth(false);
