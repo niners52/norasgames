@@ -32,7 +32,7 @@
     font-family:inherit; font-weight:800; font-size:.95rem; cursor:pointer;
     color:#eaf9ff; background:rgba(10,50,110,.75);
     border:1px solid rgba(140,220,255,.45); border-radius:999px;
-    padding:9px 16px; backdrop-filter:blur(6px);
+    padding:8px 13px; backdrop-filter:blur(6px);
     box-shadow:0 0 12px rgba(60,180,255,.25);
     transition:transform .15s, box-shadow .15s, background .15s;
   }
@@ -175,6 +175,9 @@
   .item.rare      { border-color:rgba(255,125,224,.65); }
   .item.legendary { border-color:#ffd75e; box-shadow:0 0 12px rgba(255,215,94,.45); }
   .item.legendary:not(.none) { background:rgba(255,215,94,.12); }
+  .item.earned { border-color:#ffd75e; background:rgba(255,215,94,.12); box-shadow:0 0 10px rgba(255,215,94,.35); }
+  .item.none .e { filter:grayscale(1) opacity(.5); }
+  .item .hint { display:block; font-weight:600; opacity:.75; font-size:.58rem; line-height:1.2; margin-top:2px; }
   @media (max-width:600px) { .book { grid-template-columns:repeat(3, 1fr); } }
   #cook-btn { background:linear-gradient(135deg,#ff9f1c,#ff4d6d); border:none; }
   #cook-btn:disabled { opacity:.6; transform:none; cursor:wait; }
@@ -207,6 +210,7 @@
     <button id="btn-show">🎪 Show</button>
     <button id="btn-kitchen">🍳 Kitchen</button>
     <button id="btn-visitors">🔭 Visitors</button>
+    <button id="btn-stickers">🏅 Stickers</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -304,6 +308,15 @@
       <button class="go" id="show-encore">🎬 Encore!</button>
       <button id="show-close">Close</button>
     </div>
+  </div>
+</div>
+
+<div class="overlay" id="sticker-overlay">
+  <div class="dialog big">
+    <h2>Sticker Book 🏅</h2>
+    <p id="sticker-sub"></p>
+    <div class="book" id="sticker-book"></div>
+    <button class="wide" id="sticker-close">Close</button>
   </div>
 </div>
 
@@ -427,6 +440,73 @@ const VISITORS = {
   dragon:   { name: "Sea Dragon",     emoji: "🐲", size: 70,  rarity: "legendary", layer: "front", flip: false, desc: "A glowing serpent from the deepest deep." },
 };
 let visitor = null, visitorTimer = 40, visitors = {};
+
+/* ---------- talking friends ---------- */
+const NOTES = [["Do", 523], ["Re", 587], ["Mi", 659], ["Fa", 698], ["Sol", 784], ["La", 880], ["Ti", 988], ["Do", 1047]];
+const noteOf = s => NOTES[Math.floor(((s.hue % 360) / 360) * 8) % 8];
+const LINES = {
+  hungry: ["I'm sooo hungry 🍤", "Snack please? 🥺", "My tummy is rumbling!", "Is it snack time yet?"],
+  happy:  ["Best day ever! 💖", "I love this tank!", "Wheee! 🌊", "Look at me swim!", "You're my favorite! 💕", "Hi! 👋", "Let's play!", "I'm so glowy today ✨"],
+  baby:   ["Goo goo ga ga 🍼", "Mama? Papa?", "I'm growing! ✨", "Tiny but mighty!"],
+  night:  ["The stars are so pretty ✨", "I glow best at night!", "Sweet dreams… 🌙"],
+  ice:    ["Brrr! Chilly! ❄️", "Ice skating time! ⛸️"],
+  lava:   ["It's toasty in here 🌋", "Ouch, hot sand!"],
+  galaxy: ["Are we in space?! 🚀", "I see a planet! 🪐"],
+  deep:   ["It's dark down here… 👀", "Spooky and cool!"],
+  sunset: ["What a pretty sky 🌅", "Golden hour! ✨"],
+  pet:    ["Hehe, that tickles!", "Pet me more! 💖", "That's the spot!", "Giggle giggle 😊"],
+  eat:    ["Yummy! 😋", "Nom nom nom", "More please!", "Delicious!"],
+  sleepy: ["Zzz… 💤", "So cozy… 😴"],
+  buddy:  n => [`${n} is my best friend! 💞`, `Hey ${n}, wait for me!`, `I love ${n}! 💕`],
+};
+const pickLine = pool => pool[Math.floor(Math.random() * pool.length)];
+function say(s, text, dur = 3.2) { s.say = { text, t: dur, dur }; }
+function chatter(s) {
+  const sc = sceneKey;
+  let pool;
+  if (s.fx.sleepy) pool = LINES.sleepy;
+  else if (s.hunger > 60) pool = LINES.hungry;
+  else if (s.baby && Math.random() < .5) pool = LINES.baby;
+  else if (s.buddy && byId(s.buddy) && Math.random() < .3) pool = LINES.buddy(byId(s.buddy).name);
+  else if (night && Math.random() < .4) pool = LINES.night;
+  else if (LINES[sc] && Math.random() < .4) pool = LINES[sc];
+  else pool = LINES.happy;
+  say(s, pickLine(pool));
+  stats.chats++; if (stats.chats % 5 === 0) checkStickers();
+}
+
+/* ---------- sticker book ---------- */
+const STICKERS = [
+  { id: "hatch1",   emoji: "🥚", name: "First Hatch",      hint: "Hatch your first friend",           test: st => st.hatched >= 1 },
+  { id: "allkinds", emoji: "🌟", name: "Full Collection",  hint: "Hatch all 5 kinds of creatures",    test: st => Object.keys(st.kinds).length >= 5 },
+  { id: "snack10",  emoji: "🍤", name: "Snack Time",       hint: "Feed 10 snacks",                     test: st => st.snacks >= 10 },
+  { id: "snack100", emoji: "🍽️", name: "Big Appetite",     hint: "Feed 100 snacks",                    test: st => st.snacks >= 100 },
+  { id: "pet25",    emoji: "💖", name: "Cuddle Bug",       hint: "Pet your friends 25 times",          test: st => st.pets >= 25 },
+  { id: "legend",   emoji: "👑", name: "Legendary Friend", hint: "Grow a friend to Legendary size",    test: () => squids.some(s => s.size >= 2.1) },
+  { id: "buddies",  emoji: "💞", name: "Best Buddies",     hint: "Make two friends best buddies",      test: st => st.buddies >= 1 },
+  { id: "baby",     emoji: "👶", name: "New Family",       hint: "Hatch a baby",                       test: st => st.babies >= 1 },
+  { id: "show",     emoji: "🎪", name: "Showstopper",      hint: "Put on a show",                      test: st => st.shows >= 1 },
+  { id: "fivestar", emoji: "⭐", name: "Five Stars",       hint: "Get a 5-star show. Clap a lot!",     test: st => st.fiveStar >= 1 },
+  { id: "photo",    emoji: "📸", name: "Say Cheese",       hint: "Take a photo in the Photo Booth",    test: st => st.photos >= 1 },
+  { id: "deco5",    emoji: "🏰", name: "Decorator",        hint: "Place 5 decorations",                test: st => st.decos >= 5 },
+  { id: "scenes",   emoji: "🌍", name: "World Traveler",   hint: "Visit all 6 scenes",                 test: st => Object.keys(st.scenes).length >= 6 },
+  { id: "chef",     emoji: "🍳", name: "Master Chef",      hint: "Cook 5 special snacks",              test: st => st.cooked >= 5 },
+  { id: "watcher",  emoji: "🔭", name: "Sea Watcher",      hint: "Spot 5 different visitors",          test: () => Object.keys(visitors).length >= 5 },
+  { id: "dragon",   emoji: "🐲", name: "Dragon Spotter",   hint: "Spot the legendary Sea Dragon",      test: () => !!visitors.dragon },
+  { id: "night",    emoji: "🌙", name: "Night Owl",        hint: "Turn the lights off",                test: st => st.night >= 1 },
+  { id: "fashion",  emoji: "🎩", name: "Fashionista",      hint: "Give 3 friends a hat at once",       test: () => squids.filter(s => s.hat && s.hat !== "none").length >= 3 },
+  { id: "house",    emoji: "🏠", name: "Full House",       hint: "Have 8 friends in the tank",         test: () => squids.length >= 8 },
+  { id: "chatty",   emoji: "💬", name: "Good Listener",    hint: "Hear your friends talk 20 times",    test: st => st.chats >= 20 },
+];
+function defaultStats() { return { hatched: 0, kinds: {}, snacks: 0, pets: 0, buddies: 0, babies: 0, shows: 0, fiveStar: 0, photos: 0, decos: 0, scenes: {}, cooked: 0, night: 0, chats: 0 }; }
+let stats = defaultStats(), stickers = {};
+function checkStickers() {
+  const fresh = [];
+  for (const st of STICKERS) { if (!stickers[st.id] && st.test(stats)) { stickers[st.id] = Date.now(); fresh.push(st); } }
+  if (!fresh.length) return;
+  fresh.forEach((st, i) => setTimeout(() => { toast(`🏅 New sticker: ${st.emoji} ${st.name}!`); burst(W / 2, 130, [st.emoji, "🏅", "✨"], 14); blip(988, .35, "sine", .16); }, i * 1600));
+  updateStickerButton(); save();
+}
 const MELODY = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 880, 784, 659, 587];
 const CROWD = ["🐟", "🦀", "🐢", "🐡", "🦐", "🐬", "🐙", "🐠", "🦭"];
 const kindOf = s => KINDS[s.kind] || KINDS.squid;
@@ -495,7 +575,7 @@ function makeSquid(o = {}) {
     buddy: o.buddy || null,
     parents: Array.isArray(o.parents) ? o.parents : [],
     baby: !!o.baby,
-    fx: {},
+    fx: {}, say: null, chat: rand(4, 20),
     face: 1, tilt: 0,
     hue: o.hue ?? 190,
     size: o.size ?? 1,            // grows to 2.2
@@ -511,7 +591,7 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, scene: sceneKey, pantry, visitors, savedAt: Date.now(),
+      night, decos, scene: sceneKey, pantry, visitors, stats, stickers, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hat: s.hat, glasses: s.glasses, buddy: s.buddy, parents: s.parents, baby: s.baby, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -527,6 +607,12 @@ function load() {
     sceneKey = SCENES[d.scene] ? d.scene : "reef";
     pantry = d.pantry && SNACKS[d.pantry.type] ? d.pantry : { type: "shrimp", left: -1 };
     visitors = d.visitors && typeof d.visitors === "object" ? d.visitors : {};
+    stickers = d.stickers && typeof d.stickers === "object" ? d.stickers : {};
+    stats = Object.assign(defaultStats(), d.stats || {});
+    if (!d.stats) {   // give credit for everything already in the tank
+      stats.hatched = squids.length; squids.forEach(s => stats.kinds[s.kind] = 1);
+      stats.babies = squids.filter(s => s.parents.length).length; stats.buddies = squids.some(s => s.buddy) ? 1 : 0;
+    }
     decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
@@ -608,6 +694,21 @@ function drawCreature(s) {
     ctx.fillText(s.name, s.x, s.y - r * kind.tag);
     ctx.restore();
   }
+  drawBubble(s, kind, r);
+}
+function drawBubble(s, kind, r) {
+  if (!s.say) return;
+  const a = clamp(Math.min(s.say.t / .3, (s.say.dur - s.say.t) / .25), 0, 1);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.font = "800 14px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const w = ctx.measureText(s.say.text).width + 24, h = 30;
+  const bx = clamp(s.x, w / 2 + 6, W - w / 2 - 6), by = s.y - r * kind.tag - 42;
+  const tx = clamp(s.x, bx - w / 2 + 14, bx + w / 2 - 14);
+  ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.strokeStyle = "rgba(0,60,120,.25)"; ctx.lineWidth = 1.5;
+  rr(bx - w / 2, by - h / 2, w, h, 12); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx - 6, by + h / 2 - 1); ctx.lineTo(tx + 6, by + h / 2 - 1); ctx.lineTo(tx, by + h / 2 + 9); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#0b2a55"; ctx.fillText(s.say.text, bx, by + 1);
+  ctx.restore();
 }
 
 /* ---------- hats & glasses ---------- */
@@ -1308,6 +1409,10 @@ function update(dt) {
     s.glowBurst = Math.max(0, s.glowBurst - dt * .8);
     if (s.blink > 0) s.blink -= dt; else if (Math.random() < dt * .3) s.blink = .15;
 
+    /* talking */
+    if (s.say) { s.say.t -= dt; if (s.say.t <= 0) s.say = null; }
+    s.chat -= dt; if (s.chat <= 0) { chatter(s); s.chat = rand(18, 40); }
+
     /* snack powers */
     for (const k in s.fx) { s.fx[k] -= dt; if (s.fx[k] <= 0) delete s.fx[k]; }
     if (s.fx.rainbow && Math.random() < dt * 4) sparkles.push(sp(s.x + rand(-30, 30), s.y + rand(-30, 30), ["💖", "💛", "💚", "💙", "💜"][Math.floor(Math.random() * 5)]));
@@ -1372,6 +1477,8 @@ function update(dt) {
       s.glowBurst = .8;
       burst(s.x, s.y, ["✨", "💫"], 6);
       blip(520, .12, "triangle");
+      stats.snacks++; if (Math.random() < .5) say(s, pickLine(LINES.eat), 2.2);
+      if (stats.snacks % 5 === 0) checkStickers();
       if (s.baby && s.size >= 1) { s.baby = false; toast(`${s.name} is all grown up! 🎉👶➡️🦑`); burst(s.x, s.y, ["🎉", "💖", "✨"], 16); blip(700, .3, "sine", .18); }
       if (goal.type && goal.type !== "shrimp") applySnack(s, goal.type);
       if (level(s.size) !== before) { toast(`${s.name} grew! Now a ${level(s.size)} squid! 🎉`); burst(s.x, s.y, ["🎉", "⭐", "✨"], 14); blip(660, .3, "sine", .18); }
@@ -1385,6 +1492,8 @@ function update(dt) {
     if (e.t > 3) {
       const s = makeSquid({ name: e.name, kind: e.kind, hue: e.hue, size: e.baby ? .7 : 1, hunger: 30, happy: 90, x: e.x, y: e.y - 30, parents: e.parents || [], baby: !!e.baby });
       squids.push(s); select(s);
+      stats.hatched++; stats.kinds[s.kind] = 1; if (s.baby) stats.babies++;
+      say(s, "Hello world! 👋"); checkStickers();
       burst(e.x, e.y, ["✨", "🌟", "💖"], 16); blip(440, .35, "sine", .18);
       toast(e.baby ? `${s.name} hatched! A tiny baby ${kindOf(s).name.toLowerCase()}! 👶💞` : `${s.name} the ${kindOf(s).name} hatched! Say hi! ${kindOf(s).emoji}`);
       save();
@@ -1454,7 +1563,8 @@ function spotVisitor(v) {
   toast(visitors[v.id] === 1 ? `You spotted a ${d.name}! ${d.emoji} New badge in your Visitor Book! 🏅` : `${d.name} again! ${d.emoji} Spotted ${visitors[v.id]} times`);
   if (v.id === "balloon") { burst(v.x, v.y, ["💥"], 6); v.dead = true; }
   for (const s of squids) s.happy = clamp(s.happy + 5, 0, 100);
-  updateVisitorButton(); save();
+  if (squids.length) say(squids[Math.floor(Math.random() * squids.length)], `Wow, a ${d.name}! ${d.emoji}`);
+  updateVisitorButton(); checkStickers(); save();
 }
 function drawVisitor(v) {
   const d = VISITORS[v.id];
@@ -1580,6 +1690,7 @@ function takeSnapshot() {
   const c = snap.getContext("2d"); c.drawImage(canvas, 0, 0); c.setTransform(DPR, 0, 0, DPR, 0, 0);
   drawFrame(c, booth.frame);
   booth.dataURL = snap.toDataURL("image/png");
+  stats.photos++; setTimeout(checkStickers, 1200);
 }
 function drawFrame(c, key) {
   const pad = 26;
@@ -1663,7 +1774,11 @@ function pet(s) {
   s.happy = clamp(s.happy + 12, 0, 100);
   s.glowBurst = 1;
   burst(s.x, s.y - 20, ["💖", "💕", "✨"], 8);
-  blip(700, .15, "sine", .1);
+  const [noteName, freq] = noteOf(s);
+  blip(freq, .35, "sine", .14);
+  sparkles.push(sp(s.x + 24, s.y - 30, "♪"));
+  say(s, Math.random() < .5 ? `♪ ${noteName}! ♪` : pickLine(LINES.pet), 2.4);
+  stats.pets++; if (stats.pets % 5 === 0) checkStickers();
   save();
 }
 function select(s) {
@@ -1693,6 +1808,7 @@ function makeBuddies(a, b) {
   if (a.parents.includes(b.id) || b.parents.includes(a.id)) { toast(`${a.name} and ${b.name} are family already! 👨‍👩‍👧`); return; }
   for (const s of [a, b]) { const old = byId(s.buddy); if (old && old !== a && old !== b) old.buddy = null; }
   a.buddy = b.id; b.buddy = a.id;
+  stats.buddies++; say(a, `${b.name} is my best friend! 💞`); say(b, `Yay, ${a.name}! 💕`); checkStickers();
   burst(a.x, a.y - 20, ["💞", "💕"], 8); burst(b.x, b.y - 20, ["💞", "💕"], 8);
   a.happy = clamp(a.happy + 10, 0, 100); b.happy = clamp(b.happy + 10, 0, 100);
   blip(660, .25, "sine", .14); toast(`${a.name} and ${b.name} are best buddies now! 💞`);
@@ -1788,6 +1904,7 @@ function placeDeco(kind, x) {
   const hues = DECOS[kind].hues;
   decos.push({ kind, xf: clamp(x, 50, W - 50) / W, scale: rand(.85, 1.15), phase: rand(0, 10), hue: hues[Math.floor(Math.random() * hues.length)] });
   burst(x, SAND() - 30, ["✨", "⭐"], 8); blip(480, .12, "triangle");
+  stats.decos++; checkStickers();
   save();
 }
 function removeDeco(d) {
@@ -1854,6 +1971,7 @@ cookBtn.onclick = () => {
   setTimeout(() => {
     cooking = false; cookBtn.disabled = false;
     pantry = { type, left: 3 };
+    stats.cooked++; checkStickers();
     renderRecipe(); updateKitchenTip(); save();
     burst(W / 2, 140, [sn.emoji, "✨", "⭐"], 14); blip(880, .3, "sine", .14);
     toast(`${sn.emoji} ${sn.name} is ready! 3 servings. Tap the water to serve!`);
@@ -1874,7 +1992,7 @@ function buildPicker(boxId, table, onPick) {
   });
   return box;
 }
-const hatBox = buildPicker("hats", HATS, k => { if (booth.dressing) { booth.dressing.hat = k; booth.dressing.glowBurst = 1; save(); } });
+const hatBox = buildPicker("hats", HATS, k => { if (booth.dressing) { booth.dressing.hat = k; booth.dressing.glowBurst = 1; if (k !== "none") say(booth.dressing, "Do I look fancy? ✨", 2.5); checkStickers(); save(); } });
 const glassBox = buildPicker("glasses", GLASSES, k => { if (booth.dressing) { booth.dressing.glasses = k; booth.dressing.glowBurst = 1; save(); } });
 const frameBox = buildPicker("frames", FRAMES, k => { booth.frame = k; });
 markPick(frameBox, "none");
@@ -2022,6 +2140,8 @@ function endShow() {
   for (const s of squids) { if (s.baseHue != null) s.hue = s.baseHue; s.happy = clamp(s.happy + 20, 0, 100); s.glowBurst = 1; s.retarget = 0; s.tilt = 0; }
   const stars = Math.min(5, 3 + Math.floor(show.claps / 4));
   const star = squids[Math.floor(Math.random() * squids.length)];
+  stats.shows++; if (stars === 5) stats.fiveStar++;
+  say(star, "That was so fun! 🎪"); setTimeout(checkStickers, 800);
   document.getElementById("show-sub").innerHTML =
     `<span style="font-size:1.6rem">${"⭐".repeat(stars)}</span><br>` +
     (stars === 5 ? "AMAZING! The crowd went wild!" : stars === 4 ? "Wonderful! The crowd loved it!" : "Great show! Clap more next time for extra stars!") +
@@ -2095,6 +2215,7 @@ const sceneBox = document.getElementById("scenes"), sceneOverlay = document.getE
 function setScene(key) {
   sceneKey = SCENES[key] ? key : "reef";
   buildScenery();
+  stats.scenes[sceneKey] = 1; checkStickers();
   [...sceneBox.children].forEach(el => el.classList.toggle("pick", el.dataset.key === sceneKey));
   save();
 }
@@ -2108,6 +2229,29 @@ Object.entries(SCENES).forEach(([key, sc], i) => {
 });
 document.getElementById("btn-scene").onclick = () => sceneOverlay.classList.add("show");
 document.getElementById("scene-close").onclick = () => sceneOverlay.classList.remove("show");
+
+/* sticker book */
+function updateStickerButton() {
+  const n = Object.keys(stickers).length;
+  document.getElementById("btn-stickers").textContent = n ? `🏅 Stickers ${n}/${STICKERS.length}` : "🏅 Stickers";
+}
+function renderStickerBook() {
+  const box = document.getElementById("sticker-book"); box.innerHTML = "";
+  let got = 0;
+  for (const st of STICKERS) {
+    const has = !!stickers[st.id]; if (has) got++;
+    const el = document.createElement("div");
+    el.className = `item ${has ? "earned" : "none"}`;
+    el.innerHTML = `<span class="e">${st.emoji}</span>${st.name}<span class="hint">${has ? "Earned! ✔" : st.hint}</span>`;
+    box.appendChild(el);
+  }
+  document.getElementById("sticker-sub").textContent = got === STICKERS.length
+    ? `You earned ALL ${STICKERS.length} stickers! You're the aquarium champion! 🏆`
+    : `${got} of ${STICKERS.length} stickers earned. Here's how to get the rest!`;
+}
+document.getElementById("btn-stickers").onclick = () => { renderStickerBook(); document.getElementById("sticker-overlay").classList.add("show"); blip(500, .1); };
+document.getElementById("sticker-close").onclick = () => document.getElementById("sticker-overlay").classList.remove("show");
+setInterval(checkStickers, 10000);
 
 /* visitor book */
 function updateVisitorButton() {
@@ -2136,7 +2280,7 @@ document.getElementById("visitor-close").onclick = () => document.getElementById
 /* night + sound */
 const nightBtn = document.getElementById("btn-night");
 function applyNight() { nightBtn.textContent = night ? "☀️ Lights on" : "🌙 Lights off"; nightBtn.classList.toggle("on", night); }
-nightBtn.onclick = () => { night = !night; applyNight(); blip(night ? 260 : 520, .2); save(); };
+nightBtn.onclick = () => { night = !night; applyNight(); blip(night ? 260 : 520, .2); if (night) { stats.night = 1; checkStickers(); } save(); };
 document.getElementById("btn-sound").onclick = e => { soundOn = !soundOn; e.target.textContent = soundOn ? "🔊 Sound" : "🔇 Muted"; if (soundOn) blip(500, .1); };
 
 let toastTimer;
@@ -2155,7 +2299,7 @@ if (!load()) {
 }
 applyNight();
 setScene(sceneKey);
-updateVisitorButton();
+updateVisitorButton(); updateStickerButton();
 window.addEventListener("resize", buildScenery);
 setInterval(save, 15000);
 requestAnimationFrame(loop);
