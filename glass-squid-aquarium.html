@@ -178,6 +178,13 @@
   .item.earned { border-color:#ffd75e; background:rgba(255,215,94,.12); box-shadow:0 0 10px rgba(255,215,94,.35); }
   .item.none .e { filter:grayscale(1) opacity(.5); }
   .item .hint { display:block; font-weight:600; opacity:.75; font-size:.58rem; line-height:1.2; margin-top:2px; }
+  .shop-sec { grid-column:1 / -1; font-weight:800; color:#9be7ff; text-transform:uppercase; font-size:.72rem; letter-spacing:.6px; margin-top:6px; text-align:left; }
+  .item .buy { margin-top:6px; font-size:.7rem; padding:4px 8px; width:100%; }
+  .item .buy:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+  .swatch { position:relative; }
+  .locked { opacity:.55; }
+  .locked::after { content:"🔒"; position:absolute; top:-7px; right:-7px; font-size:.85rem; }
+  #btn-shop { background:rgba(255,200,60,.22); border-color:rgba(255,215,94,.6); color:#ffe9a8; }
   @media (max-width:600px) { .book { grid-template-columns:repeat(3, 1fr); } }
   #cook-btn { background:linear-gradient(135deg,#ff9f1c,#ff4d6d); border:none; }
   #cook-btn:disabled { opacity:.6; transform:none; cursor:wait; }
@@ -211,6 +218,8 @@
     <button id="btn-kitchen">🍳 Kitchen</button>
     <button id="btn-visitors">🔭 Visitors</button>
     <button id="btn-stickers">🏅 Stickers</button>
+    <button id="btn-weather">🌦️ Weather</button>
+    <button id="btn-shop">🪙 0</button>
     <button id="btn-night">🌙 Lights off</button>
     <button id="btn-sound">🔊 Sound</button>
   </div>
@@ -276,6 +285,25 @@
   <div class="row" style="margin-top:8px">
     <button id="booth-snap">📸 Snap a photo!</button>
     <button id="booth-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="tray" id="weathertray">
+  <div class="tray-title">🌦️ Weather &amp; Seasons</div>
+  <div class="tray-tip" id="weather-tip"></div>
+  <div class="tray-items" id="weathers"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="autolights">🕐 Auto lights: Off</button>
+    <button id="weather-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="overlay" id="shop-overlay">
+  <div class="dialog big">
+    <h2>Treasure Shop 🪙</h2>
+    <p id="shop-sub"></p>
+    <div class="book" id="shop-book"></div>
+    <button class="wide" id="shop-close">Close</button>
   </div>
 </div>
 
@@ -395,6 +423,10 @@ const COLORS = [
   { name: "Violet",   hue: 270 },
   { name: "Sunny",    hue: 48  },
   { name: "Coral",    hue: 12  },
+  { name: "Midnight", hue: 230, shop: "col_midnight" },
+  { name: "Lime",     hue: 100, shop: "col_lime" },
+  { name: "Rose",     hue: 350, shop: "col_rose" },
+  { name: "Rainbow",  hue: -1,  shop: "col_rainbow" },
 ];
 const NAMES = ["Bubbles","Pearl","Glimmer","Inky","Nova","Twinkle","Marina","Sprinkle","Luna","Coral","Jelly","Shimmer","Pip","Blossom","Frosty","Ziggy","Wobble","Splash","Finn","Squishy","Dot","Sunny","Misty","Coralie"];
 
@@ -406,8 +438,29 @@ const KINDS = {
   fish:  { name: "Fish",      emoji: "🐠", speed: 55, chase: 130, mode: "flip",    tiltK: .6,  tag: 2.0, hat: [.85, -.9],  eyes: [[1.045, -.16]], eyeR: .32 },
   horse: { name: "Seahorse",  emoji: "🐴", speed: 16, chase: 45,  mode: "flip",    tiltK: .2,  tag: 3.3, hat: [0, -2.95],  eyes: [[.18, -2.15]], eyeR: .26 },
 };
-const HATS    = { none: ["🚫", "None"], party: ["🎉", "Party"], crown: ["👑", "Crown"], tophat: ["🎩", "Top hat"], wizard: ["🧙", "Wizard"], flower: ["🌸", "Flower"], bow: ["🎀", "Bow"] };
-const GLASSES = { none: ["🚫", "None"], shades: ["🕶️", "Shades"], hearts: ["💕", "Hearts"], stars: ["⭐", "Stars"] };
+const HATS    = { none: ["🚫", "None"], party: ["🎉", "Party"], crown: ["👑", "Crown"], tophat: ["🎩", "Top hat"], wizard: ["🧙", "Wizard"], flower: ["🌸", "Flower"], bow: ["🎀", "Bow"],
+                  unicorn: ["🦄", "Unicorn"], pirate: ["🏴‍☠️", "Pirate"], halo: ["😇", "Halo"], viking: ["⛑️", "Viking"] };
+const GLASSES = { none: ["🚫", "None"], shades: ["🕶️", "Shades"], hearts: ["💕", "Hearts"], stars: ["⭐", "Stars"], monocle: ["🧐", "Monocle"], threed: ["🎬", "3D"] };
+
+/* ---------- treasure shop ---------- */
+const SHOP = [
+  { id: "hat_unicorn",     cat: "Rare hats",      emoji: "🦄", name: "Unicorn Horn",    price: 150, hat: "unicorn" },
+  { id: "hat_pirate",      cat: "Rare hats",      emoji: "🏴‍☠️", name: "Pirate Hat",     price: 150, hat: "pirate" },
+  { id: "hat_halo",        cat: "Rare hats",      emoji: "😇", name: "Angel Halo",      price: 150, hat: "halo" },
+  { id: "hat_viking",      cat: "Rare hats",      emoji: "⛑️", name: "Viking Helmet",   price: 150, hat: "viking" },
+  { id: "gl_monocle",      cat: "Fancy glasses",  emoji: "🧐", name: "Monocle",         price: 100, glasses: "monocle" },
+  { id: "gl_3d",           cat: "Fancy glasses",  emoji: "🎬", name: "3D Glasses",      price: 100, glasses: "threed" },
+  { id: "deco_lighthouse", cat: "Decorations",    emoji: "🗼", name: "Lighthouse",      price: 200, deco: "lighthouse" },
+  { id: "deco_bubbler",    cat: "Decorations",    emoji: "🫧", name: "Bubble Machine",  price: 200, deco: "bubbler" },
+  { id: "deco_statue",     cat: "Decorations",    emoji: "🧜‍♀️", name: "Mermaid Statue", price: 200, deco: "statue" },
+  { id: "col_midnight",    cat: "Secret colors",  emoji: "🌌", name: "Midnight glow",   price: 80,  hue: 230 },
+  { id: "col_lime",        cat: "Secret colors",  emoji: "🍋", name: "Lime glow",       price: 80,  hue: 100 },
+  { id: "col_rose",        cat: "Secret colors",  emoji: "🌹", name: "Rose glow",       price: 80,  hue: 350 },
+  { id: "col_rainbow",     cat: "Secret colors",  emoji: "🌈", name: "RAINBOW glow",    price: 300, hue: -1 },
+];
+const HATLOCK = {}, GLLOCK = {};
+SHOP.forEach(it => { if (it.hat) HATLOCK[it.hat] = it.id; if (it.glasses) GLLOCK[it.glasses] = it.id; });
+let coins = 0, owned = {}, lastBonus = "";
 const FRAMES  = { none: ["🖼️", "Plain"], hearts: ["💖", "Hearts"], stars: ["🌟", "Stars"], shells: ["🐚", "Shells"], rainbow: ["🌈", "Rainbow"], polaroid: ["📷", "Polaroid"] };
 const booth = { open: false, dressing: null, frame: "none", busy: false, freeze: false, count: 0, countT: 0, flash: 0, dataURL: null };
 let show = { active: false, acts: [] }, rings = [];
@@ -470,6 +523,7 @@ function chatter(s) {
   else if (s.buddy && byId(s.buddy) && Math.random() < .3) pool = LINES.buddy(byId(s.buddy).name);
   else if (night && Math.random() < .4) pool = LINES.night;
   else if (LINES[sc] && Math.random() < .4) pool = LINES[sc];
+  else if (WLINES[weather.key] && Math.random() < .4) pool = WLINES[weather.key];
   else pool = LINES.happy;
   say(s, pickLine(pool));
   stats.chats++; if (stats.chats % 5 === 0) checkStickers();
@@ -500,13 +554,33 @@ const STICKERS = [
 ];
 function defaultStats() { return { hatched: 0, kinds: {}, snacks: 0, pets: 0, buddies: 0, babies: 0, shows: 0, fiveStar: 0, photos: 0, decos: 0, scenes: {}, cooked: 0, night: 0, chats: 0 }; }
 let stats = defaultStats(), stickers = {};
+
+/* ---------- weather & seasons ---------- */
+const WEATHERS = {
+  auto:   { name: "Auto",   emoji: "🔄", ray: 1 },
+  sunny:  { name: "Sunny",  emoji: "☀️", ray: 1.6 },
+  cloudy: { name: "Cloudy", emoji: "☁️", ray: .4 },
+  rainy:  { name: "Rainy",  emoji: "🌧️", ray: .2 },
+  stormy: { name: "Stormy", emoji: "⛈️", ray: 0 },
+  snowy:  { name: "Snowy",  emoji: "🌨️", ray: .5 },
+  windy:  { name: "Windy",  emoji: "🍃", ray: 1 },
+};
+const SEASONS = { winter: { name: "Winter", emoji: "⛄" }, spring: { name: "Spring", emoji: "🌸" }, summer: { name: "Summer", emoji: "🌞" }, autumn: { name: "Autumn", emoji: "🍂" } };
+const WLINES = { stormy: ["Eek, thunder! ⚡", "Was that lightning?! 😲", "Hold my tentacle! 😨"], rainy: ["Pitter patter 🌧️", "Rainy day cuddles!"], snowy: ["Snowflakes! ❄️", "Let's build a snow-squid! ⛄"], windy: ["Whoa, windy! 🍃", "My fins are flapping!"], sunny: ["What a sunny day! ☀️", "Sunbathing time 😎"] };
+let weather = { mode: "auto", key: "sunny", season: "autumn", autoLights: false, flash: 0, boltX: 0, nextBolt: 6, check: 0, parts: [], clouds: [] };
 function checkStickers() {
   const fresh = [];
   for (const st of STICKERS) { if (!stickers[st.id] && st.test(stats)) { stickers[st.id] = Date.now(); fresh.push(st); } }
   if (!fresh.length) return;
-  fresh.forEach((st, i) => setTimeout(() => { toast(`🏅 New sticker: ${st.emoji} ${st.name}!`); burst(W / 2, 130, [st.emoji, "🏅", "✨"], 14); blip(988, .35, "sine", .16); }, i * 1600));
+  fresh.forEach((st, i) => setTimeout(() => { toast(`🏅 New sticker: ${st.emoji} ${st.name}! +25 🪙`); burst(W / 2, 130, [st.emoji, "🏅", "✨"], 14); blip(988, .35, "sine", .16); addCoins(25, W / 2, 160); }, i * 1600));
   updateStickerButton(); save();
 }
+function addCoins(n, x, y) {
+  coins += n; updateCoinButton();
+  sparkles.push({ x: x ?? W / 2, y: y ?? 120, vx: 0, vy: -1.1, life: 1.8, size: 20, ch: `+${n} 🪙`, color: "#ffd75e" });
+  blip(1200, .12, "square", .05);
+}
+function updateCoinButton() { document.getElementById("btn-shop").textContent = `🪙 ${coins}`; }
 const MELODY = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 880, 784, 659, 587];
 const CROWD = ["🐟", "🦀", "🐢", "🐡", "🦐", "🐬", "🐙", "🐠", "🦭"];
 const kindOf = s => KINDS[s.kind] || KINDS.squid;
@@ -542,6 +616,9 @@ const DECOS = {
   clam:    { name: "Clam",      emoji: "🦪", hues: [330, 200, 40] },
   ship:    { name: "Shipwreck", emoji: "⛵", hues: [30] },
   crystal: { name: "Crystals",  emoji: "💎", hues: [270, 190, 320, 45] },
+  lighthouse: { name: "Lighthouse", emoji: "🗼", hues: [0],   shop: "deco_lighthouse" },
+  bubbler:    { name: "Bubbler",    emoji: "🫧", hues: [200], shop: "deco_bubbler" },
+  statue:     { name: "Statue",     emoji: "🧜‍♀️", hues: [0], shop: "deco_statue" },
   remove:  { name: "Remove",    emoji: "🧹", hues: [] },
 };
 let decos = [], decorating = false, placing = null;
@@ -591,7 +668,8 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, scene: sceneKey, pantry, visitors, stats, stickers, savedAt: Date.now(),
+      night, decos, scene: sceneKey, pantry, visitors, stats, stickers, coins, owned, lastBonus,
+      weatherMode: weather.mode, autoLights: weather.autoLights, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hat: s.hat, glasses: s.glasses, buddy: s.buddy, parents: s.parents, baby: s.baby, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
   } catch (e) {}
@@ -613,6 +691,11 @@ function load() {
       stats.hatched = squids.length; squids.forEach(s => stats.kinds[s.kind] = 1);
       stats.babies = squids.filter(s => s.parents.length).length; stats.buddies = squids.some(s => s.buddy) ? 1 : 0;
     }
+    owned = d.owned && typeof d.owned === "object" ? d.owned : {};
+    coins = typeof d.coins === "number" ? d.coins : 50 + 25 * Object.keys(stickers).length;
+    lastBonus = d.lastBonus || "";
+    weather.mode = WEATHERS[d.weatherMode] ? d.weatherMode : "auto";
+    weather.autoLights = !!d.autoLights;
     decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
     return true;
   } catch (e) { return false; }
@@ -660,7 +743,8 @@ function drawCreature(s) {
   const glowLevel = night ? 1 : .55;
   const hungryDim = 1 - (s.hunger / 100) * .55;
   const glow = glowLevel * hungryDim + s.glowBurst + (s.fx.rainbow || s.fx.love ? .4 : 0);
-  const hue = s.fx.rainbow ? (frame * 3 + s.x) % 360 : s.fx.ice ? 200 : s.hue;
+  const hue = (s.fx.rainbow || s.hue === -1) ? (frame * 3 + s.x) % 360 : s.fx.ice ? 200 : s.hue;
+  s.drawHue = hue;
   const col = a => `hsla(${hue},100%,70%,${a})`;
   const pulse = .85 + .15 * Math.sin(s.pulse);
 
@@ -690,7 +774,7 @@ function drawCreature(s) {
     ctx.font = `800 ${13 + 3 * s.size}px Nunito, sans-serif`;
     ctx.textAlign = "center";
     ctx.fillStyle = "rgba(255,255,255,.9)";
-    ctx.shadowColor = `hsl(${s.hue},100%,70%)`; ctx.shadowBlur = 12;
+    ctx.shadowColor = `hsl(${s.drawHue},100%,70%)`; ctx.shadowBlur = 12;
     ctx.fillText(s.name, s.x, s.y - r * kind.tag);
     ctx.restore();
   }
@@ -746,6 +830,18 @@ function drawAccessories(s, kind, r) {
     } else if (s.glasses === "stars") {
       for (const [ex, ey] of pts) { starShape(ex, ey, er * 1.6, er * .8); ctx.fillStyle = "rgba(255,230,90,.6)"; ctx.fill(); ctx.strokeStyle = "#ffb800"; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.stroke(); }
       glassesBridge(pts, er, "#ffb800");
+    } else if (s.glasses === "monocle") {
+      const [ex, ey] = pts[0];
+      ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(ex, ey, er * 1.25, 0, TAU); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,.18)"; ctx.fill();
+      ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(ex, ey + er * 1.25); ctx.quadraticCurveTo(ex + er * .6, ey + er * 2.4, ex + er * 1.6, ey + er * 2.6); ctx.stroke();
+    } else if (s.glasses === "threed") {
+      pts.forEach(([ex, ey], i) => {
+        ctx.fillStyle = i === 0 ? "rgba(255,40,60,.6)" : "rgba(40,120,255,.6)"; ctx.strokeStyle = "#f4f4f4"; ctx.lineWidth = 2;
+        rr(ex - er * 1.2, ey - er * .9, er * 2.4, er * 1.8, er * .25); ctx.fill(); ctx.stroke();
+      });
+      if (pts.length === 1) { const [ex, ey] = pts[0]; ctx.fillStyle = "rgba(40,120,255,.6)"; rr(ex - er * 3.7, ey - er * .9, er * 2.4, er * 1.8, er * .25); ctx.fill(); ctx.stroke(); }
+      glassesBridge(pts, er, "#f4f4f4");
     }
   }
   if (s.hat && s.hat !== "none") {
@@ -792,6 +888,39 @@ function drawHat(kind) {
       for (let i = 0; i < 5; i++) { const a = i * TAU / 5; ctx.beginPath(); ctx.arc(Math.cos(a) * 7, Math.sin(a) * 7, 6, 0, TAU); ctx.fill(); }
       ctx.fillStyle = "#ffe14d"; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, TAU); ctx.fill();
       ctx.restore();
+      break;
+    }
+    case "unicorn": {
+      ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(7, 0); ctx.lineTo(0, -36); ctx.closePath();
+      const g = ctx.createLinearGradient(0, 0, 0, -36); g.addColorStop(0, "#ffd6f5"); g.addColorStop(.5, "#c9e8ff"); g.addColorStop(1, "#fff6b0");
+      ctx.fillStyle = g; ctx.fill();
+      ctx.save(); ctx.clip(); ctx.strokeStyle = "rgba(255,180,230,.9)"; ctx.lineWidth = 2.5;
+      for (let k = -4; k > -36; k -= 7) { ctx.beginPath(); ctx.moveTo(-8, k); ctx.lineTo(8, k - 5); ctx.stroke(); }
+      ctx.restore();
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.fillStyle = "#ffe14d"; star4(0, -36, 4);
+      break;
+    }
+    case "pirate": {
+      ctx.fillStyle = "#1b1b24"; ctx.strokeStyle = "#444"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-24, -2); ctx.quadraticCurveTo(-18, -22, -4, -24); ctx.lineTo(4, -24); ctx.quadraticCurveTo(18, -22, 24, -2); ctx.quadraticCurveTo(12, 2, 0, 0); ctx.quadraticCurveTo(-12, 2, -24, -2); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(0, -13, 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#1b1b24"; ctx.fillRect(-2.5, -14, 1.6, 1.6); ctx.fillRect(1, -14, 1.6, 1.6);
+      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(-6, -6); ctx.lineTo(6, -10); ctx.moveTo(-6, -10); ctx.lineTo(6, -6); ctx.stroke();
+      break;
+    }
+    case "halo": {
+      ctx.save(); ctx.shadowColor = "#ffd75e"; ctx.shadowBlur = 10;
+      ctx.strokeStyle = "#ffd75e"; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.ellipse(0, -14 + Math.sin(frame * .08) * 2, 16, 5, 0, 0, TAU); ctx.stroke();
+      ctx.restore();
+      break;
+    }
+    case "viking": {
+      ctx.fillStyle = "#9aa3b5"; ctx.strokeStyle = "#5a6275"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(0, 0, 17, Math.PI, TAU); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#5a6275"; ctx.fillRect(-17, -2, 34, 3); ctx.fillRect(-1.5, -17, 3, 15);
+      ctx.fillStyle = "#f4ecd8"; ctx.strokeStyle = "#b8a980";
+      for (const sd of [-1, 1]) { ctx.beginPath(); ctx.moveTo(sd * 14, -8); ctx.quadraticCurveTo(sd * 26, -12, sd * 22, -30); ctx.quadraticCurveTo(sd * 20, -16, sd * 12, -14); ctx.closePath(); ctx.fill(); ctx.stroke(); }
       break;
     }
     case "bow": {
@@ -851,8 +980,8 @@ function drawJellyBody(s, r, glow, col, pulse) {
   }
   ctx.beginPath(); ctx.arc(0, 0, R * .8, Math.PI * 1.15, Math.PI * 1.6);
   ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
-  drawEye(-R * .32, -R * .1, r * .3, s.blink, s.hue);
-  drawEye(R * .32, -R * .1, r * .3, s.blink, s.hue);
+  drawEye(-R * .32, -R * .1, r * .3, s.blink, s.drawHue);
+  drawEye(R * .32, -R * .1, r * .3, s.blink, s.drawHue);
   if (s.happy > 45) smile(0, R * .08, r * .22);
 }
 
@@ -877,8 +1006,8 @@ function drawOctoBody(s, r, glow, col, pulse) {
   for (let i = 0; i < 3; i++) organ((i - 1) * R * .45, -R * .55 + Math.sin(s.pulse + i) * R * .15, R * .45, col, glow, pulse);
   ctx.beginPath(); ctx.ellipse(0, -R * .25, R * .85, R, 0, Math.PI * 1.15, Math.PI * 1.6);
   ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
-  drawEye(-R * .38, R * .15, r * .34, s.blink, s.hue);
-  drawEye(R * .38, R * .15, r * .34, s.blink, s.hue);
+  drawEye(-R * .38, R * .15, r * .34, s.blink, s.drawHue);
+  drawEye(R * .38, R * .15, r * .34, s.blink, s.drawHue);
   if (s.happy > 45) smile(0, R * .4, r * .22);
 }
 
@@ -913,7 +1042,7 @@ function drawFishBody(s, r, glow, col, pulse) {
   ctx.restore();
   ctx.beginPath(); ctx.ellipse(0, 0, L * .8, Hh * .75, 0, Math.PI * 1.1, Math.PI * 1.6);
   ctx.strokeStyle = `rgba(255,255,255,${.35 + .3 * glow})`; ctx.lineWidth = 2; ctx.lineCap = "round"; ctx.stroke();
-  drawEye(L * .55, -Hh * .15, r * .32, s.blink, s.hue);
+  drawEye(L * .55, -Hh * .15, r * .32, s.blink, s.drawHue);
   smile(L * .8, Hh * .15, r * .13);
 }
 
@@ -951,7 +1080,7 @@ function drawHorseBody(s, r, glow, col, pulse) {
   ctx.moveTo(-R * .45, -R * 2.45); ctx.lineTo(-R * .3, -R * 2.95); ctx.lineTo(-R * .1, -R * 2.6); ctx.lineTo(R * .1, -R * 3.0); ctx.lineTo(R * .3, -R * 2.6); ctx.lineTo(R * .45, -R * 2.45);
   ctx.closePath();
   ctx.fillStyle = col(.5 * (.5 + glow * .5)); ctx.fill(); ctx.strokeStyle = "rgba(235,252,255,.7)"; ctx.lineWidth = 1.2; ctx.stroke();
-  drawEye(R * .18, -R * 2.15, r * .26, s.blink, s.hue);
+  drawEye(R * .18, -R * 2.15, r * .26, s.blink, s.drawHue);
   if (s.happy > 45) smile(R * .85, -R * 1.72, r * .11);
 }
 
@@ -1030,7 +1159,7 @@ function drawSquidBody(s, r, glow, col, pulse) {
     ctx.beginPath(); ctx.arc(0, 0, er, 0, TAU);
     ctx.fillStyle = "rgba(255,255,255,.95)"; ctx.fill();
     ctx.beginPath(); ctx.arc(er * .15, 0, er * .6, 0, TAU);
-    ctx.fillStyle = `hsl(${s.hue},80%,20%)`; ctx.fill();
+    ctx.fillStyle = `hsl(${s.drawHue},80%,20%)`; ctx.fill();
     ctx.beginPath(); ctx.arc(er * .35, -er * .25, er * .22, 0, TAU);
     ctx.fillStyle = "#fff"; ctx.fill();
     ctx.restore();
@@ -1051,9 +1180,10 @@ function drawBackground() {
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
   drawSceneExtras(sc);
+  drawWeatherBack(sc);
 
   /* light rays */
-  const rayA = night ? sc.rays * .3 : sc.rays;
+  const rayA = (night ? sc.rays * .3 : sc.rays) * WEATHERS[weather.key].ray;
   if (rayA > 0) {
     ctx.save(); ctx.globalCompositeOperation = "screen";
     for (let i = 0; i < 7; i++) {
@@ -1086,7 +1216,7 @@ function drawBackground() {
     ctx.beginPath(); ctx.moveTo(w.x, sy + 8);
     for (let k = 1; k <= w.seg; k++) {
       const t = k / w.seg;
-      ctx.lineTo(w.x + Math.sin(frame * .02 + w.phase + t * 3) * 18 * t, sy + 8 - w.h * t);
+      ctx.lineTo(w.x + Math.sin(frame * (weather.key === "windy" || weather.key === "stormy" ? .05 : .02) + w.phase + t * 3) * (18 + (weather.key === "windy" ? 16 : weather.key === "stormy" ? 10 : 0)) * t, sy + 8 - w.h * t);
     }
     ctx.strokeStyle = `hsla(${w.hue},70%,${night ? sc.weedLight * .65 : sc.weedLight}%,.85)`;
     ctx.lineWidth = 9; ctx.lineCap = "round"; ctx.stroke();
@@ -1329,6 +1459,43 @@ function drawDeco(d) {
       break;
     }
 
+    case "lighthouse": {
+      const beamA = t * 1.2;
+      ctx.save(); ctx.globalCompositeOperation = "screen"; ctx.translate(0, -96);
+      ctx.rotate(beamA); ctx.fillStyle = `rgba(255,240,150,${night ? .35 : .18})`;
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(220, -26); ctx.lineTo(220, 26); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      ctx.fillStyle = "#f4f4f4"; ctx.strokeStyle = "#8a8a8a"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-11, -84); ctx.lineTo(11, -84); ctx.lineTo(18, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.save(); ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(-11, -84); ctx.lineTo(11, -84); ctx.lineTo(18, 0); ctx.closePath(); ctx.clip();
+      ctx.fillStyle = "#e0324b"; for (let y = -10; y > -84; y -= 24) ctx.fillRect(-20, y - 12, 40, 12);
+      ctx.restore();
+      ctx.fillStyle = night ? "#fff2a0" : "#9be7ff"; ctx.fillRect(-9, -100, 18, 16);
+      ctx.strokeStyle = "#555"; ctx.strokeRect(-9, -100, 18, 16);
+      ctx.fillStyle = "#e0324b"; ctx.beginPath(); ctx.moveTo(-13, -100); ctx.lineTo(0, -112); ctx.lineTo(13, -100); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#6b4a2b"; ctx.beginPath(); ctx.moveTo(-6, 0); ctx.lineTo(-6, -14); ctx.arc(0, -14, 6, Math.PI, TAU); ctx.lineTo(6, 0); ctx.closePath(); ctx.fill();
+      break;
+    }
+    case "bubbler": {
+      ctx.fillStyle = "#7a8aa0"; ctx.strokeStyle = "#465468"; ctx.lineWidth = 1.5;
+      rr(-20, -24, 40, 24, 5); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#4dd2ff"; ctx.beginPath(); ctx.arc(-8, -12, 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#ff44cc"; ctx.beginPath(); ctx.arc(4, -12, 4, 0, TAU); ctx.fill();
+      ctx.fillStyle = "#ffe14d"; ctx.fillRect(10, -16, 5, 8);
+      ctx.fillStyle = "#465468"; ctx.fillRect(-4, -40, 8, 16);
+      ctx.fillStyle = "#9aa3b5"; ctx.beginPath(); ctx.arc(0, -42, 7, 0, TAU); ctx.fill();
+      if (Math.random() < .06) rings.push({ x: x, y: y - 50 * d.scale, r: 4, life: 1, hue: [190, 320, 50][Math.floor(Math.random() * 3)] });
+      break;
+    }
+    case "statue": {
+      ctx.fillStyle = "#b9c0cc"; ctx.strokeStyle = "#7f8896"; ctx.lineWidth = 1.5;
+      rr(-26, -14, 52, 14, 3); ctx.fill(); ctx.stroke(); rr(-20, -22, 40, 8, 3); ctx.fill(); ctx.stroke();
+      ctx.save(); try { ctx.filter = "grayscale(1) brightness(1.1)"; } catch (e) {}
+      ctx.font = "60px serif"; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic"; ctx.fillText("🧜‍♀️", 0, -24);
+      ctx.restore();
+      if (Math.random() < .02) sparkles.push(sp(x + rand(-20, 20) * d.scale, y - 60 * d.scale, "✨"));
+      break;
+    }
     case "crystal": {
       const hues = [d.hue, (d.hue + 40) % 360, (d.hue + 80) % 360];
       const pulseA = .5 + .5 * Math.sin(t * 2);
@@ -1564,6 +1731,7 @@ function spotVisitor(v) {
   if (v.id === "balloon") { burst(v.x, v.y, ["💥"], 6); v.dead = true; }
   for (const s of squids) s.happy = clamp(s.happy + 5, 0, 100);
   if (squids.length) say(squids[Math.floor(Math.random() * squids.length)], `Wow, a ${d.name}! ${d.emoji}`);
+  addCoins({ common: 5, uncommon: 10, rare: 20, legendary: 50 }[d.rarity], v.x, v.y - 40);
   updateVisitorButton(); checkStickers(); save();
 }
 function drawVisitor(v) {
@@ -1645,6 +1813,7 @@ function mixHue(a, b) {
 /* ---------- main loop ---------- */
 function loop(now) {
   const dt = Math.min(.05, (now - lastTime) / 1000); lastTime = now; frame++;
+  updateWeather(dt);
   if (show.active) showUpdate(dt); else if (!booth.freeze) update(dt);
   drawBackground();
   if (show.active) drawSpotlights();
@@ -1654,6 +1823,7 @@ function loop(now) {
   for (const s of [...squids].sort((a, b) => a.size - b.size)) drawCreature(s);
   if (visitor && VISITORS[visitor.id].layer === "front") drawVisitor(visitor);
   drawSparkles(); drawRings();
+  drawWeatherFront();
   if (night) {
     ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
   }
@@ -1690,7 +1860,7 @@ function takeSnapshot() {
   const c = snap.getContext("2d"); c.drawImage(canvas, 0, 0); c.setTransform(DPR, 0, 0, DPR, 0, 0);
   drawFrame(c, booth.frame);
   booth.dataURL = snap.toDataURL("image/png");
-  stats.photos++; setTimeout(checkStickers, 1200);
+  stats.photos++; setTimeout(checkStickers, 1200); setTimeout(() => addCoins(5, W / 2, 160), 900);
 }
 function drawFrame(c, key) {
   const pad = 26;
@@ -1833,7 +2003,8 @@ document.getElementById("baby-go").onclick = () => {
   const [a, b] = babyParents || []; if (!a || !b) return;
   const name = document.getElementById("baby-name").value.trim() || "Baby";
   document.getElementById("baby-overlay").classList.remove("show");
-  const hue = (mixHue(a.hue, b.hue) + rand(-12, 12) + 360) % 360;
+  const ha = a.hue < 0 ? rand(0, 360) : a.hue, hb = b.hue < 0 ? rand(0, 360) : b.hue;
+  const hue = (mixHue(ha, hb) + rand(-12, 12) + 360) % 360;
   const kind = Math.random() < .5 ? a.kind : b.kind;
   eggs.push({ x: clamp((a.x + b.x) / 2 + rand(-40, 40), 60, W - 60), y: SAND() - 22, hue, kind, name, t: 0, parents: [a.id, b.id], baby: true });
   burst(a.x, a.y, ["💞"], 6); burst(b.x, b.y, ["💞"], 6);
@@ -1869,9 +2040,13 @@ Object.entries(KINDS).forEach(([key, k], i) => {
 const swatchBox = document.getElementById("swatches");
 COLORS.forEach((c, i) => {
   const d = document.createElement("div");
-  d.className = "swatch" + (i === 0 ? " pick" : ""); d.title = c.name;
-  d.style.setProperty("--c", `hsl(${c.hue},100%,65%)`);
-  d.onclick = () => { pickHue = c.hue; [...swatchBox.children].forEach(x => x.classList.remove("pick")); d.classList.add("pick"); blip(400 + i * 60, .08); };
+  d.className = "swatch" + (i === 0 ? " pick" : ""); d.title = c.name; if (c.shop) d.dataset.shop = c.shop;
+  if (c.hue === -1) d.style.background = "conic-gradient(#ff4d6d, #ffb84d, #fff44d, #4dff88, #4dd2ff, #b44dff, #ff4d6d)";
+  else d.style.setProperty("--c", `hsl(${c.hue},100%,65%)`);
+  d.onclick = () => {
+    if (d.classList.contains("locked")) { toast("🔒 That color is in the Treasure Shop! Tap the 🪙 button."); blip(200, .1); return; }
+    pickHue = c.hue; [...swatchBox.children].forEach(x => x.classList.remove("pick")); d.classList.add("pick"); blip(400 + i * 60, .08);
+  };
   swatchBox.appendChild(d);
 });
 document.getElementById("btn-hatch").onclick = () => {
@@ -1923,12 +2098,15 @@ Object.entries(DECOS).forEach(([key, k], i) => {
   const el = document.createElement("div");
   el.className = "deco"; el.dataset.kind = key;
   el.innerHTML = `<span>${k.emoji}</span>${k.name}`;
-  el.onclick = () => { setPlacing(placing === key ? null : key); blip(350 + i * 40, .07); };
+  el.onclick = () => {
+    if (el.classList.contains("locked")) { toast("🔒 That's in the Treasure Shop! Tap the 🪙 button."); blip(200, .1); return; }
+    setPlacing(placing === key ? null : key); blip(350 + i * 40, .07);
+  };
   trayItems.appendChild(el);
 });
 function setDecorating(on) {
   decorating = on; tray.classList.toggle("show", on); decoBtn.classList.toggle("on", on);
-  if (on) { if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
+  if (on) { if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setWeatherTray(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
   else placing = null;
 }
 
@@ -1957,7 +2135,7 @@ function updateKitchenTip() {
 }
 function setKitchen(on) {
   kitchenEl.classList.toggle("show", on); kitchenBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); renderRecipe(); updateKitchenTip(); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setWeatherTray(false); renderRecipe(); updateKitchenTip(); }
 }
 kitchenBtn.onclick = () => { setKitchen(!kitchenEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("kitchen-done").onclick = () => setKitchen(false);
@@ -1987,7 +2165,10 @@ function buildPicker(boxId, table, onPick) {
   Object.entries(table).forEach(([key, [emoji, name]], i) => {
     const el = document.createElement("div");
     el.className = "deco"; el.dataset.key = key; el.innerHTML = `<span>${emoji}</span>${name}`;
-    el.onclick = () => { onPick(key); markPick(box, key); blip(380 + i * 40, .07); };
+    el.onclick = () => {
+      if (el.classList.contains("locked")) { toast("🔒 That's in the Treasure Shop! Tap the 🪙 button."); blip(200, .1); return; }
+      onPick(key); markPick(box, key); blip(380 + i * 40, .07);
+    };
     box.appendChild(el);
   });
   return box;
@@ -2006,7 +2187,7 @@ function setBooth(on) {
   booth.open = on; boothEl.classList.toggle("show", on); boothBtn.classList.toggle("on", on);
   if (on) {
     if (decorating) setDecorating(false);
-    setShowTray(false); setKitchen(false);
+    setShowTray(false); setKitchen(false); setWeatherTray(false);
     selected = null; document.getElementById("card").classList.remove("show");
     booth.dressing = null; dressSec.hidden = true; boothTip.textContent = "Tap a friend to dress them up!";
   } else booth.dressing = null;
@@ -2083,7 +2264,7 @@ function renderActs() {
 }
 function setShowTray(on) {
   showTrayEl.classList.toggle("show", on); showBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setKitchen(false); selected = null; document.getElementById("card").classList.remove("show"); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setKitchen(false); setWeatherTray(false); selected = null; document.getElementById("card").classList.remove("show"); }
 }
 showBtn.onclick = () => { setShowTray(!showTrayEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("show-done").onclick = () => setShowTray(false);
@@ -2142,6 +2323,7 @@ function endShow() {
   const star = squids[Math.floor(Math.random() * squids.length)];
   stats.shows++; if (stars === 5) stats.fiveStar++;
   say(star, "That was so fun! 🎪"); setTimeout(checkStickers, 800);
+  addCoins(10 + stars * 5, W / 2, H * .3);
   document.getElementById("show-sub").innerHTML =
     `<span style="font-size:1.6rem">${"⭐".repeat(stars)}</span><br>` +
     (stars === 5 ? "AMAZING! The crowd went wild!" : stars === 4 ? "Wonderful! The crowd loved it!" : "Great show! Clap more next time for extra stars!") +
@@ -2230,6 +2412,192 @@ Object.entries(SCENES).forEach(([key, sc], i) => {
 document.getElementById("btn-scene").onclick = () => sceneOverlay.classList.add("show");
 document.getElementById("scene-close").onclick = () => sceneOverlay.classList.remove("show");
 
+/* treasure shop */
+function refreshLocks() {
+  [...hatBox.children].forEach(el => el.classList.toggle("locked", !!HATLOCK[el.dataset.key] && !owned[HATLOCK[el.dataset.key]]));
+  [...glassBox.children].forEach(el => el.classList.toggle("locked", !!GLLOCK[el.dataset.key] && !owned[GLLOCK[el.dataset.key]]));
+  [...trayItems.children].forEach(el => { const sh = DECOS[el.dataset.kind] && DECOS[el.dataset.kind].shop; el.classList.toggle("locked", !!sh && !owned[sh]); });
+  [...swatchBox.children].forEach(el => el.classList.toggle("locked", !!el.dataset.shop && !owned[el.dataset.shop]));
+}
+function renderShop() {
+  const box = document.getElementById("shop-book"); box.innerHTML = "";
+  let cat = "";
+  for (const it of SHOP) {
+    if (it.cat !== cat) { cat = it.cat; const h = document.createElement("div"); h.className = "shop-sec"; h.textContent = cat; box.appendChild(h); }
+    const has = !!owned[it.id];
+    const el = document.createElement("div");
+    el.className = `item ${has ? "earned" : ""}`;
+    el.innerHTML = `<span class="e">${it.emoji}</span>${it.name}<span class="hint">${has ? "Owned ✔" : `🪙 ${it.price}`}</span>`;
+    if (!has) {
+      const b = document.createElement("button"); b.className = "buy";
+      b.textContent = coins >= it.price ? "Buy!" : `Need ${it.price - coins} more`; b.disabled = coins < it.price;
+      b.onclick = () => buy(it); el.appendChild(b);
+    }
+    box.appendChild(el);
+  }
+  document.getElementById("shop-sub").textContent = `You have 🪙 ${coins}. Earn coins from shows, stickers, photos, spotting visitors, and a daily bonus!`;
+}
+function buy(it) {
+  if (coins < it.price || owned[it.id]) return;
+  coins -= it.price; owned[it.id] = true;
+  updateCoinButton(); renderShop(); refreshLocks(); save();
+  burst(W / 2, H * .3, [it.emoji, "🪙", "✨"], 14); blip(1047, .35, "sine", .16);
+  const where = it.hat || it.glasses ? "Find it in the Photo Booth!" : it.deco ? "Find it in Decorate!" : "Pick it when you hatch a friend!";
+  toast(`You bought ${it.emoji} ${it.name}! ${where}`);
+}
+document.getElementById("btn-shop").onclick = () => { renderShop(); document.getElementById("shop-overlay").classList.add("show"); blip(500, .1); };
+document.getElementById("shop-close").onclick = () => document.getElementById("shop-overlay").classList.remove("show");
+function dailyBonus() {
+  const today = new Date().toDateString();
+  if (lastBonus === today) return;
+  lastBonus = today;
+  setTimeout(() => { addCoins(20, W / 2, 160); toast("Daily treasure! +20 🪙 Come back tomorrow for more!"); save(); }, 2500);
+}
+
+/* weather & seasons */
+const weatherEl = document.getElementById("weathertray"), weatherBtn = document.getElementById("btn-weather"), weatherBox = document.getElementById("weathers");
+function seasonOf(d) { const m = d.getMonth(); return m <= 1 || m === 11 ? "winter" : m <= 4 ? "spring" : m <= 7 ? "summer" : "autumn"; }
+function hash01(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return ((h >>> 0) % 10000) / 10000; }
+function autoWeather() {
+  const d = new Date(), season = seasonOf(d);
+  const table = {
+    spring: [["sunny", 35], ["cloudy", 25], ["rainy", 25], ["stormy", 5], ["windy", 10]],
+    summer: [["sunny", 55], ["cloudy", 20], ["rainy", 10], ["stormy", 10], ["windy", 5]],
+    autumn: [["sunny", 25], ["cloudy", 25], ["rainy", 20], ["stormy", 10], ["windy", 20]],
+    winter: [["sunny", 20], ["cloudy", 25], ["snowy", 35], ["rainy", 10], ["stormy", 5], ["windy", 5]],
+  }[season];
+  let r = hash01(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}-${d.getHours()}`) * 100;
+  for (const [k, w] of table) { r -= w; if (r <= 0) return { season, key: k }; }
+  return { season, key: "sunny" };
+}
+function applyWeather(key, season) {
+  if (weather.key === key && weather.season === season && weather.parts.length) { updateWeatherTip(); return; }
+  weather.key = key; weather.season = season; weather.parts = []; weather.clouds = [];
+  const n = key === "rainy" ? 90 : key === "stormy" ? 140 : key === "snowy" ? 80 : key === "windy" ? 22 : 0;
+  for (let i = 0; i < n; i++) weather.parts.push({ x: Math.random() * W, y: Math.random() * H, v: rand(.6, 1.4), ph: Math.random() * TAU });
+  const amb = season === "spring" ? 16 : season === "autumn" ? 14 : season === "winter" ? 22 : 8;
+  for (let i = 0; i < amb; i++) weather.parts.push({ x: Math.random() * W, y: Math.random() * H, v: rand(.4, 1), ph: Math.random() * TAU, amb: true });
+  const nc = { cloudy: 5, rainy: 6, stormy: 7, snowy: 5, windy: 3, sunny: 2 }[key] || 2;
+  for (let i = 0; i < nc; i++) weather.clouds.push({ x0: Math.random() * W, y: rand(8, 70), w: rand(90, 200), v: rand(6, 18) * (key === "windy" ? 4 : key === "stormy" ? 2 : 1) });
+  updateWeatherTip();
+}
+function updateWeatherTip() {
+  const now = new Date(), a = autoWeather();
+  const time = now.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  const real = `${WEATHERS[a.key].emoji} ${WEATHERS[a.key].name}`;
+  document.getElementById("weather-tip").textContent =
+    `It's ${SEASONS[a.season].name} ${SEASONS[a.season].emoji} · ${time} · Today's weather: ${real}` +
+    (weather.mode === "auto" ? "" : ` · You picked ${WEATHERS[weather.key].emoji} ${WEATHERS[weather.key].name}`);
+  document.getElementById("autolights").textContent = `🕐 Auto lights: ${weather.autoLights ? "On" : "Off"}`;
+}
+function initWeather() { const a = autoWeather(); applyWeather(weather.mode === "auto" ? a.key : weather.mode, a.season); markPick(weatherBox, weather.mode); if (weather.autoLights) autoLightsCheck(true); }
+function autoLightsCheck(quiet) {
+  if (show.active) return;
+  const d = new Date(), h = d.getHours() + d.getMinutes() / 60, wantNight = h >= 19.5 || h < 6.5;
+  if (wantNight !== night) { night = wantNight; applyNight(); if (!quiet) toast(night ? "It's getting late. Lights off! 🌙" : "Good morning! Lights on ☀️"); save(); }
+}
+function updateWeather(dt) {
+  weather.check -= dt;
+  if (weather.check <= 0) {
+    weather.check = 60;
+    const a = autoWeather(); applyWeather(weather.mode === "auto" ? a.key : weather.mode, a.season);
+    if (weather.autoLights) autoLightsCheck(false);
+  }
+  if (weather.key === "stormy") {
+    weather.nextBolt -= dt;
+    if (weather.nextBolt <= 0) {
+      weather.flash = 1; weather.boltX = rand(W * .1, W * .9); weather.nextBolt = rand(4, 11);
+      blip(70, .7, "sawtooth", .12);
+      if (squids.length && Math.random() < .6) say(squids[Math.floor(Math.random() * squids.length)], pickLine(WLINES.stormy));
+    }
+  }
+  weather.flash = Math.max(0, weather.flash - dt * 2.5);
+}
+function drawWeatherBack(sc) {
+  const wk = weather.key, dark = sc.rays === 0;
+  if (wk === "sunny" && !dark && sc.key !== "sunset" && !night) {
+    const g = ctx.createRadialGradient(W * .82, 60, 0, W * .82, 60, 170);
+    g.addColorStop(0, "rgba(255,245,180,.85)"); g.addColorStop(.25, "rgba(255,230,140,.35)"); g.addColorStop(1, "rgba(255,220,120,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, 260);
+    ctx.fillStyle = "rgba(255,250,210,.95)"; ctx.beginPath(); ctx.arc(W * .82, 60, 30, 0, TAU); ctx.fill();
+  }
+  const cloudCol = wk === "stormy" ? "rgba(55,58,85,.8)" : night ? "rgba(130,140,170,.45)" : wk === "rainy" ? "rgba(200,210,225,.75)" : "rgba(255,255,255,.75)";
+  for (const c of weather.clouds) {
+    const x = ((c.x0 + frame * c.v / 60) % (W + c.w * 1.6)) - c.w * .8;
+    ctx.fillStyle = cloudCol;
+    for (const [ox, oy, r] of [[0, 0, .3], [.3, -.12, .36], [.62, 0, .3], [.3, .1, .28]]) { ctx.beginPath(); ctx.arc(x + ox * c.w, c.y + oy * c.w, r * c.w, 0, TAU); ctx.fill(); }
+  }
+  const tint = wk === "stormy" ? .28 : wk === "rainy" ? .12 : wk === "cloudy" ? .06 : 0;
+  if (tint) { ctx.fillStyle = `rgba(0,5,35,${tint})`; ctx.fillRect(0, 0, W, H); }
+}
+function drawWeatherFront() {
+  const wk = weather.key, season = weather.season;
+  ctx.save();
+  for (const p of weather.parts) {
+    if (p.amb) {
+      p.y += p.v * (season === "winter" ? .7 : .45); p.x += Math.sin(frame * .02 + p.ph) * .6 + (season === "autumn" ? .7 : 0);
+      if (p.y > H - 60) { p.y = -10; p.x = Math.random() * W; } if (p.x > W + 20) p.x = -20;
+      if (season === "spring") { ctx.font = "13px serif"; ctx.textAlign = "center"; ctx.globalAlpha = .8; ctx.fillText("🌸", p.x, p.y); }
+      else if (season === "autumn") { ctx.font = "15px serif"; ctx.textAlign = "center"; ctx.globalAlpha = .85; ctx.fillText(p.ph > 3 ? "🍂" : "🍁", p.x, p.y); }
+      else if (season === "winter") { ctx.globalAlpha = .7; ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 1.8, 0, TAU); ctx.fill(); }
+      else if (!night) { ctx.globalAlpha = .35 + .35 * Math.sin(frame * .1 + p.ph); ctx.fillStyle = "#fff8c0"; ctx.beginPath(); ctx.arc(p.x, p.y * .5, 1.6, 0, TAU); ctx.fill(); }
+      ctx.globalAlpha = 1;
+    } else if (wk === "rainy" || wk === "stormy") {
+      p.y += p.v * (wk === "stormy" ? 16 : 10); p.x += wk === "stormy" ? 1.5 : .4;
+      if (p.y > H * .38) { p.y = -10; p.x = Math.random() * W; } if (p.x > W) p.x = 0;
+      ctx.strokeStyle = `rgba(200,230,255,${.55 * (1 - p.y / (H * .4))})`; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - (wk === "stormy" ? 3 : 1), p.y + 14); ctx.stroke();
+    } else if (wk === "snowy") {
+      p.y += p.v * 1.2; p.x += Math.sin(frame * .02 + p.ph) * .7;
+      if (p.y > H - 60) { p.y = -10; p.x = Math.random() * W; }
+      ctx.fillStyle = "rgba(255,255,255,.85)"; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, TAU); ctx.fill();
+    } else if (wk === "windy") {
+      p.x += p.v * 3.5; p.y += Math.sin(frame * .05 + p.ph) * 1.2;
+      if (p.x > W + 20) { p.x = -20; p.y = rand(20, H * .6); }
+      ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.fillText("🍃", p.x, p.y);
+    }
+  }
+  if (wk === "rainy" || wk === "stormy") {
+    ctx.strokeStyle = "rgba(220,240,255,.5)"; ctx.lineWidth = 1.2;
+    for (let i = 0; i < 10; i++) {
+      const rr0 = (frame * 1.4 + i * 37) % 60, x = (i * 173 + 40) % W;
+      ctx.globalAlpha = (1 - rr0 / 60) * .5; ctx.beginPath(); ctx.ellipse(x, 22, rr0, rr0 * .28, 0, 0, TAU); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (weather.flash > 0) {
+    ctx.fillStyle = `rgba(255,255,255,${weather.flash * .5})`; ctx.fillRect(0, 0, W, H);
+    if (weather.flash > .6) {
+      ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 3; ctx.shadowColor = "#bfe8ff"; ctx.shadowBlur = 18; ctx.lineJoin = "round";
+      ctx.beginPath(); let bx = weather.boltX, by = 0; ctx.moveTo(bx, by);
+      for (let k = 0; k < 7; k++) { bx += ((k * 7919) % 60) - 30; by += H * .09; ctx.lineTo(bx, by); }
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+Object.entries(WEATHERS).forEach(([key, w], i) => {
+  const el = document.createElement("div");
+  el.className = "deco"; el.dataset.key = key; el.innerHTML = `<span>${w.emoji}</span>${w.name}`;
+  el.onclick = () => {
+    weather.mode = key; markPick(weatherBox, key);
+    const a = autoWeather(); applyWeather(key === "auto" ? a.key : key, a.season);
+    blip(380 + i * 40, .07); save();
+    toast(key === "auto" ? "Weather follows the real world now 🔄" : `${w.emoji} ${w.name} weather!`);
+  };
+  weatherBox.appendChild(el);
+});
+function setWeatherTray(on) {
+  weatherEl.classList.toggle("show", on); weatherBtn.classList.toggle("on", on);
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); updateWeatherTip(); }
+}
+weatherBtn.onclick = () => { setWeatherTray(!weatherEl.classList.contains("show")); blip(500, .1); };
+document.getElementById("weather-done").onclick = () => setWeatherTray(false);
+document.getElementById("autolights").onclick = () => {
+  weather.autoLights = !weather.autoLights; updateWeatherTip(); save(); blip(weather.autoLights ? 600 : 300, .1);
+  if (weather.autoLights) { autoLightsCheck(false); toast("Lights will follow the real time of day 🕐"); }
+};
+
 /* sticker book */
 function updateStickerButton() {
   const n = Object.keys(stickers).length;
@@ -2299,7 +2667,7 @@ if (!load()) {
 }
 applyNight();
 setScene(sceneKey);
-updateVisitorButton(); updateStickerButton();
+updateVisitorButton(); updateStickerButton(); updateCoinButton(); refreshLocks(); initWeather(); dailyBonus();
 window.addEventListener("resize", buildScenery);
 setInterval(save, 15000);
 requestAnimationFrame(loop);
