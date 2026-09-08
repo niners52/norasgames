@@ -190,6 +190,13 @@
   #cook-btn:disabled { opacity:.6; transform:none; cursor:wait; }
   .recipe-info { font-size:.8rem; color:rgba(200,240,255,.85); margin-top:8px; line-height:1.45; }
   .recipe-info b { color:#fff; }
+  .seq { display:grid; grid-template-columns:34px repeat(8, 1fr); gap:4px; }
+  .seq .lbl { font-size:.72rem; font-weight:800; display:flex; align-items:center; color:#bfefff; }
+  .cell { height:26px; border-radius:6px; background:rgba(255,255,255,.08); border:1px solid rgba(140,220,255,.2); cursor:pointer; transition:transform .08s; }
+  .cell:hover { transform:scale(1.08); }
+  .cell.on { background:var(--rc,#ff44cc); box-shadow:0 0 8px var(--rc,#ff44cc); }
+  .cell.now { border-color:#fff; }
+  #music-play { background:linear-gradient(135deg,#00aaff,#ff44cc); border:none; }
   .deco:hover { transform:scale(1.06); background:rgba(255,255,255,.12); }
   .deco.pick { border-color:#fff; background:rgba(255,120,220,.25); transform:scale(1.08); }
   .tray .row { display:flex; gap:8px; }
@@ -219,6 +226,7 @@
     <button id="btn-visitors">🔭 Visitors</button>
     <button id="btn-stickers">🏅 Stickers</button>
     <button id="btn-games">🎮 Games</button>
+    <button id="btn-music">🎵 Music</button>
     <button id="btn-weather">🌦️ Weather</button>
     <button id="btn-shop">🪙 0</button>
     <button id="btn-night">🌙 Lights off</button>
@@ -287,6 +295,19 @@
   <div class="row" style="margin-top:8px">
     <button id="booth-snap">📸 Snap a photo!</button>
     <button id="booth-done">✅ Done</button>
+  </div>
+</div>
+
+<div class="tray" id="musictray">
+  <div class="tray-title">🎵 Music Maker</div>
+  <div class="tray-tip">Tap the squares to make a song, then press Play. Your friends will dance!</div>
+  <div class="seq" id="seq"></div>
+  <div class="tray-items" id="presets" style="margin-top:8px"></div>
+  <div class="row" style="margin-top:8px">
+    <button id="music-play">▶️ Play</button>
+    <button id="music-disco">🪩 Disco: Off</button>
+    <button id="music-tempo">🚶 Normal</button>
+    <button id="music-done">✅ Done</button>
   </div>
 </div>
 
@@ -541,6 +562,8 @@ function chatter(s) {
   const sc = sceneKey;
   let pool;
   if (s.fx.sleepy) pool = LINES.sleepy;
+  else if (room === "cave" && Math.random() < .5) pool = CAVELINES;
+  else if (music.playing && Math.random() < .5) pool = ["Dance party! 🎶", "Feel the beat! 🪩", "Wiggle wiggle! 💃", "This is my jam! 🎵"];
   else if (s.hunger > 60) pool = LINES.hungry;
   else if (s.baby && Math.random() < .5) pool = LINES.baby;
   else if (s.buddy && byId(s.buddy) && Math.random() < .3) pool = LINES.buddy(byId(s.buddy).name);
@@ -574,8 +597,10 @@ const STICKERS = [
   { id: "fashion",  emoji: "🎩", name: "Fashionista",      hint: "Give 3 friends a hat at once",       test: () => squids.filter(s => s.hat && s.hat !== "none").length >= 3 },
   { id: "house",    emoji: "🏠", name: "Full House",       hint: "Have 8 friends in the tank",         test: () => squids.length >= 8 },
   { id: "chatty",   emoji: "💬", name: "Good Listener",    hint: "Hear your friends talk 20 times",    test: st => st.chats >= 20 },
+  { id: "cave",     emoji: "🕯️", name: "Cave Explorer",    hint: "Find the secret cave door",          test: st => st.cave >= 1 },
+  { id: "dj",       emoji: "🎵", name: "DJ Squid",         hint: "Play a song you made in the Music Maker", test: st => st.songs >= 1 },
 ];
-function defaultStats() { return { hatched: 0, kinds: {}, snacks: 0, pets: 0, buddies: 0, babies: 0, shows: 0, fiveStar: 0, photos: 0, decos: 0, scenes: {}, cooked: 0, night: 0, chats: 0 }; }
+function defaultStats() { return { hatched: 0, kinds: {}, snacks: 0, pets: 0, buddies: 0, babies: 0, shows: 0, fiveStar: 0, photos: 0, decos: 0, scenes: {}, cooked: 0, night: 0, chats: 0, cave: 0, songs: 0 }; }
 let stats = defaultStats(), stickers = {};
 
 /* ---------- weather & seasons ---------- */
@@ -593,6 +618,21 @@ const WLINES = { stormy: ["Eek, thunder! ⚡", "Was that lightning?! 😲", "Hol
 let weather = { mode: "auto", key: "sunny", season: "autumn", autoLights: false, flash: 0, boltX: 0, nextBolt: 6, check: 0, parts: [], clouds: [] };
 let game = { active: false, kind: null }, bestPop = 0;
 let party = { active: false, s: null };
+
+/* ---------- music maker ---------- */
+const ROWS = [["🥁", "kick", 25], ["👏", "clap", 45], ["La", 880, 300], ["Sol", 784, 270], ["Mi", 659, 200], ["Re", 587, 160], ["Do", 523, 120]];
+const PRESETS = {
+  bop:   { name: "Bubble Bop",  emoji: "🫧", rows: ["x.x.x.x.", "..x...x.", "......x.", "..x.....", "x...x...", ".....x..", "...x...."] },
+  waltz: { name: "Ocean Waltz", emoji: "🌊", rows: ["x..x..x.", ".x..x..x", "x.......", "...x....", "......x.", ".x....x.", "....x..."] },
+  disco: { name: "Squid Disco", emoji: "🪩", rows: ["x.x.x.x.", ".x.x.x.x", "x.x.....", "....x.x.", "x...x...", "..x...x.", ".x.x.x.x"] },
+};
+let music = { playing: false, disco: false, bpm: 120, step: -1, acc: 0, beat: 0, hit: false, bars: 0, grid: ROWS.map(() => Array(8).fill(false)) };
+
+/* ---------- secret cave ---------- */
+let room = "tank", roomTarget = null, roomFade = 0, grandmaAwake = 0;
+let cave = { day: "", found: [false, false, false], grandma: false };
+const CAVE_SPOTS = [[.3, .5], [.55, .26], [.72, .58]];
+const CAVELINES = ["Spooky! 👀", "Look at the crystals! 💎", "Shhh, Grandma's sleeping 🤫", "It's so glowy in here!", "Is that a pool? Splash!"];
 function checkStickers() {
   const fresh = [];
   for (const st of STICKERS) { if (!stickers[st.id] && st.test(stats)) { stickers[st.id] = Date.now(); fresh.push(st); } }
@@ -694,7 +734,8 @@ function makeSquid(o = {}) {
 function save() {
   try {
     localStorage.setItem("glassSquidAquarium", JSON.stringify({
-      night, decos, scene: sceneKey, pantry, visitors, stats, stickers, coins, owned, lastBonus, bestPop,
+      night, decos, scene: sceneKey, pantry, visitors, stats, stickers, coins, owned, lastBonus, bestPop, cave,
+      song: music.grid, bpm: music.bpm,
       weatherMode: weather.mode, autoLights: weather.autoLights, savedAt: Date.now(),
       squids: squids.map(s => ({ id: s.id, name: s.name, kind: s.kind, hat: s.hat, glasses: s.glasses, buddy: s.buddy, parents: s.parents, baby: s.baby, lastParty: s.lastParty, parties: s.parties, hue: s.hue, size: s.size, hunger: s.hunger, happy: s.happy, x: s.x, y: s.y, bornAt: s.bornAt })),
     }));
@@ -721,6 +762,9 @@ function load() {
     coins = typeof d.coins === "number" ? d.coins : 50 + 25 * Object.keys(stickers).length;
     lastBonus = d.lastBonus || "";
     bestPop = d.bestPop || 0;
+    if (Array.isArray(d.song) && d.song.length === ROWS.length) music.grid = d.song.map(r => Array.from({ length: 8 }, (_, i) => !!(r && r[i])));
+    if ([90, 120, 150].includes(d.bpm)) music.bpm = d.bpm;
+    if (d.cave && Array.isArray(d.cave.found)) cave = d.cave;
     weather.mode = WEATHERS[d.weatherMode] ? d.weatherMode : "auto";
     weather.autoLights = !!d.autoLights;
     decos =Array.isArray(d.decos) ? d.decos.filter(x => DECOS[x.kind] && x.kind !== "remove") : starterDecos();
@@ -1202,6 +1246,7 @@ function drawSquidBody(s, r, glow, col, pulse) {
 
 /* ---------- scenery drawing ---------- */
 function drawBackground() {
+  if (room === "cave") { drawCave(); return; }
   const sc = scene();
   const stops = night ? sc.night : sc.day;
   const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -1258,6 +1303,7 @@ function drawBackground() {
 
   /* decorations */
   for (const d of decos) drawDeco(d);
+  drawCaveDoor(sy);
 
   drawParticles(sc, sy);
 }
@@ -1666,6 +1712,12 @@ function update(dt) {
     }
     if (s.kind === "jelly") s.y += Math.sin(s.pulse) * .5;   // jellyfish bob with every pulse
     if (s.fx.ice) s.x += Math.sin(s.wob * 30) * .8;          // shivering!
+    if (music.playing) {                                      // dance to the beat!
+      s.y -= music.beat * 1.4;
+      if (kind.mode === "heading") s.angle += music.beat * dt * 6 * (s.id.charCodeAt(1) % 2 ? 1 : -1);
+      else s.tilt = Math.sin((music.step + music.acc * music.bpm / 30) * Math.PI) * .35;
+      if (music.hit && Math.random() < .3) sparkles.push(sp(s.x + rand(-30, 30), s.y - 20, pickLine(["🎶", "🎵", "✨"])));
+    }
 
     /* eat! */
     if (goal && Math.hypot(goal.x - s.x, goal.y - s.y) < 24 * s.size + 10) {
@@ -1701,7 +1753,8 @@ function update(dt) {
   }
   eggs = eggs.filter(e => e.t <= 3);
   updateSparkles(dt); updateRings(dt);
-  if (!booth.open) { if (visitor) updateVisitor(dt); else { visitorTimer -= dt; if (visitorTimer <= 0) { spawnVisitor(); visitorTimer = rand(70, 160); } } }
+  if (!booth.open && room === "tank") { if (visitor) updateVisitor(dt); else { visitorTimer -= dt; if (visitorTimer <= 0) { spawnVisitor(); visitorTimer = rand(70, 160); } } }
+  music.hit = false;
   if (selected) refreshCard();
 }
 
@@ -1846,25 +1899,28 @@ function mixHue(a, b) {
 /* ---------- main loop ---------- */
 function loop(now) {
   const dt = Math.min(.05, (now - lastTime) / 1000); lastTime = now; frame++;
-  updateWeather(dt);
+  updateWeather(dt); updateMusic(dt); updateRoom(dt); grandmaAwake = Math.max(0, grandmaAwake - dt);
   if (game.active) updateGame(dt);
   if (party.active) updateParty(dt);
   if (show.active) showUpdate(dt); else if (!booth.freeze) update(dt);
   drawBackground();
   if (show.active) drawSpotlights();
+  if (music.disco) drawDiscoLights();
   if (visitor && VISITORS[visitor.id].layer === "back") drawVisitor(visitor);
   for (const e of eggs) drawEgg(e);
   for (const f of foods) drawFood(f);
   for (const s of [...squids].filter(s => !s.hidden).sort((a, b) => a.size - b.size)) drawCreature(s);
   if (visitor && VISITORS[visitor.id].layer === "front") drawVisitor(visitor);
   drawSparkles(); drawRings();
+  if (music.disco) drawMirrorBall();
   if (party.active) drawParty();
   if (game.active) drawGame();
-  drawWeatherFront();
+  if (room === "tank") drawWeatherFront();
   if (night) {
     ctx.fillStyle = "rgba(0,0,10,.18)"; ctx.fillRect(0, 0, W, H);
   }
   if (show.active) drawShowStage();
+  drawRoomFade();
   boothStep(dt);
   requestAnimationFrame(loop);
 }
@@ -1957,6 +2013,18 @@ canvas.addEventListener("pointerdown", ev => {
   }
   const vis = visitorAt(x, y);
   if (vis) { spotVisitor(vis); return; }
+  if (!decorating && !booth.open) {
+    if (room === "cave") {
+      if (x < 110 && y > SAND() - 95) { enterRoom("tank"); return; }
+      if (Math.hypot(x - grandma.x, y - grandma.y) < 95) { grandmaTap(); return; }
+      for (let i = 0; i < CAVE_SPOTS.length; i++) {
+        if (!cave.found[i] && Math.hypot(x - CAVE_SPOTS[i][0] * W, y - CAVE_SPOTS[i][1] * H) < 45) {
+          cave.found[i] = true; addCoins(5, x, y); burst(x, y, ["💎", "✨"], 10); blip(900, .2);
+          toast(cave.found.every(Boolean) ? "You found ALL the cave treasures today! 💎💎💎" : "A cave treasure! 💎 +5 coins"); save(); return;
+        }
+      }
+    } else if (x > W - 115 && y > SAND() - 100) { enterRoom("cave"); return; }
+  }
   if (decorating) {
     if (placing === "remove") { const hit = decoAt(x, y); if (hit) removeDeco(hit); else toast("Tap a decoration to take it away 🧹"); }
     else if (placing) placeDeco(placing, x);
@@ -2147,7 +2215,7 @@ Object.entries(DECOS).forEach(([key, k], i) => {
 });
 function setDecorating(on) {
   decorating = on; tray.classList.toggle("show", on); decoBtn.classList.toggle("on", on);
-  if (on) { if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setWeatherTray(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
+  if (on) { if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setWeatherTray(false); setMusicTray(false); selected = null; document.getElementById("card").classList.remove("show"); setPlacing(null); }
   else placing = null;
 }
 
@@ -2176,7 +2244,7 @@ function updateKitchenTip() {
 }
 function setKitchen(on) {
   kitchenEl.classList.toggle("show", on); kitchenBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setWeatherTray(false); renderRecipe(); updateKitchenTip(); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setWeatherTray(false); setMusicTray(false); renderRecipe(); updateKitchenTip(); }
 }
 kitchenBtn.onclick = () => { setKitchen(!kitchenEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("kitchen-done").onclick = () => setKitchen(false);
@@ -2228,7 +2296,7 @@ function setBooth(on) {
   booth.open = on; boothEl.classList.toggle("show", on); boothBtn.classList.toggle("on", on);
   if (on) {
     if (decorating) setDecorating(false);
-    setShowTray(false); setKitchen(false); setWeatherTray(false);
+    setShowTray(false); setKitchen(false); setWeatherTray(false); setMusicTray(false);
     selected = null; document.getElementById("card").classList.remove("show");
     booth.dressing = null; dressSec.hidden = true; boothTip.textContent = "Tap a friend to dress them up!";
   } else booth.dressing = null;
@@ -2305,7 +2373,7 @@ function renderActs() {
 }
 function setShowTray(on) {
   showTrayEl.classList.toggle("show", on); showBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setKitchen(false); setWeatherTray(false); selected = null; document.getElementById("card").classList.remove("show"); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setKitchen(false); setWeatherTray(false); setMusicTray(false); selected = null; document.getElementById("card").classList.remove("show"); }
 }
 showBtn.onclick = () => { setShowTray(!showTrayEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("show-done").onclick = () => setShowTray(false);
@@ -2630,7 +2698,7 @@ Object.entries(WEATHERS).forEach(([key, w], i) => {
 });
 function setWeatherTray(on) {
   weatherEl.classList.toggle("show", on); weatherBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); updateWeatherTip(); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setMusicTray(false); updateWeatherTip(); }
 }
 weatherBtn.onclick = () => { setWeatherTray(!weatherEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("weather-done").onclick = () => setWeatherTray(false);
@@ -2716,7 +2784,7 @@ setTimeout(checkBirthdays, 4000); setInterval(checkBirthdays, 60000);
 const gameEl = document.getElementById("gamestray"), gameBtn = document.getElementById("btn-games");
 function setGamesTray(on) {
   gameEl.classList.toggle("show", on); gameBtn.classList.toggle("on", on);
-  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setWeatherTray(false); }
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setKitchen(false); setWeatherTray(false); setMusicTray(false); }
 }
 gameBtn.onclick = () => { setGamesTray(!gameEl.classList.contains("show")); blip(500, .1); };
 document.getElementById("games-done").onclick = () => setGamesTray(false);
@@ -2726,6 +2794,7 @@ document.getElementById("game-close").onclick = () => document.getElementById("g
 document.getElementById("game-again").onclick = () => startGame(game.kind);
 function startGame(kind) {
   if (show.active || booth.busy || party.active) { toast("Wait for that to finish first! 😊"); return; }
+  if (kind === "hide" && room === "cave") { toast("Play Hide & Seek back in the tank! 🌊"); return; }
   setGamesTray(false); selected = null; document.getElementById("card").classList.remove("show");
   document.getElementById("game-overlay").classList.remove("show");
   game = { active: true, kind, t: 0, score: 0, bubbles: [], spawn: 0, found: 0, total: 0, hint: 3, timeLeft: kind === "pop" ? 30 : 45 };
@@ -2819,6 +2888,201 @@ function drawGame() {
   ctx.restore();
 }
 
+/* ---------- music maker & dance party ---------- */
+const musicEl = document.getElementById("musictray"), musicBtn = document.getElementById("btn-music"), seqEl = document.getElementById("seq");
+const seqCells = [];
+function drum(kind) {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === "suspended") audio.resume();
+    const t0 = audio.currentTime;
+    if (kind === "kick") {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.setValueAtTime(160, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + .18);
+      g.gain.setValueAtTime(.35, t0); g.gain.exponentialRampToValueAtTime(.001, t0 + .22);
+      o.connect(g); g.connect(audio.destination); o.start(t0); o.stop(t0 + .25);
+    } else {
+      const len = Math.floor(audio.sampleRate * .12), buf = audio.createBuffer(1, len, audio.sampleRate), data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+      const src = audio.createBufferSource(); src.buffer = buf;
+      const f = audio.createBiquadFilter(); f.type = "highpass"; f.frequency.value = 1500;
+      const g = audio.createGain(); g.gain.value = .25;
+      src.connect(f); f.connect(g); g.connect(audio.destination); src.start(t0);
+    }
+  } catch (e) {}
+}
+ROWS.forEach(([label, v, hue], r) => {
+  const lbl = document.createElement("div"); lbl.className = "lbl"; lbl.textContent = label; seqEl.appendChild(lbl);
+  seqCells[r] = [];
+  for (let c = 0; c < 8; c++) {
+    const cell = document.createElement("div"); cell.className = "cell"; cell.style.setProperty("--rc", `hsl(${hue},100%,60%)`);
+    cell.onclick = () => {
+      music.grid[r][c] = !music.grid[r][c]; cell.classList.toggle("on", music.grid[r][c]);
+      if (music.grid[r][c]) { if (v === "kick" || v === "clap") drum(v); else blip(v, .2, "triangle", .08); }
+      save();
+    };
+    seqEl.appendChild(cell); seqCells[r][c] = cell;
+  }
+});
+function renderSeq() { seqCells.forEach((row, r) => row.forEach((el, c) => { el.classList.toggle("on", !!music.grid[r][c]); el.classList.remove("now"); })); }
+const presetBox = document.getElementById("presets");
+Object.entries(PRESETS).forEach(([key, p], i) => {
+  const el = document.createElement("div"); el.className = "deco"; el.innerHTML = `<span>${p.emoji}</span>${p.name}`;
+  el.onclick = () => { music.grid = p.rows.map(str => [...str].map(ch => ch === "x")); renderSeq(); if (!music.playing) togglePlay(); blip(500 + i * 80, .1); save(); };
+  presetBox.appendChild(el);
+});
+const clearEl = document.createElement("div"); clearEl.className = "deco"; clearEl.innerHTML = "<span>🧹</span>Clear";
+clearEl.onclick = () => { music.grid = ROWS.map(() => Array(8).fill(false)); renderSeq(); blip(300, .1); save(); };
+presetBox.appendChild(clearEl);
+function togglePlay() {
+  music.playing = !music.playing; music.step = -1; music.acc = 0; music.bars = 0;
+  document.getElementById("music-play").textContent = music.playing ? "⏸ Stop" : "▶️ Play";
+  if (!music.playing) { renderSeq(); for (const s of squids) s.tilt = 0; }
+  else if (!music.grid.some(r => r.some(Boolean))) toast("Tap some squares first to make a beat! 🎵");
+}
+function updateMusic(dt) {
+  music.beat = Math.max(0, music.beat - dt * 4);
+  if (!music.playing) return;
+  music.acc += dt; const stepDur = 60 / music.bpm / 2;
+  while (music.acc >= stepDur) { music.acc -= stepDur; music.step = (music.step + 1) % 8; playStep(music.step); }
+}
+function playStep(c) {
+  let any = false;
+  ROWS.forEach(([label, v], r) => { if (!music.grid[r][c]) return; any = true; if (v === "kick" || v === "clap") drum(v); else blip(v, .2, "triangle", .08); });
+  if (any) { music.beat = 1; music.hit = true; }
+  if (c === 0) {
+    music.bars++;
+    if (music.bars === 2 && music.grid.some(r => r.some(Boolean))) { stats.songs++; checkStickers(); }
+    for (const s of squids) s.happy = clamp(s.happy + .5, 0, 100);
+  }
+  seqCells.forEach(row => row.forEach((el, cc) => el.classList.toggle("now", cc === c)));
+}
+function drawDiscoLights() {
+  ctx.fillStyle = "rgba(0,0,25,.4)"; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalCompositeOperation = "screen";
+  for (let k = 0; k < 3; k++) {
+    const hue = (frame * 2 + k * 120) % 360, bx = W * .5 + Math.sin(frame * .02 + k * 2.1) * W * .35;
+    ctx.fillStyle = `hsla(${hue},100%,60%,.22)`; ctx.beginPath(); ctx.moveTo(W * .5, 20); ctx.lineTo(bx - 90, H); ctx.lineTo(bx + 90, H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+  const sy = SAND(), tw = 64;
+  for (let i = 0; i * tw < W; i++) { const hue = (i * 47 + Math.max(0, music.step) * 45 + frame) % 360; ctx.fillStyle = `hsla(${hue},100%,60%,${.22 + .3 * music.beat})`; ctx.fillRect(i * tw, sy + 6, tw - 3, H - sy); }
+}
+function drawMirrorBall() {
+  const cx = W / 2, cy = 46, r = 26;
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, cy - r); ctx.stroke();
+  const g = ctx.createRadialGradient(cx - 8, cy - 8, 4, cx, cy, r); g.addColorStop(0, "#fff"); g.addColorStop(1, "#8a8fa8");
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.clip();
+  ctx.strokeStyle = "rgba(0,0,40,.35)"; ctx.lineWidth = 1;
+  for (let k = -3; k <= 3; k++) { ctx.beginPath(); ctx.moveTo(cx - r, cy + k * 8); ctx.lineTo(cx + r, cy + k * 8); ctx.stroke(); }
+  const off = (frame * .6) % 12;
+  for (let x = cx - r + off; x < cx + r; x += 12) { ctx.beginPath(); ctx.moveTo(x, cy - r); ctx.lineTo(x, cy + r); ctx.stroke(); }
+  ctx.restore();
+  for (let k = 0; k < 10; k++) {
+    const a = frame * .02 + k * TAU / 10, px = cx + Math.cos(a) * W * .42, py = H * .4 + Math.sin(a) * H * .28;
+    const gg = ctx.createRadialGradient(px, py, 0, px, py, 40); gg.addColorStop(0, `hsla(${(k * 36 + frame) % 360},100%,75%,.35)`); gg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = gg; ctx.fillRect(px - 40, py - 40, 80, 80);
+  }
+  ctx.fillStyle = "#fff"; star4(cx + r * .6, cy - r * .5, 5 + 3 * Math.sin(frame * .2));
+  ctx.restore();
+}
+function setMusicTray(on) {
+  musicEl.classList.toggle("show", on); musicBtn.classList.toggle("on", on);
+  if (on) { if (decorating) setDecorating(false); if (booth.open) setBooth(false); setShowTray(false); setGamesTray(false); setWeatherTray(false); setKitchen(false); renderSeq(); }
+}
+musicBtn.onclick = () => { setMusicTray(!musicEl.classList.contains("show")); blip(500, .1); };
+document.getElementById("music-done").onclick = () => setMusicTray(false);
+document.getElementById("music-play").onclick = () => { togglePlay(); blip(music.playing ? 700 : 300, .1); };
+document.getElementById("music-disco").onclick = e => { music.disco = !music.disco; e.target.textContent = `🪩 Disco: ${music.disco ? "On" : "Off"}`; blip(music.disco ? 800 : 300, .12); if (music.disco && !music.playing && music.grid.some(r => r.some(Boolean))) togglePlay(); };
+document.getElementById("music-tempo").onclick = e => {
+  music.bpm = music.bpm === 90 ? 120 : music.bpm === 120 ? 150 : 90;
+  e.target.textContent = music.bpm === 90 ? "🐢 Slow" : music.bpm === 120 ? "🚶 Normal" : "🐇 Fast"; blip(400 + music.bpm, .1); save();
+};
+
+/* ---------- secret cave ---------- */
+const grandma = makeSquid({ kind: "octo", hue: 285, size: 2.2, name: "Grandma Octo", hat: "bow", glasses: "monocle", x: 0, y: 0 });
+grandma.id = "grandma"; grandma.happy = 100;
+function ensureCaveDay() { const t = new Date().toDateString(); if (cave.day !== t) cave = { day: t, found: [false, false, false], grandma: false }; }
+function enterRoom(r) {
+  if (roomTarget || room === r) return;
+  roomTarget = r; roomFade = 0; blip(r === "cave" ? 180 : 520, .35, "triangle", .1);
+  setShowTray(false); setKitchen(false); setWeatherTray(false); setGamesTray(false); setMusicTray(false);
+  selected = null; document.getElementById("card").classList.remove("show");
+}
+function updateRoom(dt) {
+  if (!roomTarget) return;
+  roomFade += dt * 2.2;
+  if (roomFade >= 1 && room !== roomTarget) {
+    room = roomTarget;
+    for (const s of squids) { s.x = clamp(s.x, 150, W - 170); s.retarget = 0; }
+    if (room === "cave") { ensureCaveDay(); stats.cave = 1; checkStickers(); toast("🕯️ Ooooh… the Secret Cave! Shhh, Grandma Octo is sleeping."); }
+    else toast("🌊 Back home in the tank!");
+  }
+  if (roomFade >= 2) { roomTarget = null; roomFade = 0; }
+}
+function drawRoomFade() { if (!roomTarget) return; const a = roomFade <= 1 ? roomFade : 2 - roomFade; ctx.fillStyle = `rgba(0,0,0,${clamp(a, 0, 1)})`; ctx.fillRect(0, 0, W, H); }
+function drawCaveDoor(sy) {
+  const x = W - 62, pul = .5 + .5 * Math.sin(frame * .06);
+  ctx.fillStyle = "#3b3550"; ctx.beginPath(); ctx.moveTo(x - 52, sy + 8); ctx.quadraticCurveTo(x - 50, sy - 70, x, sy - 78); ctx.quadraticCurveTo(x + 50, sy - 70, x + 52, sy + 8); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#4a4462"; ctx.beginPath(); ctx.arc(x - 30, sy - 40, 12, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(x + 25, sy - 55, 9, 0, TAU); ctx.fill();
+  const g = ctx.createRadialGradient(x, sy - 28, 4, x, sy - 28, 40); g.addColorStop(0, `rgba(180,120,255,${.35 + .3 * pul})`); g.addColorStop(1, "rgba(180,120,255,0)");
+  ctx.fillStyle = g; ctx.fillRect(x - 40, sy - 70, 80, 80);
+  ctx.fillStyle = "#07040f"; ctx.beginPath(); ctx.moveTo(x - 20, sy + 6); ctx.lineTo(x - 20, sy - 30); ctx.arc(x, sy - 30, 20, Math.PI, TAU); ctx.lineTo(x + 20, sy + 6); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.font = "800 12px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = `rgba(230,210,255,${.6 + .4 * pul})`; ctx.shadowColor = "#000"; ctx.shadowBlur = 6; ctx.fillText("🕯️ secret cave", x, sy - 92); ctx.restore();
+}
+function drawCave() {
+  const sy = SAND();
+  const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#0b0618"); g.addColorStop(.6, "#140b2e"); g.addColorStop(1, "#0a0616");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 40; i++) { const x = (i * 97) % W, y = 14 + (i * 37) % 90, a = .3 + .7 * Math.abs(Math.sin(frame * .03 + i)); ctx.fillStyle = `hsla(160,100%,70%,${a})`; ctx.beginPath(); ctx.arc(x, y, 1.8, 0, TAU); ctx.fill(); }
+  ctx.fillStyle = "#1c1333";
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(W * .16, 0); ctx.lineTo(W * .1, H * .3); ctx.lineTo(W * .14, H * .6); ctx.lineTo(W * .06, H); ctx.lineTo(0, H); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W, 0); ctx.lineTo(W * .84, 0); ctx.lineTo(W * .9, H * .3); ctx.lineTo(W * .86, H * .6); ctx.lineTo(W * .94, H); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#26193f";
+  for (let i = 0; i < 9; i++) { const x = W * (.14 + i * .09), h = 40 + (i * 29) % 60; ctx.beginPath(); ctx.moveTo(x - 18, 0); ctx.lineTo(x + 18, 0); ctx.lineTo(x + ((i * 13) % 10) - 5, h); ctx.closePath(); ctx.fill(); }
+  const sg = ctx.createLinearGradient(0, sy, 0, H); sg.addColorStop(0, "#2b2244"); sg.addColorStop(1, "#150f26"); ctx.fillStyle = sg;
+  ctx.beginPath(); ctx.moveTo(0, H); for (let x = 0; x <= W; x += 40) ctx.lineTo(x, sy + Math.sin(x * .02 + 1) * 6); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "rgba(80,200,255,.28)"; ctx.beginPath(); ctx.ellipse(W * .3, sy + 26, 80, 14, 0, 0, TAU); ctx.fill();
+  ctx.strokeStyle = "rgba(160,230,255,.4)"; ctx.lineWidth = 1;
+  for (let k = 0; k < 3; k++) { const rr0 = (frame * .6 + k * 20) % 60; ctx.globalAlpha = 1 - rr0 / 60; ctx.beginPath(); ctx.ellipse(W * .3, sy + 26, rr0, rr0 * .18, 0, 0, TAU); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  drawDeco({ kind: "crystal", xf: .2, scale: 1.5, phase: 1, hue: 270 }); drawDeco({ kind: "crystal", xf: .52, scale: 1.1, phase: 3, hue: 190 }); drawDeco({ kind: "crystal", xf: .66, scale: 1.3, phase: 5, hue: 320 });
+  for (let i = 0; i < 4; i++) {
+    const mx = W * .4 + i * 22, mh = 18 + (i % 2) * 10, hue = 150 + i * 30, pul = .6 + .4 * Math.sin(frame * .05 + i);
+    const mg = ctx.createRadialGradient(mx, sy - mh, 0, mx, sy - mh, 30); mg.addColorStop(0, `hsla(${hue},100%,70%,${.35 * pul})`); mg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = mg; ctx.fillRect(mx - 30, sy - mh - 30, 60, 60);
+    ctx.fillStyle = "#d8cfe8"; ctx.fillRect(mx - 3, sy - mh, 6, mh + 4);
+    ctx.fillStyle = `hsl(${hue},90%,${55 + 15 * pul}%)`; ctx.beginPath(); ctx.arc(mx, sy - mh, 11, Math.PI, TAU); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.beginPath(); ctx.arc(mx - 4, sy - mh - 5, 2, 0, TAU); ctx.fill();
+  }
+  CAVE_SPOTS.forEach(([xf, yf], i) => {
+    if (cave.found[i]) return;
+    const x = xf * W, y = yf * H, t = frame / 60;
+    for (let k = 0; k < 3; k++) { const a = t * 2 + k * 2.1, r = 10 + 6 * Math.sin(t * 3 + k), al = .5 + .5 * Math.sin(t * 6 + k * 2); ctx.fillStyle = `rgba(255,240,150,${al})`; star4(x + Math.cos(a) * r, y + Math.sin(a) * r * .6, 4 + 2 * al); }
+    ctx.font = "16px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("💎", x, y);
+  });
+  grandma.x = W * .8; grandma.y = sy - 62; grandma.wob += .02; grandma.pulse += .03;
+  grandma.blink = grandmaAwake > 0 ? 0 : 1; grandma.face = -1; grandma.tilt = 0;
+  if (grandma.say) { grandma.say.t -= 1 / 60; if (grandma.say.t <= 0) grandma.say = null; }
+  drawCreature(grandma);
+  if (grandmaAwake <= 0 && Math.random() < .015) sparkles.push(sp(grandma.x + 30, grandma.y - 60, "💤"));
+  const dx = 58;
+  const dg = ctx.createRadialGradient(dx, sy - 30, 4, dx, sy - 30, 60); dg.addColorStop(0, "rgba(120,220,255,.6)"); dg.addColorStop(1, "rgba(120,220,255,0)");
+  ctx.fillStyle = dg; ctx.fillRect(dx - 60, sy - 90, 120, 100);
+  ctx.fillStyle = "#7fd8ff"; ctx.beginPath(); ctx.moveTo(dx - 22, sy + 6); ctx.lineTo(dx - 22, sy - 32); ctx.arc(dx, sy - 32, 22, Math.PI, TAU); ctx.lineTo(dx + 22, sy + 6); ctx.closePath(); ctx.fill();
+  ctx.save(); ctx.font = "800 12px Nunito, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillStyle = "#fff"; ctx.shadowColor = "#000"; ctx.shadowBlur = 6; ctx.fillText("🌊 back to tank", dx, sy - 72); ctx.restore();
+}
+function grandmaTap() {
+  grandmaAwake = 6;
+  if (!cave.grandma) { cave.grandma = true; say(grandma, "Oh! Hello, little one. I dreamed of the glowing deep… Here, a gift 🪙", 5); addCoins(15, grandma.x, grandma.y - 90); }
+  else say(grandma, pickLine(["Back so soon, dearie? 💜", "When I was young, the whole sea glowed…", "Mind the crystals, they tickle!", "Zzz… oh! Did someone say cake? 🍰", "Your friends are lovely. So glowy!"]), 4);
+  burst(grandma.x, grandma.y - 40, ["💜", "✨"], 6); blip(330, .3, "sine", .1); save();
+}
+
 /* sticker book */
 function updateStickerButton() {
   const n = Object.keys(stickers).length;
@@ -2888,7 +3152,8 @@ if (!load()) {
 }
 applyNight();
 setScene(sceneKey);
-updateVisitorButton(); updateStickerButton(); updateCoinButton(); refreshLocks(); initWeather(); dailyBonus();
+updateVisitorButton(); updateStickerButton(); updateCoinButton(); refreshLocks(); initWeather(); dailyBonus(); renderSeq();
+document.getElementById("music-tempo").textContent = music.bpm === 90 ? "🐢 Slow" : music.bpm === 120 ? "🚶 Normal" : "🐇 Fast";
 window.addEventListener("resize", buildScenery);
 setInterval(save, 15000);
 requestAnimationFrame(loop);
