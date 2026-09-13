@@ -33,6 +33,35 @@ function shade(hex, amt) {
   return "#" + ((c(16) << 16) | (c(8) << 8) | c(0)).toString(16).padStart(6, "0");
 }
 
+/* a whole unicorn or horse, with a body, legs, tail, and mane */
+function animalSVG(kind) {
+  const uni = kind === "unicorn";
+  const body = uni ? "#ffffff" : "#b07a4a", far = uni ? "#e8e2f7" : "#8a5a34", line = uni ? "#cfc2f0" : "#6e4a2a";
+  const hoof = uni ? "#b48cff" : "#3a2418", snout = uni ? "#ffd6e6" : "#8a5a34";
+  const mane = uni ? ["#ff6fae", "#ffb347", "#ffe066", "#6fdc8c", "#4fc3f7", "#9b7bff"] : ["#3a2418", "#4a3020", "#2b1b12", "#3a2418"];
+  let s = `<svg viewBox="0 0 170 140" xmlns="http://www.w3.org/2000/svg">`;
+  mane.forEach((c, i) => { s += `<path d="M42 62 C${22 - i * 3} ${70 + i * 4} ${18 - i * 2} ${96 + i * 3} ${30 - i * 2} ${114 + i * 2}" stroke="${c}" stroke-width="6" fill="none" stroke-linecap="round"/>`; });
+  s += `<rect x="58" y="80" width="10" height="46" rx="5" fill="${far}"/><rect x="102" y="80" width="10" height="46" rx="5" fill="${far}"/>
+        <rect x="58" y="119" width="10" height="7" rx="2" fill="${hoof}"/><rect x="102" y="119" width="10" height="7" rx="2" fill="${hoof}"/>
+        <ellipse cx="82" cy="72" rx="46" ry="26" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <rect x="45" y="84" width="11" height="44" rx="5" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <rect x="113" y="84" width="11" height="44" rx="5" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <rect x="45" y="121" width="11" height="8" rx="2" fill="${hoof}"/><rect x="113" y="121" width="11" height="8" rx="2" fill="${hoof}"/>
+        <path d="M68 50 Q84 42 102 50 L100 64 Q84 58 70 64Z" fill="${uni ? "#ff8fcf" : "#e0324b"}" stroke="${uni ? "#ffd54a" : "#ffd54a"}" stroke-width="2"/>
+        <path d="M108 58 C114 40 124 26 134 18 L152 30 C142 44 134 62 126 80 Z" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <path d="M131 18 L133 2 L142 15Z" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <ellipse cx="146" cy="32" rx="21" ry="13" transform="rotate(28 146 32)" fill="${body}" stroke="${line}" stroke-width="2"/>
+        <ellipse cx="158" cy="45" rx="10" ry="8" fill="${snout}"/><circle cx="162" cy="45" r="1.8" fill="#6e4a6a"/>
+        <circle cx="143" cy="27" r="3.4" fill="#3a2466"/><circle cx="144.2" cy="25.8" r="1.1" fill="#fff"/>
+        <path d="M139 23 l-3 -3 M142 22 l-1 -4 M145 22 l1 -4" stroke="#3a2466" stroke-width="1.3" stroke-linecap="round"/>
+        <ellipse cx="150" cy="38" rx="4" ry="2.5" fill="#ff7fa8" opacity=".5"/>`;
+  mane.forEach((c, i) => { s += `<path d="M${137 - i * 4} ${15 + i * 2} C${125 - i * 5} ${30 + i * 4} ${119 - i * 5} ${48 + i * 4} ${113 - i * 3} ${66 + i * 2}" stroke="${c}" stroke-width="6" fill="none" stroke-linecap="round"/>`; });
+  if (uni) s += `<path d="M139 13 L153 -14 L148 15Z" fill="#ffd54a" stroke="#e0a800" stroke-width="1.5"/>
+        <path d="M141 6 L150 8 M143 -1 L151 1 M146 -8 L152 -6" stroke="#e0a800" stroke-width="1.5"/>
+        <path d="M30 30 l2 5 5 0 -4 3 2 5 -5 -3 -5 3 2 -5 -4 -3 5 0Z" fill="#ffe066"/><path d="M70 22 l1.5 3.5 3.5 0 -3 2 1.5 3.5 -3.5 -2 -3.5 2 1.5 -3.5 -3 -2 3.5 0Z" fill="#ff8fcf"/>`;
+  return s + `</svg>`;
+}
+
 let svgUid = 0;
 function avatarSVG(c) {
   const uid = "g" + (svgUid++);
@@ -41,7 +70,8 @@ function avatarSVG(c) {
   let s = `<svg viewBox="0 0 120 170" xmlns="http://www.w3.org/2000/svg">
   <defs><linearGradient id="${uid}r" x1="0" y1="0" x2="1" y2="1">
     <stop offset="0" stop-color="#ff5f8f"/><stop offset=".25" stop-color="#ffb347"/><stop offset=".5" stop-color="#ffe066"/>
-    <stop offset=".75" stop-color="#6fdc8c"/><stop offset="1" stop-color="#9b7bff"/></linearGradient></defs>`;
+    <stop offset=".75" stop-color="#6fdc8c"/><stop offset="1" stop-color="#9b7bff"/></linearGradient></defs>
+  <rect class="hit" x="30" y="18" width="60" height="146" rx="22" fill="none"/>`;
 
   /* wings */
   if (c.wings === "fairy") s += `<g opacity=".85" stroke="#fff" stroke-width="1.5">

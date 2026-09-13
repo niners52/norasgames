@@ -3155,7 +3155,13 @@ setScene(sceneKey);
 updateVisitorButton(); updateStickerButton(); updateCoinButton(); refreshLocks(); initWeather(); dailyBonus(); renderSeq();
 document.getElementById("music-tempo").textContent = music.bpm === 90 ? "🐢 Slow" : music.bpm === 120 ? "🚶 Normal" : "🐇 Fast";
 window.addEventListener("resize", buildScenery);
-setInterval(save, 15000);
+setInterval(save, 5000);
+/* save the moment the page is hidden or closed (iPads close tabs without warning) */
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") save(); });
+window.addEventListener("pagehide", save);
+window.addEventListener("beforeunload", save);
+/* ask the browser to keep our save safe and not clean it up */
+try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
 requestAnimationFrame(loop);
 </script>
 </body>
