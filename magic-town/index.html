@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Magic Town ✨</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏰</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; overflow:hidden; }
+  body { font-family:"Nunito","Trebuchet MS",sans-serif; background:#2a1b4a; color:#fff; touch-action:none; user-select:none; -webkit-user-select:none; }
+
+  /* ---------- top bar ---------- */
+  .bar { position:fixed; top:0; left:0; right:0; height:62px; z-index:20; display:flex; align-items:center; gap:8px; padding:0 12px;
+         background:linear-gradient(180deg,rgba(40,20,80,.95),rgba(40,20,80,.75)); box-shadow:0 4px 20px rgba(0,0,0,.3); }
+  .logo { font-family:"Dancing Script",cursive; font-size:1.9rem; color:#ffe9ff; text-shadow:0 0 12px #ff8fe0; white-space:nowrap; margin-right:auto; }
+  .place { font-weight:800; font-size:1rem; color:#ffd6f5; white-space:nowrap; }
+  button { font-family:inherit; font-weight:800; font-size:.95rem; color:#fff; cursor:pointer; border:none; border-radius:999px; padding:9px 14px;
+           background:linear-gradient(135deg,#ff7ac6,#a66bff); box-shadow:0 3px 0 rgba(0,0,0,.25); transition:transform .12s; white-space:nowrap; }
+  button:hover { transform:translateY(-2px); }
+  button:active { transform:scale(.95); }
+  button.soft { background:rgba(255,255,255,.18); }
+  button.on { background:linear-gradient(135deg,#ffb347,#ff5fa2); }
+
+  /* ---------- the room ---------- */
+  #stage { position:fixed; top:62px; left:0; right:0; bottom:0; overflow:hidden; }
+  #wall, #floor { position:absolute; left:0; right:0; transition:background .4s; }
+  #wall { top:0; height:64%; }
+  #floor { bottom:0; height:36%; box-shadow:inset 0 10px 18px rgba(0,0,0,.12); }
+  #scenery, #things { position:absolute; inset:0; }
+  #scenery { pointer-events:none; }
+  #dim { position:absolute; inset:0; background:rgba(10,0,40,.55); opacity:0; pointer-events:none; transition:opacity .6s; z-index:9000; }
+  #dim.show { opacity:1; }
+
+  .scene-bit { position:absolute; transform:translate(-50%,-100%); line-height:1; }
+  .board { position:absolute; background:#2f5d46; border:8px solid #b07a45; border-radius:6px; box-shadow:0 6px 14px rgba(0,0,0,.25);
+           color:#eaffea; font-family:"Dancing Script",cursive; display:flex; align-items:center; justify-content:center; text-align:center; }
+
+  .thing { position:absolute; transform:translate(-50%,-100%); cursor:grab; line-height:1; touch-action:none; }
+  .thing.drag { cursor:grabbing; filter:drop-shadow(0 12px 10px rgba(0,0,0,.35)); }
+  .prop { filter:drop-shadow(0 4px 3px rgba(0,0,0,.2)); transition:filter .15s; }
+  .prop:hover { filter:drop-shadow(0 0 10px rgba(255,255,255,.9)); }
+  .char svg { width:100%; height:100%; display:block; overflow:visible; }
+  .char { pointer-events:none; }
+  .char svg * { pointer-events:visiblePainted; }
+  .char .frogbody { pointer-events:auto; }
+  .char .shadow { position:absolute; left:15%; right:15%; bottom:-3%; height:7%; border-radius:50%; background:rgba(0,0,0,.18); z-index:-1; }
+  .char .inner { width:100%; height:100%; transform-origin:50% 100%; transition:transform .5s; }
+  .char .bob { width:100%; height:100%; transform-origin:50% 100%; animation:idle 2.8s ease-in-out infinite; }
+  @keyframes idle { 50% { transform:scaleY(1.025) } }
+  .char.tiny .inner { transform:scale(.6); }
+  .char.giant .inner { transform:scale(1.35); }
+  .char.glow .inner { filter:drop-shadow(0 0 14px #fff6a8) drop-shadow(0 0 22px #ff8fe0); }
+  .thing.bounce { animation:bounce .5s; }
+  @keyframes bounce { 30% { transform:translate(-50%,-114%) } 60% { transform:translate(-50%,-100%) } 80% { transform:translate(-50%,-104%) } }
+  #toast { position:fixed; left:50%; top:76px; transform:translate(-50%,-20px); z-index:40; background:rgba(255,122,198,.95); color:#fff; font-weight:800;
+           padding:10px 18px; border-radius:999px; opacity:0; transition:all .35s; pointer-events:none; white-space:nowrap; box-shadow:0 6px 18px rgba(0,0,0,.3); }
+  #toast.show { opacity:1; transform:translate(-50%,0); }
+  .char .name { position:absolute; left:50%; bottom:-14%; transform:translateX(-50%); font-weight:800; font-size:.8rem; background:rgba(40,20,80,.7);
+                padding:1px 8px; border-radius:999px; white-space:nowrap; pointer-events:none; }
+  .say { position:absolute; left:50%; bottom:104%; transform:translateX(-50%); background:#fff; color:#4a2a7a; font-weight:800; font-size:.9rem;
+         padding:6px 12px; border-radius:14px; white-space:nowrap; box-shadow:0 4px 10px rgba(0,0,0,.2); pointer-events:none; animation:pop .25s; }
+  .say::after { content:""; position:absolute; left:50%; top:100%; transform:translateX(-50%); border:7px solid transparent; border-top-color:#fff; }
+  @keyframes pop { from { transform:translateX(-50%) scale(.3); opacity:0 } }
+
+  .fx { position:absolute; pointer-events:none; z-index:9500; animation:floatUp 1.3s ease-out forwards; line-height:1; }
+  @keyframes floatUp { from { transform:translate(-50%,-50%) scale(.6); opacity:1 } to { transform:translate(calc(-50% + var(--dx)), calc(-50% - 90px)) scale(1.2); opacity:0 } }
+
+  /* ---------- trays ---------- */
+  .tray { position:fixed; left:0; right:0; bottom:0; z-index:15; background:rgba(40,20,80,.94); padding:10px 12px 12px; border-radius:20px 20px 0 0;
+          box-shadow:0 -6px 24px rgba(0,0,0,.35); transform:translateY(110%); transition:transform .3s; }
+  .tray.show { transform:translateY(0); }
+  .tray h3 { font-size:.95rem; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .tray h3 span { font-weight:600; font-size:.8rem; opacity:.75; }
+  .tray h3 button { margin-left:auto; padding:5px 12px; font-size:.8rem; }
+  .row { display:flex; gap:8px; overflow-x:auto; padding:4px 2px 6px; }
+  .chip { flex:0 0 auto; min-width:62px; border-radius:14px; background:rgba(255,255,255,.12); border:2px solid transparent; padding:6px; text-align:center;
+          cursor:pointer; font-size:.7rem; font-weight:800; }
+  .chip:hover { background:rgba(255,255,255,.22); }
+  .chip.pick { border-color:#fff; background:rgba(255,122,198,.35); }
+  .chip .e { font-size:1.8rem; line-height:1.1; display:block; }
+  .chip .mini { width:46px; height:64px; margin:0 auto; }
+  .swatch { flex:0 0 auto; width:44px; height:44px; border-radius:12px; border:3px solid transparent; cursor:pointer; }
+  .swatch.pick { border-color:#fff; }
+  #trash { flex:0 0 auto; font-size:1.8rem; border:2px dashed rgba(255,255,255,.5); border-radius:14px; padding:6px 12px; }
+  #trash.hot { background:rgba(255,80,80,.5); }
+
+  /* ---------- overlays ---------- */
+  .overlay { position:fixed; inset:0; z-index:30; background:rgba(20,5,45,.7); display:none; align-items:center; justify-content:center; padding:14px; }
+  .overlay.show { display:flex; }
+  .box { background:linear-gradient(160deg,#4a2a8a,#2c1a5a); border-radius:24px; padding:18px; width:min(760px,100%); max-height:100%; overflow:auto; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+  .box h2 { font-family:"Dancing Script",cursive; font-size:2.2rem; text-align:center; color:#ffe9ff; text-shadow:0 0 12px #ff8fe0; margin-bottom:10px; }
+  .map { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .loc { border-radius:18px; padding:14px 8px; text-align:center; cursor:pointer; font-weight:800; min-height:110px; display:flex; flex-direction:column;
+         justify-content:center; align-items:center; gap:4px; box-shadow:inset 0 -6px 0 rgba(0,0,0,.15); transition:transform .15s; text-shadow:0 2px 4px rgba(0,0,0,.4); }
+  .loc:hover { transform:scale(1.04); }
+  .loc .e { font-size:2.6rem; }
+  .loc.here { outline:4px solid #fff; }
+  .creator { display:grid; grid-template-columns:220px 1fr; gap:16px; }
+  #preview { width:200px; height:283px; margin:0 auto; background:radial-gradient(circle at 50% 60%,rgba(255,255,255,.25),transparent 70%); border-radius:18px; }
+  .cname { width:100%; margin-top:8px; font-family:inherit; font-weight:800; font-size:1.1rem; text-align:center; border:none; border-radius:12px; padding:8px; }
+  .opts h4 { font-size:.75rem; text-transform:uppercase; letter-spacing:.6px; opacity:.8; margin:6px 0 2px; }
+  .opts .row { flex-wrap:wrap; overflow:visible; padding:2px; gap:6px; }
+  .opts .chip { min-width:0; padding:5px 9px; font-size:.75rem; }
+  .opts .swatch { width:30px; height:30px; border-radius:50%; }
+  .btns { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; justify-content:center; }
+
+  @media (max-width:640px) {
+    .logo { font-size:1.4rem; } .place { display:none; } button { padding:8px 10px; font-size:.8rem; }
+    .map { grid-template-columns:repeat(2,1fr); } .creator { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div class="logo">✨ Magic Town</div>
+    <div class="place" id="place"></div>
+    <button id="btn-map">🗺️ Map</button>
+    <button id="btn-friends" class="soft">🧑‍🤝‍🧑 Friends</button>
+    <button id="btn-decorate" class="soft">🛋️ Decorate</button>
+    <button id="btn-sound" class="soft">🔊</button>
+  </div>
+
+  <div id="stage">
+    <div id="wall"></div>
+    <div id="floor"></div>
+    <div id="scenery"></div>
+    <div id="things"></div>
+    <div id="dim"></div>
+  </div>
+
+  <div class="tray" id="friends-tray">
+    <h3>🧑‍🤝‍🧑 Friends <span>Tap to bring them here · double-tap a friend in the room to change their look</span><button id="friends-close">✕</button></h3>
+    <div class="row" id="friends-row"></div>
+  </div>
+
+  <div class="tray" id="decor-tray">
+    <h3>🛋️ Decorate <span>Tap to add · drag onto 🗑️ to remove</span><button id="decor-close">✕</button></h3>
+    <div class="row" id="walls-row"></div>
+    <div class="row" id="items-row"><div id="trash">🗑️</div></div>
+  </div>
+
+  <div class="overlay" id="map-overlay">
+    <div class="box">
+      <h2>Where to? 🗺️</h2>
+      <div class="map" id="map"></div>
+      <div class="btns"><button class="soft" id="map-close">Close</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="creator-overlay">
+    <div class="box">
+      <h2 id="creator-title">Make a Friend ✨</h2>
+      <div class="creator">
+        <div>
+          <div id="preview"></div>
+          <input class="cname" id="cname" maxlength="14" placeholder="Name">
+          <div class="btns">
+            <button class="soft" id="c-random">🎲 Surprise</button>
+          </div>
+        </div>
+        <div class="opts" id="opts"></div>
+      </div>
+      <div class="btns">
+        <button id="c-save">💖 Save</button>
+        <button class="soft" id="c-delete">🗑️ Delete</button>
+        <button class="soft" id="c-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="avatar.js"></script>
+  <script src="places.js"></script>
+  <script src="world.js"></script>
+</body>
+</html>
