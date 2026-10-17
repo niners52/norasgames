@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mini Games · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .game { text-align: center; }
+  .game .emoji { font-size: 3.4rem; }
+  .best { margin-top: 10px; font-weight: 800; color: var(--yellow); }
+  .how { font-size: .88rem; color: var(--dim); margin-top: 8px; }
+  .arcade {
+    margin: 26px auto 0; max-width: 820px; border-radius: 20px; padding: 18px 22px; text-align: center;
+    background: linear-gradient(160deg, rgba(20, 8, 32, .95), rgba(8, 3, 14, .95));
+    border: 1px solid rgba(79, 210, 255, .35); box-shadow: 0 0 40px rgba(79, 210, 255, .15) inset;
+  }
+  .arcade h2 { font-family: "Noto Serif Display", Georgia, serif; letter-spacing: 3px; color: var(--blue); text-transform: uppercase; }
+  .scores { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 14px; }
+  .scores div { background: rgba(255, 255, 255, .05); border-radius: 12px; padding: 12px; }
+  .scores b { display: block; color: var(--yellow); font-size: 1.8rem; font-family: "Noto Serif Display", Georgia, serif; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title">Mini Games</h1>
+  <p class="sub">Three games from the Palace Arcade. Each one opens on its own page so it loads fast. 🕹️</p>
+
+  <div class="grid">
+    <a class="card game" href="game-eggo.html">
+      <span class="emoji">🧇</span>
+      <h3>Eggo Catch</h3>
+      <p>Waffles are falling over Hawkins. Catch them in Eleven's basket and dodge the Demodogs.</p>
+      <p class="how">Move with your finger, mouse, or arrow keys.</p>
+      <p class="best" id="best-eggo"></p>
+    </a>
+    <a class="card game" href="game-lights.html">
+      <span class="emoji">💡</span>
+      <h3>Light Code</h3>
+      <p>Will is spelling a message through the Christmas lights. Watch the blinks, then repeat them back.</p>
+      <p class="how">Tap the bulbs in the same order. It gets longer every round.</p>
+      <p class="best" id="best-lights"></p>
+    </a>
+    <a class="card game" href="game-vecna.html">
+      <span class="emoji">🕰️</span>
+      <h3>Escape Vecna</h3>
+      <p>The clock is chiming and you're stuck in the trance. Hit your favorite song's beats to wake yourself up.</p>
+      <p class="how">Tap the glowing notes before they reach the line.</p>
+      <p class="best" id="best-vecna"></p>
+    </a>
+  </div>
+
+  <section class="arcade">
+    <h2>🕹️ High Scores</h2>
+    <p class="how">Saved right on this device, just like a real arcade machine.</p>
+    <div class="scores">
+      <div><b id="s-eggo">0</b>Eggo Catch</div>
+      <div><b id="s-lights">0</b>Light Code rounds</div>
+      <div><b id="s-vecna">0</b>Escape Vecna</div>
+      <div><b id="s-trivia">0</b>Trivia best (out of 10)</div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="ghost" id="clear">🧹 Clear my high scores</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const get = k => { try { return +(localStorage.getItem(k) || 0); } catch (e) { return 0; } };
+function show() {
+  const eggo = get("stEggoBest"), lights = get("stLightsBest"), vecna = get("stVecnaBest"), trivia = get("stTriviaBest");
+  document.getElementById("s-eggo").textContent = eggo;
+  document.getElementById("s-lights").textContent = lights;
+  document.getElementById("s-vecna").textContent = vecna;
+  document.getElementById("s-trivia").textContent = trivia;
+  document.getElementById("best-eggo").textContent = eggo ? `🏆 Your best: ${eggo}` : "";
+  document.getElementById("best-lights").textContent = lights ? `🏆 Your best: round ${lights}` : "";
+  document.getElementById("best-vecna").textContent = vecna ? `🏆 Your best: ${vecna}` : "";
+}
+show();
+document.getElementById("clear").onclick = () => {
+  if (!confirm("Clear all your high scores?")) return;
+  try { ["stEggoBest", "stLightsBest", "stVecnaBest", "stTriviaBest"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  show(); beep(300, .2);
+};
+</script>
+</body>
+</html>

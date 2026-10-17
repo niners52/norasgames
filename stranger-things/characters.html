@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Party · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧇</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 22px 0 6px; }
+  .filters button { font-size: .9rem; padding: 10px 16px; background: rgba(255, 255, 255, .1); box-shadow: none; border: 1px solid rgba(255, 255, 255, .25); }
+  .filters button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .person { cursor: pointer; padding: 0; overflow: hidden; }
+  .person .portrait { display: block; width: 100%; height: auto; }
+  .person .body { padding: 16px 18px 18px; }
+  .person .who { color: var(--blue); font-size: .85rem; font-weight: 800; }
+  .person .more { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+  .person.open .more { max-height: 460px; }
+  .person ul { margin: 10px 0 0 18px; color: var(--dim); font-size: .95rem; }
+  .person li { margin-bottom: 4px; }
+  .person .hint { font-size: .78rem; color: rgba(255, 233, 233, .45); margin-top: 8px; }
+  .person.open .hint { display: none; }
+  .powers { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .powers span { font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 999px;
+                 background: rgba(166, 107, 255, .18); border: 1px solid rgba(166, 107, 255, .5); color: #d9c2ff; }
+  .frame { position: relative; }
+  .frame::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+                  background: linear-gradient(180deg, transparent 60%, rgba(10, 4, 16, .85)); }
+  .nameplate { position: absolute; left: 14px; bottom: 10px; z-index: 2; }
+  .nameplate h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.5rem; color: #fff;
+                  text-shadow: 0 0 12px rgba(255, 32, 32, .9), 0 2px 6px #000; margin: 0; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title">The Party</h1>
+  <p class="sub">Tap a card to open it up. Rule number one: friends don't lie.</p>
+
+  <div class="filters">
+    <button data-f="all" class="on">Everyone</button>
+    <button data-f="kids">The Kids</button>
+    <button data-f="teens">The Teens</button>
+    <button data-f="grown">The Grown-Ups</button>
+  </div>
+
+  <div class="grid" id="people"></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.<br>
+  Every portrait here was drawn with code, not copied from anywhere. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script src="art.js"></script>
+<script>
+"use strict";
+const PEOPLE = [
+  { name: "Eleven", actor: "Millie Bobby Brown", group: "kids", who: "Also called Jane · Number 011",
+    look: { icon: "eggo", accent: "#ff2f6a" },
+    powers: ["Telekinesis", "The Void", "Nosebleeds"],
+    quote: "Friends don't lie.",
+    facts: ["Grew up as a test subject in Hawkins Lab and escaped in 1983.",
+            "Finds people by floating in a dark, silent place called the Void.",
+            "Opened the very first gate to the Upside Down by accident.",
+            "Loves Eggo waffles more than almost anything."] },
+  { name: "Mike Wheeler", actor: "Finn Wolfhard", group: "kids", who: "Dungeon Master of the party",
+    look: { icon: "d20", accent: "#4fd2ff" },
+    powers: ["Leader", "Dungeons & Dragons", "Never gives up"],
+    quote: "If we're both going crazy, then we'll go crazy together, right?",
+    facts: ["Found Eleven in the woods and hid her in his basement.",
+            "Runs the party's Dungeons & Dragons campaigns, which once lasted ten hours.",
+            "His basement is the headquarters for basically every plan."] },
+  { name: "Dustin Henderson", actor: "Gaten Matarazzo", group: "kids", who: "The science guy",
+    look: { icon: "walkie", accent: "#ffd54a" },
+    powers: ["Inventing", "Big brain", "Curiosity doors"],
+    quote: "What's the point of having a secret code if you don't tell your friends?",
+    facts: ["Adopted a tadpole-looking pet named Dart, who turned out to be a baby Demogorgon.",
+            "Built a giant radio called Cerebro to reach his girlfriend Suzie in Utah.",
+            "Sang The NeverEnding Story with Suzie while the world was ending."] },
+  { name: "Lucas Sinclair", actor: "Caleb McLaughlin", group: "kids", who: "The one with the slingshot",
+    look: { icon: "sling", accent: "#6fff9c" },
+    powers: ["Wrist rocket", "Basketball", "Common sense"],
+    quote: "We have a lot of rules in our party, but the most important is that friends don't lie.",
+    facts: ["Carries a wrist rocket slingshot and actually hits what he aims at.",
+            "Joined the Hawkins basketball team and had to choose between the team and his friends.",
+            "His little sister Erica is the bravest person in town, just ask her."] },
+  { name: "Will Byers", actor: "Noah Schnapp", group: "kids", who: "Will the Wise",
+    look: { icon: "crayons", accent: "#ffb347" },
+    powers: ["Sees the Upside Down", "True Sight", "Drawing"],
+    quote: "It's like I feel it everywhere.",
+    facts: ["Vanished into the Upside Down in November 1983 and hid in Castle Byers.",
+            "Talked to his mom through Christmas lights on the living room wall.",
+            "Feels a cold tingle on the back of his neck whenever the monster is close."] },
+  { name: "Max Mayfield", actor: "Sadie Sink", group: "kids", who: "Zoomer · MADMAX",
+    look: { icon: "walkman", accent: "#ff7a4f" },
+    powers: ["Skateboarding", "Arcade champion", "Bravery"],
+    quote: "I'm not going anywhere.",
+    facts: ["Beat Dustin's arcade high score under the name MADMAX.",
+            "Was chosen by Vecna and escaped the first time when her friends played her favorite song.",
+            "Kate Bush's Running Up That Hill is the song that saved her."] },
+  { name: "Steve Harrington", actor: "Joe Keery", group: "teens", who: "Babysitter with the nail bat",
+    look: { icon: "bat", accent: "#4fd2ff" },
+    powers: ["Nail bat", "Great hair", "Protects everyone"],
+    quote: "Nancy, seriously, you're gonna be so cool now, it's ridiculous.",
+    facts: ["Started out as the popular jerk and turned into everyone's favorite big brother.",
+            "Scooped ice cream at Scoops Ahoy in a sailor outfit he absolutely hated.",
+            "His bat with nails in it has saved the party more than once."] },
+  { name: "Robin Buckley", actor: "Maya Hawke", group: "teens", who: "Band kid · code breaker",
+    look: { icon: "scoops", accent: "#ff5fc8" },
+    powers: ["Languages", "Secret codes", "Talking fast"],
+    quote: "I cracked it. The code. The Russian code.",
+    facts: ["Cracked a secret Russian code she overheard while scooping ice cream.",
+            "Plays in the Hawkins band and knows a bunch of languages.",
+            "She and Steve are the best friend duo of the whole show."] },
+  { name: "Nancy Wheeler", actor: "Natalia Dyer", group: "teens", who: "Reporter · Mike's big sister",
+    look: { icon: "notes", accent: "#9fd0ff" },
+    powers: ["Investigating", "Shotgun", "Never backs down"],
+    quote: "I'm not going to sit around and do nothing.",
+    facts: ["Writes for the school paper and then for the Hawkins Post.",
+            "Taught herself to shoot so she could fight monsters properly.",
+            "Figured out things the grown-ups refused to believe."] },
+  { name: "Jonathan Byers", actor: "Charlie Heaton", group: "teens", who: "Will's big brother",
+    look: { icon: "camera", accent: "#a66bff" },
+    powers: ["Photography", "Loyal", "Homemade traps"],
+    quote: "I don't like most people.",
+    facts: ["Takes pictures of everything, which accidentally solved a few mysteries.",
+            "Moved to California with his family after season 2.",
+            "Built a flaming monster trap out of lighter fluid and a bear trap."] },
+  { name: "Eddie Munson", actor: "Joseph Quinn", group: "teens", who: "Leader of the Hellfire Club",
+    look: { icon: "guitar", accent: "#ff2020" },
+    powers: ["Metal guitar", "Dungeon Master", "Fearless"],
+    quote: "This is the most metal thing I've ever seen!",
+    facts: ["Runs the Hellfire Club, the school's Dungeons & Dragons club.",
+            "Got blamed for things he never did because of how he looked.",
+            "Played Master of Puppets on his guitar in the Upside Down to save his friends."] },
+  { name: "Jim Hopper", actor: "David Harbour", group: "grown", who: "Chief of police",
+    look: { icon: "badge", accent: "#ffd54a" },
+    powers: ["Punching monsters", "Detective work", "Dad energy"],
+    quote: "Mornings are for coffee and contemplation.",
+    facts: ["Chief of the Hawkins police and Eleven's adopted dad.",
+            "Was captured and taken to a Russian prison, and still found his way home.",
+            "Makes rules with Eleven over a walkie-talkie, with a lot of arguing."] },
+  { name: "Joyce Byers", actor: "Winona Ryder", group: "grown", who: "Will's mom",
+    look: { icon: "lights", accent: "#ff7ac6" },
+    powers: ["Christmas lights", "Axe", "Never gives up"],
+    quote: "He's alive. He's out there.",
+    facts: ["Everyone said Will was gone, and she refused to believe it for one second.",
+            "Painted an alphabet on her wall and hung lights so Will could answer.",
+            "Works at Melvald's General Store in town."] },
+  { name: "Erica Sinclair", actor: "Priah Ferguson", group: "kids", who: "Lucas's little sister",
+    look: { icon: "sundae", accent: "#ff5fc8" },
+    powers: ["Sass", "Fits in air vents", "Negotiating"],
+    quote: "You can't spell America without Erica.",
+    facts: ["Crawled through the vents of a secret Russian base in exchange for free ice cream.",
+            "Beat a bunch of teenagers at Dungeons & Dragons on her very first try.",
+            "Says exactly what she thinks, every single time."] },
+];
+
+const box = document.getElementById("people");
+function draw(filter) {
+  box.innerHTML = PEOPLE.filter(p => filter === "all" || p.group === filter).map((p, i) => `
+    <article class="card person" data-i="${i}">
+      <div class="frame">
+        ${ART.portrait(p.look)}
+        <div class="nameplate"><h3>${p.name}</h3></div>
+      </div>
+      <div class="body">
+        <div class="who">${p.who}</div>
+        <p style="color:var(--dim);font-size:.9rem;margin-top:4px">Played by ${p.actor}</p>
+        <div class="powers">${p.powers.map(x => `<span>${x}</span>`).join("")}</div>
+        <div class="more">
+          <p class="quote">“${p.quote}”</p>
+          <ul>${p.facts.map(f => `<li>${f}</li>`).join("")}</ul>
+        </div>
+        <p class="hint">Tap to read more ▾</p>
+      </div>
+    </article>`).join("");
+}
+draw("all");
+document.querySelectorAll(".filters button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".filters button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on"); draw(b.dataset.f); beep(600, .1);
+  };
+});
+box.addEventListener("click", e => {
+  const c = e.target.closest(".person");
+  if (!c) return;
+  c.classList.toggle("open");
+  beep(c.classList.contains("open") ? 700 : 400, .1, "triangle");
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quizzes · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔮</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .tabs { display: flex; gap: 10px; justify-content: center; margin: 20px 0 10px; flex-wrap: wrap; }
+  .tabs button { background: rgba(255, 255, 255, .1); box-shadow: none; border: 1px solid rgba(255, 255, 255, .25); }
+  .tabs button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .quizbox { max-width: 760px; margin: 0 auto; border-radius: 20px; padding: clamp(18px, 4vw, 30px);
+             background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+             border: 1px solid rgba(255, 90, 90, .3); box-shadow: 0 14px 40px rgba(0, 0, 0, .5); }
+  .progress { height: 10px; border-radius: 999px; background: rgba(255, 255, 255, .12); overflow: hidden; margin-bottom: 18px; }
+  .progress div { height: 100%; background: linear-gradient(90deg, #ff2020, #ff9f3b); width: 0; transition: width .35s; }
+  .qtext { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.15rem, 3.4vw, 1.6rem); margin-bottom: 16px; }
+  .answers { display: grid; gap: 10px; }
+  .answers button {
+    text-align: left; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .18);
+    box-shadow: none; font-size: 1rem; padding: 14px 16px; line-height: 1.4;
+  }
+  .answers button:hover { background: rgba(255, 32, 32, .22); border-color: var(--red); }
+  .answers button.right { background: rgba(60, 200, 110, .3); border-color: #4cd97b; }
+  .answers button.wrong { background: rgba(255, 50, 50, .3); border-color: var(--red); }
+  .result { text-align: center; }
+  .result .big { font-size: 4rem; line-height: 1; }
+  .result h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.6rem, 6vw, 2.6rem); margin: 8px 0; color: #fff; text-shadow: 0 0 16px var(--red); }
+  .scoreline { font-size: 1.1rem; color: var(--dim); margin: 10px 0 16px; }
+  .feedback { min-height: 1.6em; text-align: center; font-weight: 800; margin-top: 14px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title">Quizzes</h1>
+  <p class="sub">No cheating. Friends don't lie. 🤚</p>
+
+  <div class="tabs">
+    <button id="tab-who" class="on">🔮 Which character are you?</button>
+    <button id="tab-trivia">🧠 Hawkins trivia</button>
+  </div>
+
+  <section class="quizbox" id="quizbox"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+/* ============ quiz 1: which character are you? ============ */
+const WHO_Q = [
+  { q: "Your friends are in trouble. What do you do?", a: [
+    ["Go straight at the monster. No plan needed.", "el"],
+    ["Make a plan with maps, radios, and snacks.", "dustin"],
+    ["Grab something to swing and stand in front of everyone.", "steve"],
+    ["Figure out the one clue nobody else noticed.", "robin"]] },
+  { q: "Pick a snack.", a: [
+    ["Eggo waffles, obviously.", "el"],
+    ["Nougat candy. Don't ask why.", "dustin"],
+    ["Ice cream from the mall.", "steve"],
+    ["Whatever's in the arcade vending machine.", "max"]] },
+  { q: "What do you do on a Saturday?", a: [
+    ["Beat the high score at the arcade.", "max"],
+    ["Run a Dungeons & Dragons campaign.", "eddie"],
+    ["Hang out with my best friend talking nonstop.", "robin"],
+    ["Stay home where it's quiet.", "el"]] },
+  { q: "Someone is being mean to a kid at school.", a: [
+    ["Stare them down until they leave.", "el"],
+    ["Make a joke so everyone laughs at them instead.", "eddie"],
+    ["Tell a teacher, then sit with the kid.", "robin"],
+    ["Walk the kid home so nobody bothers them.", "steve"]] },
+  { q: "Pick a way to travel Hawkins.", a: [
+    ["Bike, with everyone riding together.", "dustin"],
+    ["Skateboard, going way too fast.", "max"],
+    ["A beat-up van with music blasting.", "eddie"],
+    ["My own two feet, running.", "el"]] },
+  { q: "What's your superpower if you could pick?", a: [
+    ["Moving things with my mind.", "el"],
+    ["Knowing every fact about everything.", "dustin"],
+    ["Understanding any language or code.", "robin"],
+    ["Being brave even when I'm scared.", "steve"]] },
+  { q: "Your favorite part of the show?", a: [
+    ["The scary monsters.", "el"],
+    ["The friendship and the jokes.", "dustin"],
+    ["The music and the 80s stuff.", "eddie"],
+    ["The mysteries and the clues.", "robin"]] },
+  { q: "Pick a hiding spot in the Upside Down.", a: [
+    ["Castle Byers, my own fort.", "el"],
+    ["A trailer with a guitar in it.", "eddie"],
+    ["The arcade, lights off.", "max"],
+    ["Behind the biggest person I know.", "dustin"]] },
+];
+const WHO_R = {
+  el: { face: "🧇", name: "Eleven", text: "Quiet, powerful, and done letting anybody push your friends around. You'd rather show up than talk about it, and you'd flip a van for the people you love." },
+  dustin: { face: "🦷", name: "Dustin", text: "The brain and the heart of the party. You know a weirdly specific fact for every situation, and you always want everyone in on the plan." },
+  steve: { face: "🏏", name: "Steve", text: "The protector. You might act goofy, but when something scary shows up you put yourself in front of everyone else. Great hair, too." },
+  robin: { face: "🎺", name: "Robin", text: "The one who cracks the code. You notice everything, talk a mile a minute, and you're loyal to your best friend forever." },
+  max: { face: "🛹", name: "Max", text: "Fast, fearless, and way tougher than people expect. You handle hard things on your own, but your friends always come find you anyway." },
+  eddie: { face: "🎸", name: "Eddie", text: "Loud, funny, and totally yourself. People misjudge you until the moment it counts, and then you turn out to be the bravest one in the room." },
+};
+
+/* ============ quiz 2: trivia ============ */
+const TRIVIA = [
+  { q: "What year did Will Byers go missing?", a: ["1983", "1979", "1985", "1991"], right: 0, why: "November 1983, the night he rode his bike home." },
+  { q: "What is Eleven's favorite food?", a: ["Pizza rolls", "Eggo waffles", "Ice cream", "Nougat"], right: 1, why: "Eggos. She steals a whole box in season 1." },
+  { q: "What state is Hawkins in?", a: ["Ohio", "Illinois", "Indiana", "Maine"], right: 2, why: "Hawkins is a made-up town in Indiana." },
+  { q: "What's the name of the mall in season 3?", a: ["Starcourt Mall", "Hawkins Plaza", "Palace Mall", "Mirkwood Mall"], right: 0, why: "Starcourt Mall, with a secret Russian base underneath." },
+  { q: "Which song pulls Max out of Vecna's trance?", a: ["Master of Puppets", "Should I Stay or Should I Go", "Running Up That Hill", "Africa"], right: 2, why: "Kate Bush's Running Up That Hill, her favorite song." },
+  { q: "Who leads the Hellfire Club?", a: ["Mike", "Dustin", "Eddie Munson", "Lucas"], right: 2, why: "Eddie runs the school's Dungeons & Dragons club." },
+  { q: "What was Vecna's name when he was a boy?", a: ["Henry Creel", "Peter Ballard", "Martin Brenner", "Billy Hargrove"], right: 0, why: "Henry Creel, who later became test subject One." },
+  { q: "What do the kids call baby Demogorgons?", a: ["Demopups", "Demodogs", "Demobats", "Flayers"], right: 1, why: "Dustin squished together Demogorgon and dogs." },
+  { q: "How did Joyce talk to Will when he was gone?", a: ["A walkie-talkie", "Dreams", "Christmas lights and an alphabet", "A phone in the woods"], right: 2, why: "She painted the alphabet on the wall and hung lights." },
+  { q: "What was Dustin's pet named?", a: ["Dart", "Mews", "Yertle", "Bob"], right: 0, why: "Dart, short for D'Artagnan, who grew into a Demodog." },
+  { q: "Where did Steve and Robin work in season 3?", a: ["Melvald's", "Scoops Ahoy", "Family Video", "The Palace Arcade"], right: 1, why: "Scoops Ahoy, in those sailor outfits." },
+  { q: "What song did Eddie play in the Upside Down?", a: ["Master of Puppets", "Enter Sandman", "The NeverEnding Story", "Every Breath You Take"], right: 0, why: "Metallica's Master of Puppets, to pull the Demobats away." },
+];
+
+/* ============ the machine that runs both quizzes ============ */
+const box = document.getElementById("quizbox");
+const shuffle = arr => arr.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+let mode = "who", qs = [], idx = 0, scores = {}, correct = 0;
+
+function start(which) {
+  mode = which; idx = 0; correct = 0; scores = {};
+  qs = which === "who" ? shuffle(WHO_Q).slice(0, 6) : shuffle(TRIVIA).slice(0, 10);
+  document.getElementById("tab-who").classList.toggle("on", which === "who");
+  document.getElementById("tab-trivia").classList.toggle("on", which === "trivia");
+  render();
+}
+function render() {
+  if (idx >= qs.length) return finish();
+  const q = qs[idx];
+  const answers = mode === "who" ? shuffle(q.a) : q.a.map((t, i) => [t, i]);
+  box.innerHTML = `
+    <div class="progress"><div style="width:${idx / qs.length * 100}%"></div></div>
+    <p style="color:var(--dim);font-weight:800">Question ${idx + 1} of ${qs.length}</p>
+    <p class="qtext">${q.q}</p>
+    <div class="answers">${answers.map(([t, v]) => `<button data-v="${v}">${t}</button>`).join("")}</div>
+    <p class="feedback" id="fb"></p>`;
+  box.querySelectorAll(".answers button").forEach(b => { b.onclick = () => choose(b, q); });
+}
+function choose(btn, q) {
+  box.querySelectorAll(".answers button").forEach(b => b.disabled = true);
+  if (mode === "who") {
+    const v = btn.dataset.v;
+    scores[v] = (scores[v] || 0) + 1;
+    btn.classList.add("right"); beep(720, .12);
+    setTimeout(() => { idx++; render(); }, 320);
+  } else {
+    const pickedIdx = +btn.dataset.v, ok = pickedIdx === q.right;
+    btn.classList.add(ok ? "right" : "wrong");
+    if (!ok) box.querySelector(`.answers button[data-v="${q.right}"]`).classList.add("right");
+    if (ok) { correct++; tune([660, 880]); } else { beep(180, .3, "sawtooth", .08); }
+    document.getElementById("fb").textContent = (ok ? "✅ Yes! " : "❌ Nope. ") + q.why;
+    setTimeout(() => { idx++; render(); }, 1700);
+  }
+}
+function finish() {
+  if (mode === "who") {
+    let best = "el", bestN = -1;
+    for (const k in scores) if (scores[k] > bestN) { bestN = scores[k]; best = k; }
+    const r = WHO_R[best];
+    tune([523, 659, 784, 1047]);
+    box.innerHTML = `
+      <div class="result">
+        <div class="big">${r.face}</div>
+        <h3>You are ${r.name}!</h3>
+        <p class="scoreline">${r.text}</p>
+        <div class="row">
+          <button onclick="start('who')">🔁 Try again</button>
+          <button class="ghost" onclick="start('trivia')">🧠 Now do the trivia</button>
+        </div>
+      </div>`;
+  } else {
+    const pct = Math.round(correct / qs.length * 100);
+    const rank = pct === 100 ? ["🏆", "Hawkins Legend", "Perfect score! Even Dustin would be impressed."]
+      : pct >= 80 ? ["🔦", "Party Member", "You know your stuff. Welcome to the Hellfire Club."]
+      : pct >= 50 ? ["🚲", "Hawkins Kid", "Not bad! Time for a rewatch to get the rest."]
+      : ["🧇", "New in Town", "That's okay, everyone starts somewhere. Go watch it again!"];
+    tune([523, 659, 784]);
+    try {
+      const best = +(localStorage.getItem("stTriviaBest") || 0);
+      if (correct > best) localStorage.setItem("stTriviaBest", correct);
+    } catch (e) {}
+    let best = correct;
+    try { best = Math.max(correct, +(localStorage.getItem("stTriviaBest") || 0)); } catch (e) {}
+    box.innerHTML = `
+      <div class="result">
+        <div class="big">${rank[0]}</div>
+        <h3>${rank[1]}</h3>
+        <p class="scoreline">You got <b>${correct} out of ${qs.length}</b> right.<br>${rank[2]}<br>Your best ever: ${best}/10</p>
+        <div class="row">
+          <button onclick="start('trivia')">🔁 Play again</button>
+          <button class="ghost" onclick="start('who')">🔮 Which character are you?</button>
+        </div>
+      </div>`;
+  }
+}
+document.getElementById("tab-who").onclick = () => start("who");
+document.getElementById("tab-trivia").onclick = () => start("trivia");
+start("who");
+</script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Eggo Catch · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧇</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { touch-action: none; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .hud { display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 1.1rem; margin-bottom: 8px; }
+  .hud .lives { letter-spacing: 2px; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 18px; border: 2px solid rgba(255, 90, 90, .4);
+           background: linear-gradient(180deg, #1a0a26, #0b0414 70%, #140820); box-shadow: 0 14px 40px rgba(0, 0, 0, .55); touch-action: none; }
+  .overlay2 { position: relative; }
+  .panel {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    background: rgba(8, 3, 14, .88); border-radius: 18px; text-align: center; padding: 20px;
+  }
+  .panel h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.5rem, 6vw, 2.4rem); color: #fff; text-shadow: 0 0 16px var(--red); }
+  .panel p { color: var(--dim); max-width: 44ch; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Eggo Catch</h1>
+  <p class="sub">Catch the waffles. Do not catch the Demodogs. 🧇</p>
+
+  <div class="hud">
+    <span>Score: <b id="score">0</b></span>
+    <span class="lives" id="lives">❤️❤️❤️</span>
+    <span>Best: <b id="best">0</b></span>
+  </div>
+
+  <div class="overlay2">
+    <canvas id="c" width="700" height="520"></canvas>
+    <div class="panel" id="panel">
+      <h2>🧇 Eggo Catch</h2>
+      <p>Waffles are falling all over Hawkins. Move Eleven to catch them.
+         Golden waffles are worth 3. Watch out for Demodogs, they cost you a heart.</p>
+      <p><b>Move:</b> slide your finger, move the mouse, or use ← →</p>
+      <button id="go">▶️ Start</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:14px">
+    <a class="btn" href="games.html">← All mini games</a>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const c = document.getElementById("c"), ctx = c.getContext("2d");
+const W = c.width, H = c.height;
+const panel = document.getElementById("panel");
+let items = [], player = { x: W / 2, w: 110, h: 90 }, score = 0, lives = 3, running = false, spawnT = 0, speed = 1, t = 0, sparks = [];
+let best = 0;
+try { best = +(localStorage.getItem("stEggoBest") || 0); } catch (e) {}
+document.getElementById("best").textContent = best;
+
+const KINDS = [
+  { e: "🧇", pts: 1, good: true, w: 7 },
+  { e: "🧇", pts: 1, good: true, w: 7 },
+  { e: "🌟", pts: 3, good: true, w: 2 },   // golden waffle
+  { e: "🍦", pts: 2, good: true, w: 2 },
+  { e: "🐕", pts: 0, good: false, w: 4 },  // demodog
+  { e: "🦇", pts: 0, good: false, w: 2 },  // demobat
+];
+const pickKind = () => {
+  const total = KINDS.reduce((s, k) => s + k.w, 0);
+  let r = Math.random() * total;
+  for (const k of KINDS) { r -= k.w; if (r <= 0) return k; }
+  return KINDS[0];
+};
+
+function start() {
+  items = []; sparks = []; score = 0; lives = 3; speed = 1; spawnT = 0; t = 0; running = true;
+  panel.hidden = true;
+  updateHud();
+  requestAnimationFrame(loop);
+}
+function updateHud() {
+  document.getElementById("score").textContent = score;
+  document.getElementById("lives").textContent = "❤️".repeat(lives) + "🖤".repeat(3 - lives);
+}
+function gameOver() {
+  running = false;
+  if (score > best) { best = score; try { localStorage.setItem("stEggoBest", best); } catch (e) {} document.getElementById("best").textContent = best; }
+  panel.hidden = false;
+  panel.innerHTML = `<h2>${score >= 30 ? "🏆 Eleven would be proud!" : score >= 15 ? "🧇 Nice catching!" : "😬 The Demodogs got you"}</h2>
+    <p>You caught <b>${score}</b> points of waffles.<br>Your best ever is <b>${best}</b>.</p>
+    <button id="go">🔁 Play again</button>
+    <a class="btn ghost" href="games.html" style="background:rgba(255,255,255,.1)">← All mini games</a>`;
+  document.getElementById("go").onclick = start;
+  tune([392, 330, 262]);
+}
+
+function loop() {
+  if (!running) return;
+  t++;
+  speed = 1 + t / 2600;
+  ctx.clearRect(0, 0, W, H);
+
+  /* background bits */
+  ctx.fillStyle = "rgba(255,255,255,.05)";
+  for (let i = 0; i < 24; i++) {
+    const x = (i * 97 + t * .3) % W, y = (i * 53 + t * .6) % H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+
+  /* spawn */
+  spawnT -= 1;
+  if (spawnT <= 0) {
+    spawnT = Math.max(16, 46 - t / 90);
+    const k = pickKind();
+    items.push({ ...k, x: 40 + Math.random() * (W - 80), y: -40, vy: (2.2 + Math.random() * 1.6) * speed, spin: Math.random() * 6 });
+  }
+
+  /* items */
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for (const it of items) {
+    it.y += it.vy; it.spin += .02;
+    ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(Math.sin(it.spin) * .25);
+    ctx.font = "44px serif"; ctx.fillText(it.e, 0, 0); ctx.restore();
+  }
+
+  /* catching */
+  const basketY = H - 70;
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (it.y > basketY - 34 && it.y < basketY + 40 && Math.abs(it.x - player.x) < player.w / 2 + 16) {
+      items.splice(i, 1);
+      if (it.good) { score += it.pts; beep(700 + it.pts * 120, .1, "triangle", .08); popText(it.x, it.y, "+" + it.pts, "#6fff9c"); }
+      else { lives--; beep(140, .3, "sawtooth", .1); popText(it.x, it.y, "-1 ❤️", "#ff5a5a"); if (lives <= 0) { updateHud(); return gameOver(); } }
+      updateHud();
+    } else if (it.y > H + 40) items.splice(i, 1);
+  }
+
+  /* floating score pops */
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const s = sparks[i];
+    s.y -= 1.4; s.life -= .02;
+    ctx.globalAlpha = Math.max(0, s.life); ctx.fillStyle = s.color; ctx.font = "800 24px Nunito, sans-serif";
+    ctx.fillText(s.text, s.x, s.y); ctx.globalAlpha = 1;
+    if (s.life <= 0) sparks.splice(i, 1);
+  }
+
+  /* player: Eleven with a basket */
+  ctx.font = "66px serif";
+  ctx.fillText("🧒", player.x, basketY - 26);
+  ctx.font = "54px serif";
+  ctx.fillText("🧺", player.x, basketY + 22);
+
+  requestAnimationFrame(loop);
+}
+function popText(x, y, text, color) { sparks.push({ x, y, text, color, life: 1 }); }
+
+/* ---------- controls ---------- */
+function moveTo(clientX) {
+  const r = c.getBoundingClientRect();
+  player.x = Math.max(60, Math.min(W - 60, (clientX - r.left) / r.width * W));
+}
+c.addEventListener("pointermove", e => { e.preventDefault(); moveTo(e.clientX); });
+c.addEventListener("pointerdown", e => { e.preventDefault(); moveTo(e.clientX); });
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") player.x = Math.max(60, player.x - 42);
+  if (e.key === "ArrowRight") player.x = Math.min(W - 60, player.x + 42);
+  if ((e.key === " " || e.key === "Enter") && !running) start();
+});
+document.getElementById("go").onclick = start;
+</script>
+</body>
+</html>

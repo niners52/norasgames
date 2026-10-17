@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stranger Things Fan Zone ✨ Welcome to Hawkins</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔦</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ---------- the hero ---------- */
+  .hero { text-align: center; padding: 10px 0 6px; }
+  .hero .kicker { letter-spacing: 6px; text-transform: uppercase; font-size: .8rem; color: var(--red-soft); margin-bottom: 10px; }
+  .hero .blurb { max-width: 60ch; margin: 16px auto 0; color: var(--dim); }
+  .heroart { margin: 18px auto 0; max-width: 900px; border-radius: 18px; overflow: hidden;
+             border: 1px solid rgba(255, 90, 90, .3); box-shadow: 0 16px 44px rgba(0, 0, 0, .6); }
+  .heroart svg { display: block; width: 100%; height: auto; }
+
+  /* ---------- the christmas light alphabet wall ---------- */
+  .wall {
+    margin: 34px auto 0; max-width: 980px; border-radius: 20px; padding: 18px clamp(10px, 3vw, 28px) 26px;
+    background: repeating-linear-gradient(90deg, #d8c4a0 0 44px, #cbb694 44px 46px);
+    box-shadow: inset 0 0 90px rgba(90, 50, 20, .55), 0 14px 40px rgba(0, 0, 0, .5);
+    border: 3px solid #8a6a46; position: relative;
+  }
+  .wall::after {
+    content: ""; position: absolute; inset: 0; border-radius: 17px; pointer-events: none;
+    background: radial-gradient(ellipse at 50% 0%, rgba(255, 220, 160, .18), transparent 60%);
+  }
+  .wallrow { position: relative; display: flex; justify-content: space-between; gap: 2px; padding: 26px 6px 8px; }
+  .wire { position: absolute; left: 0; right: 0; top: 10px; height: 34px; }
+  .bulb { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; width: 100%; }
+  .bulb .glass {
+    width: clamp(15px, 3.4vw, 26px); height: clamp(21px, 4.6vw, 34px); border-radius: 50% 50% 46% 46%;
+    background: var(--c); opacity: .3; transition: opacity .12s, box-shadow .12s, transform .12s;
+  }
+  .bulb.lit .glass { opacity: 1; box-shadow: 0 0 16px var(--c), 0 0 38px var(--c); transform: scale(1.12); }
+  .bulb .letter {
+    font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(.8rem, 2.6vw, 1.5rem); font-weight: 800;
+    color: #3b2a16; margin-top: 4px; text-transform: uppercase; transition: color .12s, text-shadow .12s;
+  }
+  .bulb.lit .letter { color: #1a1008; text-shadow: 0 0 12px var(--c); }
+  .wall-controls { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+  .wall-controls input {
+    font-family: inherit; font-weight: 800; font-size: 1.05rem; padding: 12px 16px; border-radius: 999px;
+    border: 2px solid rgba(255, 90, 90, .5); background: rgba(10, 4, 16, .85); color: var(--text); min-width: min(320px, 80vw);
+  }
+  .wall-controls input:focus { outline: none; border-color: var(--red); box-shadow: 0 0 16px rgba(255, 32, 32, .5); }
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .presets button { font-size: .85rem; padding: 8px 14px; background: rgba(255, 255, 255, .1); box-shadow: none; border: 1px solid rgba(255, 255, 255, .25); }
+  #wall-says { min-height: 2em; text-align: center; margin-top: 14px; font-family: "Noto Serif Display", Georgia, serif;
+                font-size: clamp(1.3rem, 5vw, 2.4rem); letter-spacing: 8px; color: #fff; text-shadow: 0 0 14px var(--red); }
+
+  /* ---------- fact strip ---------- */
+  .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; }
+  .fact { border-radius: 16px; padding: 16px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); }
+  .fact b { color: var(--yellow); display: block; font-size: 1.6rem; font-family: "Noto Serif Display", Georgia, serif; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <p class="kicker">Hawkins, Indiana · Population 30,000</p>
+    <h1 class="title flip">Stranger<br>Things</h1>
+    <p class="sub">A fan site made by Nora ✨</p>
+    <div id="heroart" class="heroart"></div>
+    <p class="blurb">
+      Everything about the show: the kids, the monsters, the Upside Down, quizzes, and mini games.
+      Grab your flashlight and your walkie-talkie. <strong>Friends don't lie.</strong>
+    </p>
+    <div class="row" style="margin-top:18px">
+      <a class="btn" href="games.html">🎮 Play the mini games</a>
+      <button id="btn-upside" class="ghost">🙃 Flip to the Upside Down</button>
+    </div>
+  </section>
+
+  <h2 class="section center">📞 Talk through the lights</h2>
+  <p class="sub">Type a message like Joyce did, then watch the wall spell it out.</p>
+
+  <section class="wall" id="wall">
+    <div class="wallrow" data-letters="ABCDEFGH"></div>
+    <div class="wallrow" data-letters="IJKLMNOPQ"></div>
+    <div class="wallrow" data-letters="RSTUVWXYZ"></div>
+  </section>
+
+  <div id="wall-says"></div>
+  <div class="wall-controls">
+    <input id="wall-input" maxlength="28" placeholder="Type a message…" autocomplete="off" spellcheck="false">
+    <button id="wall-send">💡 Light it up</button>
+  </div>
+  <div class="presets">
+    <button data-msg="RUN">RUN</button>
+    <button data-msg="FRIENDS DONT LIE">FRIENDS DONT LIE</button>
+    <button data-msg="RIGHT HERE">RIGHT HERE</button>
+    <button data-msg="HELP ME">HELP ME</button>
+    <button data-msg="HI NORA">HI NORA</button>
+  </div>
+
+  <h2 class="section">🚪 Where do you want to go?</h2>
+  <div class="grid">
+    <a class="card" href="characters.html">
+      <span class="emoji">🧇</span>
+      <h3>The Party</h3>
+      <p>Eleven, Mike, Dustin, Lucas, Will, Max, Steve, Robin, Nancy, Hopper, Joyce, and Eddie. Facts and best quotes for everyone.</p>
+      <span class="tag">12 characters</span>
+    </a>
+    <a class="card" href="monsters.html">
+      <span class="emoji">🌺</span>
+      <h3>Monster Files</h3>
+      <p>Top secret lab files on the Demogorgon, Demodogs, the Mind Flayer, Demobats, and Vecna, plus how the kids beat them.</p>
+      <span class="tag">5 monsters</span>
+    </a>
+    <a class="card" href="quiz.html">
+      <span class="emoji">🔮</span>
+      <h3>Quizzes</h3>
+      <p>Find out which character you are, then test how much you really know about Hawkins.</p>
+      <span class="tag">2 quizzes</span>
+    </a>
+    <a class="card" href="games.html">
+      <span class="emoji">🎮</span>
+      <h3>Mini Games</h3>
+      <p>Catch Eggo waffles, copy the blinking lights, and escape Vecna before the clock runs out.</p>
+      <span class="tag">3 games</span>
+    </a>
+  </div>
+
+  <h2 class="section">📼 Quick facts</h2>
+  <div class="facts">
+    <div class="fact"><b>1983</b>The year Will Byers went missing and the whole story started.</div>
+    <div class="fact"><b>5</b>Seasons in total. The last one came out at the end of 2025.</div>
+    <div class="fact"><b>1987</b>When the final season takes place, four years after Will vanished.</div>
+    <div class="fact"><b>011</b>Eleven's number, tattooed on her arm from Hawkins Lab.</div>
+  </div>
+
+  <h2 class="section">🎵 Songs that saved the day</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Running Up That Hill</h3>
+      <p>Kate Bush, 1985. Max's favorite song pulls her out of Vecna's trance. After season 4 came out, the song shot back up the charts around the world, 37 years after it was made.</p>
+      <span class="tag">Season 4</span>
+    </div>
+    <div class="card">
+      <h3>Master of Puppets</h3>
+      <p>Metallica, 1986. Eddie Munson plays it on his guitar in the Upside Down to pull the Demobats away from his friends. The most metal distraction ever.</p>
+      <span class="tag">Season 4</span>
+    </div>
+    <div class="card">
+      <h3>The NeverEnding Story</h3>
+      <p>Dustin and Suzie sing it to each other over the radio in the middle of saving the world. Everyone else had to wait.</p>
+      <span class="tag">Season 3</span>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.<br>
+  All characters and monsters belong to their creators. This site is just for fun. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script src="art.js"></script>
+<script>
+"use strict";
+document.getElementById("heroart").innerHTML = ART.hawkins();
+/* ---------- build the light wall ---------- */
+const COLORS = ["#ff3b3b", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff5fc8", "#ff9f3b", "#a66bff"];
+const bulbs = {};
+document.querySelectorAll(".wallrow").forEach((row, r) => {
+  const letters = row.dataset.letters;
+  const svg = `<svg class="wire" viewBox="0 0 100 10" preserveAspectRatio="none">
+      <path d="M0 2 Q 12 ${r % 2 ? 9 : 8} 25 3 T 50 3 T 75 3 T 100 2" fill="none" stroke="#2f2112" stroke-width="1.1"/></svg>`;
+  let html = svg;
+  [...letters].forEach((ch, i) => {
+    html += `<div class="bulb" data-ch="${ch}" style="--c:${COLORS[(r * 3 + i) % COLORS.length]}">
+      <div class="glass"></div><div class="letter">${ch}</div></div>`;
+  });
+  row.innerHTML = html;
+  [...letters].forEach(ch => { bulbs[ch] = row.querySelector(`.bulb[data-ch="${ch}"]`); });
+});
+
+/* ---------- idle twinkle ---------- */
+let playing = false;
+setInterval(() => {
+  if (playing) return;
+  const keys = Object.keys(bulbs), b = bulbs[keys[Math.floor(Math.random() * keys.length)]];
+  b.classList.add("lit");
+  setTimeout(() => b.classList.remove("lit"), 450 + Math.random() * 500);
+}, 260);
+
+/* ---------- spell out a message ---------- */
+const says = document.getElementById("wall-says");
+async function spell(msg) {
+  if (playing) return;
+  const text = msg.toUpperCase().replace(/[^A-Z ]/g, "").slice(0, 28);
+  if (!text.trim()) { says.textContent = "…"; return; }
+  playing = true;
+  Object.values(bulbs).forEach(b => b.classList.remove("lit"));
+  says.textContent = "";
+  for (const ch of text) {
+    if (ch === " ") { says.textContent += " "; await wait(320); continue; }
+    const b = bulbs[ch];
+    b.classList.add("lit");
+    says.textContent += ch;
+    beep(300 + (ch.charCodeAt(0) - 65) * 22, .16, "triangle", .07);
+    await wait(430);
+    b.classList.remove("lit");
+    await wait(130);
+  }
+  await wait(500);
+  for (let i = 0; i < 3; i++) {   // happy flash at the end
+    Object.values(bulbs).forEach(b => b.classList.add("lit"));
+    beep(900, .1, "sine", .05);
+    await wait(170);
+    Object.values(bulbs).forEach(b => b.classList.remove("lit"));
+    await wait(130);
+  }
+  playing = false;
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+document.getElementById("wall-send").onclick = () => spell(document.getElementById("wall-input").value);
+document.getElementById("wall-input").addEventListener("keydown", e => { if (e.key === "Enter") spell(e.target.value); });
+document.querySelectorAll(".presets button").forEach(b => { b.onclick = () => spell(b.dataset.msg); });
+document.getElementById("wall").addEventListener("click", e => {
+  const b = e.target.closest(".bulb");
+  if (!b || playing) return;
+  b.classList.add("lit"); beep(300 + (b.dataset.ch.charCodeAt(0) - 65) * 22, .2, "triangle", .08);
+  setTimeout(() => b.classList.remove("lit"), 600);
+});
+setTimeout(() => spell("WELCOME TO HAWKINS"), 900);
+</script>
+</body>
+</html>

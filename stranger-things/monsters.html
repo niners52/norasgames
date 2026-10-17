@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monster Files · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📕</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .bookwrap { max-width: 860px; margin: 18px auto 0; }
+  .book { position: relative; perspective: 2200px; }
+  .sheet {
+    position: relative; border-radius: 12px; overflow: hidden;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(255, 255, 255, .35), transparent 55%),
+      linear-gradient(170deg, #f1e3c6, #e2d1ad 60%, #d6c49c);
+    color: #241a12; border: 2px solid #8a6a46;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .6), inset 0 0 70px rgba(140, 100, 60, .25);
+    min-height: 60vh; padding: clamp(16px, 3vw, 28px);
+    transform-origin: left center; backface-visibility: hidden;
+  }
+  .sheet::before {   /* the spine shadow */
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 26px;
+    background: linear-gradient(90deg, rgba(90, 60, 30, .45), transparent);
+  }
+  .sheet.turn-fwd { animation: turnFwd .75s cubic-bezier(.4, .05, .25, 1) forwards; }
+  .sheet.turn-back { animation: turnBack .75s cubic-bezier(.4, .05, .25, 1); }
+  @keyframes turnFwd { to { transform: rotateY(-155deg); box-shadow: 0 20px 60px rgba(0, 0, 0, .8); } }
+  @keyframes turnBack { from { transform: rotateY(-155deg); } to { transform: rotateY(0); } }
+
+  .corner { position: absolute; width: 96px; height: 96px; bottom: 0; cursor: pointer; z-index: 5; transition: width .18s, height .18s, filter .18s; }
+  .corner.next { right: 0; background: linear-gradient(315deg, rgba(255, 255, 255, .55) 0 42%, rgba(160, 125, 80, .55) 43% 46%, transparent 47%); border-radius: 0 0 10px 0; }
+  .corner.prev { left: 0; background: linear-gradient(45deg, rgba(255, 255, 255, .5) 0 42%, rgba(160, 125, 80, .5) 43% 46%, transparent 47%); border-radius: 0 0 0 10px; }
+  .corner:hover { width: 130px; height: 130px; filter: drop-shadow(0 0 10px rgba(255, 220, 150, .8)); }
+  .corner span { position: absolute; bottom: 10px; font-size: .72rem; font-weight: 800; color: #4a3722; }
+  .corner.next span { right: 10px; } .corner.prev span { left: 10px; }
+
+  .pagenum { text-align: center; margin-top: 12px; font-weight: 800; color: var(--dim); letter-spacing: 1px; }
+  .flipbar { display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .flipbar button { padding: 10px 16px; }
+
+  /* ---- what's on a page ---- */
+  .art { display: block; width: 100%; height: auto; border-radius: 10px; box-shadow: 0 10px 26px rgba(0, 0, 0, .45); }
+  .pageart { float: right; width: min(46%, 330px); margin: 0 0 14px 20px; }
+  .sheet h2 {
+    font-family: "Noto Serif Display", Georgia, serif; text-transform: uppercase; letter-spacing: 1.5px;
+    font-size: clamp(1.5rem, 5vw, 2.4rem); color: #1b120c; margin-bottom: 2px;
+  }
+  .sheet .sub2 { font-style: italic; color: #5a4432; margin-bottom: 12px; }
+  .sheet p { color: #2d2118; margin-bottom: 10px; }
+  .stamp { display: inline-block; transform: rotate(-7deg); border: 3px solid #b3121a; color: #b3121a; font-weight: 800;
+           letter-spacing: 2px; padding: 3px 10px; border-radius: 6px; font-size: .78rem; margin-bottom: 10px; }
+  .rows { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 12px 0; clear: none; }
+  .row2 { background: rgba(120, 90, 60, .16); border-radius: 10px; padding: 8px 10px; }
+  .row2 b { display: block; font-size: .66rem; letter-spacing: 1.2px; text-transform: uppercase; color: #6b5338; }
+  .beat { background: rgba(40, 90, 50, .16); border-left: 4px solid #2f7d3e; padding: 10px 12px; border-radius: 0 10px 10px 0; clear: both; }
+  .beat b { color: #235e2f; }
+  .danger { font-weight: 800; } .d1 { color: #b07d16; } .d2 { color: #c2610f; } .d3 { color: #b3121a; }
+  .cover { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 56vh; }
+  .cover h2 { font-size: clamp(1.8rem, 7vw, 3rem); }
+  .cover .art { max-width: 360px; }
+  .cover .seal { font-size: .8rem; letter-spacing: 3px; color: #6b5338; font-weight: 800; }
+  @media (max-width: 620px) {
+    .pageart { float: none; width: 100%; margin: 0 0 14px; }
+    .corner { width: 76px; height: 76px; }
+  }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.6rem)">Monster Files</h1>
+  <p class="sub">Touch the corner of the page to turn it. 📖</p>
+
+  <div class="bookwrap">
+    <div class="book" id="book">
+      <article class="sheet" id="sheet"></article>
+    </div>
+    <p class="pagenum" id="pagenum"></p>
+    <div class="flipbar">
+      <button class="ghost" id="prev">◀ Back</button>
+      <button id="next">Next page ▶</button>
+    </div>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.<br>
+  Every picture on this page was drawn from scratch, not copied. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script src="art.js"></script>
+<script>
+"use strict";
+const PAGES = [
+  () => `<div class="cover">
+      <div class="seal">HAWKINS NATIONAL LABORATORY</div>
+      <h2>Monster Files</h2>
+      <p class="sub2">Property of the Party. Do not show the government.</p>
+      ${ART.upsidedown()}
+      <p style="max-width:46ch">Everything we know about the things that come through the gate.
+         Turn the page by touching the corner.</p>
+      <div class="stamp">TOP SECRET</div>
+    </div>`,
+
+  () => `<div class="stamp">FILE 00</div>
+    <h2>The Upside Down</h2>
+    <p class="sub2">"It's like home, but dark and empty and cold."</p>
+    <div class="pageart">${ART.upsidedown()}</div>
+    <p>The Upside Down is a copy of Hawkins sitting in another dimension. Same houses, same trees, same school,
+       but frozen in the night Will disappeared. No people. No sun. Vines creep over everything and spores float
+       in the air like snow that never lands.</p>
+    <p>Everything in there is joined together like one giant creature, all wired into the same mind. That is why,
+       when the kids slam a gate shut, monsters across the whole town drop at exactly the same moment.</p>
+    <div class="rows">
+      <div class="row2"><b>First gate</b>1983, Hawkins Lab</div>
+      <div class="row2"><b>Opened by</b>Eleven, by accident</div>
+      <div class="row2"><b>Weather</b>Spores and lightning</div>
+      <div class="row2"><b>Residents</b>Nothing friendly</div>
+    </div>
+    <div class="beat"><b>Remember:</b> time barely moves in there. Will hid in Castle Byers for a week and it felt like one long night.</div>`,
+
+  () => `<div class="stamp">FILE 01</div>
+    <h2>The Demogorgon</h2>
+    <p class="sub2">"The monster with the flower face."</p>
+    <div class="pageart">${ART.demogorgon()}</div>
+    <p>Tall, grey and faceless, until it opens up. Its whole head splits into petals lined with teeth, which is
+       exactly where the kids got the name, straight out of their Dungeons &amp; Dragons book.</p>
+    <p>It tears its own holes between the worlds, so no gate is needed. It hunts by smelling blood, so a single
+       paper cut can bring it running. It took Will, it took Barb, and nobody believed it was real until it was
+       standing in the living room.</p>
+    <div class="rows">
+      <div class="row2"><b>First seen</b>Season 1, 1983</div>
+      <div class="row2"><b>Danger</b><span class="danger d2">High</span></div>
+      <div class="row2"><b>Hunts by</b>Smelling blood</div>
+      <div class="row2"><b>Named after</b>A D&amp;D monster</div>
+    </div>
+    <div class="beat"><b>How they beat it:</b> Eleven blasted it apart with her powers, and the gate it used was sealed shut.</div>`,
+
+  () => `<div class="stamp">FILE 02</div>
+    <h2>Demodogs</h2>
+    <p class="sub2">"Dart was so cute before he got big."</p>
+    <div class="pageart">${ART.demodog()}</div>
+    <p>Young Demogorgons that run on four legs like dogs, which is why Dustin smashed the two words together.
+       He raised one as a pet, named him Dart, and fed him nougat candy until Dart outgrew the shoebox, the
+       terrarium, and finally Dustin's whole storm cellar.</p>
+    <p>They hunt in packs and every single one obeys the same mind, so if one finds you, they all know.</p>
+    <div class="rows">
+      <div class="row2"><b>First seen</b>Season 2, 1984</div>
+      <div class="row2"><b>Danger</b><span class="danger d2">High</span></div>
+      <div class="row2"><b>They are</b>Baby Demogorgons</div>
+      <div class="row2"><b>Travel in</b>Packs</div>
+    </div>
+    <div class="beat"><b>How they beat them:</b> Eleven closed the gate, their link to the hive mind snapped, and the entire pack dropped at once.</div>`,
+
+  () => `<div class="stamp">FILE 03</div>
+    <h2>The Mind Flayer</h2>
+    <p class="sub2">"The shadow in the sky."</p>
+    <div class="pageart">${ART.mindflayer()}</div>
+    <p>A spider-shaped shadow the size of a storm cloud. It does not need to touch you to hurt you, because it
+       can crawl inside a person and drive them like a car. Will was its first victim, and he could feel it
+       coming like ice on the back of his neck.</p>
+    <p>In the summer of 1985 it built itself a body in Hawkins, pulling melted rats and people together into one
+       enormous monster that chased the kids right through Starcourt Mall.</p>
+    <div class="rows">
+      <div class="row2"><b>First seen</b>Season 2, 1984</div>
+      <div class="row2"><b>Danger</b><span class="danger d3">Extreme</span></div>
+      <div class="row2"><b>Size</b>Taller than a building</div>
+      <div class="row2"><b>Power</b>Controls the hive</div>
+    </div>
+    <div class="beat"><b>How they beat it:</b> They burned its piece out of Will, then destroyed the gate under the mall and cut its body off from its mind.</div>`,
+
+  () => `<div class="stamp">FILE 04</div>
+    <h2>Demobats</h2>
+    <p class="sub2">"They guard the boss."</p>
+    <div class="pageart">${ART.demobat()}</div>
+    <p>Flying creatures with long whipping tails that swarm anything coming near Vecna's lair. They wrap their
+       tails around your neck and do not let go. The good news is that they cannot survive on our side of the
+       gate, so they only hunt inside the Upside Down.</p>
+    <div class="rows">
+      <div class="row2"><b>First seen</b>Season 4, 1986</div>
+      <div class="row2"><b>Danger</b><span class="danger d1">Medium</span></div>
+      <div class="row2"><b>Weakness</b>Loud music</div>
+      <div class="row2"><b>Can't leave</b>The Upside Down</div>
+    </div>
+    <div class="beat"><b>How they beat them:</b> Eddie Munson blasted Master of Puppets on his guitar from a trailer roof, and every single bat flew at the music instead of his friends.</div>`,
+
+  () => `<div class="stamp">FILE 05</div>
+    <h2>Vecna</h2>
+    <p class="sub2">"He was a boy named Henry Creel."</p>
+    <div class="pageart">${ART.vecna()}</div>
+    <p>The one behind all of it. He began as a boy with powers called Henry Creel, became test subject One at
+       Hawkins Lab, and was thrown into the Upside Down, where he grew into Vecna.</p>
+    <p>He picks people who are carrying something heavy and sad. First come the headaches and the nosebleeds,
+       then nightmares, then a grandfather clock chiming that nobody else can hear. When the clock strikes four,
+       he has you.</p>
+    <div class="rows">
+      <div class="row2"><b>First seen</b>Season 4, 1986</div>
+      <div class="row2"><b>Danger</b><span class="danger d3">Extreme</span></div>
+      <div class="row2"><b>Picks victims</b>By their sadness</div>
+      <div class="row2"><b>Warning sign</b>A chiming clock</div>
+    </div>
+    <div class="beat"><b>How they beat him:</b> Not easily. Your favorite song can yank you out of the trance, which is exactly how Max escaped the first time. Beating him took everyone, working in two worlds at once.</div>`,
+
+  () => `<div class="stamp">FIELD GUIDE</div>
+    <h2>Monster Rules</h2>
+    <p class="sub2">Tape this inside your bike basket.</p>
+    <div class="rows" style="grid-template-columns:1fr">
+      <div class="row2"><b>Rule 1</b>🎵 Music breaks the spell. A song you love can pull you out of Vecna's trance, so keep your favorite one close.</div>
+      <div class="row2"><b>Rule 2</b>🔥 Fire hurts almost everything from the Upside Down. It also makes all of it very, very angry.</div>
+      <div class="row2"><b>Rule 3</b>🩸 Never bleed. Demogorgons find you by the smell, and a paper cut is plenty.</div>
+      <div class="row2"><b>Rule 4</b>🚪 Close the gate. Everything is wired to one mind, so cutting the link drops the whole swarm.</div>
+      <div class="row2"><b>Rule 5</b>👫 Never go alone. Nobody in Hawkins has ever beaten a monster by themselves, not even Eleven.</div>
+    </div>
+    <div class="beat"><b>Last page.</b> Touch the left corner to flip back, or go play the mini games. 🎮</div>`,
+];
+
+const book = document.getElementById("book");
+let page = 0, busy = false;
+
+function cornerHTML() {
+  return `${page < PAGES.length - 1 ? `<div class="corner next" title="Next page"><span>turn ▶</span></div>` : ""}
+          ${page > 0 ? `<div class="corner prev" title="Back"><span>◀ back</span></div>` : ""}`;
+}
+function draw() {
+  const sheet = document.getElementById("sheet");
+  sheet.innerHTML = PAGES[page]() + cornerHTML();
+  document.getElementById("pagenum").textContent = `Page ${page + 1} of ${PAGES.length}`;
+  document.getElementById("prev").disabled = page === 0;
+  document.getElementById("next").disabled = page === PAGES.length - 1;
+}
+function flip(dir) {
+  if (busy) return;
+  const sheet = document.getElementById("sheet");
+  if (dir > 0 && page >= PAGES.length - 1) return;
+  if (dir < 0 && page <= 0) return;
+  busy = true;
+  beep(dir > 0 ? 420 : 360, .18, "triangle", .07);
+  setTimeout(() => beep(260, .12, "sine", .05), 180);
+  if (dir > 0) {
+    sheet.classList.add("turn-fwd");
+    setTimeout(() => {
+      page++; draw();
+      sheet.classList.remove("turn-fwd");
+      busy = false;
+    }, 740);
+  } else {
+    page--; draw();
+    sheet.classList.add("turn-back");
+    setTimeout(() => { sheet.classList.remove("turn-back"); busy = false; }, 740);
+  }
+}
+book.addEventListener("click", e => {
+  if (e.target.closest(".corner.next")) flip(1);
+  else if (e.target.closest(".corner.prev")) flip(-1);
+});
+document.getElementById("next").onclick = () => flip(1);
+document.getElementById("prev").onclick = () => flip(-1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") flip(1);
+  if (e.key === "ArrowLeft") flip(-1);
+});
+/* swipe on the book */
+let sx = 0;
+book.addEventListener("pointerdown", e => { sx = e.clientX; });
+book.addEventListener("pointerup", e => {
+  const dx = e.clientX - sx;
+  if (Math.abs(dx) > 70) flip(dx < 0 ? 1 : -1);
+});
+draw();
+</script>
+</body>
+</html>

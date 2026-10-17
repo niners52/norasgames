@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Escape Vecna · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕰️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { touch-action: none; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .meters { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0 12px; }
+  .meter b { display: block; font-size: .8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+  .bar2 { height: 16px; border-radius: 999px; background: rgba(255, 255, 255, .12); overflow: hidden; }
+  .bar2 div { height: 100%; width: 0; transition: width .18s; }
+  .wake div { background: linear-gradient(90deg, #4fd2ff, #6fff9c); }
+  .trance div { background: linear-gradient(90deg, #ff9f3b, #ff2020); }
+  .overlay2 { position: relative; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 18px; border: 2px solid rgba(166, 107, 255, .45);
+           background: linear-gradient(180deg, #170826, #0a0414 60%, #1a0a10); box-shadow: 0 14px 40px rgba(0, 0, 0, .6); touch-action: none; }
+  .panel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+           background: rgba(8, 3, 14, .9); border-radius: 18px; text-align: center; padding: 20px; }
+  .panel h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.4rem, 5.5vw, 2.2rem); color: #fff; text-shadow: 0 0 16px var(--red); }
+  .panel p { color: var(--dim); max-width: 46ch; }
+  .songpick { display: grid; gap: 8px; width: min(420px, 90%); }
+  .songpick button { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .22); box-shadow: none; font-size: .95rem; }
+  .songpick button:hover { background: rgba(79, 210, 255, .25); border-color: var(--blue); }
+  .keys { text-align: center; color: var(--dim); font-size: .85rem; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main class="wrap">
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Escape Vecna</h1>
+  <p class="sub">Your friends are playing your favorite song. Hit the beats and wake up! 🎵</p>
+
+  <div class="meters">
+    <div class="meter"><b>😴 Wake up meter</b><div class="bar2 wake"><div id="m-wake"></div></div></div>
+    <div class="meter"><b>🕰️ Vecna's clock</b><div class="bar2 trance"><div id="m-trance"></div></div></div>
+  </div>
+
+  <div class="overlay2">
+    <canvas id="c" width="700" height="520"></canvas>
+    <div class="panel" id="panel">
+      <h2>🕰️ You're in the trance</h2>
+      <p>Notes fall down four lanes. Tap a lane when its note touches the glowing line.
+         Every hit wakes you up. Every miss lets Vecna pull you deeper.</p>
+      <p><b>Pick the song your friends should play:</b></p>
+      <div class="songpick" id="songs"></div>
+      <p class="keys">On a keyboard you can also press <b>D F J K</b></p>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:14px">
+    <span style="font-weight:800">Best hits: <b id="best">0</b></span>
+    <a class="btn" href="games.html">← All mini games</a>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const c = document.getElementById("c"), ctx = c.getContext("2d");
+const W = c.width, H = c.height, LANES = 4, LANE_W = W / LANES, HIT_Y = H - 90;
+const panel = document.getElementById("panel");
+const SONGS = [
+  { name: "🎵 Running Up That Hill", scale: [392, 440, 523, 587, 659], bpm: 108 },
+  { name: "🎸 Master of Puppets", scale: [220, 262, 294, 330, 392], bpm: 132 },
+  { name: "📻 The NeverEnding Story", scale: [349, 392, 440, 523, 587], bpm: 96 },
+  { name: "🎹 Make up my own song!", scale: [330, 392, 494, 587, 698], bpm: 120 },
+];
+let notes = [], wake = 0, trance = 0, hits = 0, combo = 0, running = false, spawnT = 0, song = SONGS[0], flashLane = [0, 0, 0, 0], t = 0, pops = [];
+let best = 0;
+try { best = +(localStorage.getItem("stVecnaBest") || 0); } catch (e) {}
+document.getElementById("best").textContent = best;
+
+function showSongs() {
+  const box = document.getElementById("songs");
+  box.innerHTML = SONGS.map((s, i) => `<button data-i="${i}">${s.name}</button>`).join("");
+  box.querySelectorAll("button").forEach(b => { b.onclick = () => { song = SONGS[+b.dataset.i]; start(); }; });
+}
+showSongs();
+
+function start() {
+  notes = []; pops = []; wake = 0; trance = 0; hits = 0; combo = 0; spawnT = 0; t = 0; running = true;
+  panel.hidden = true;
+  requestAnimationFrame(loop);
+}
+function finish(win) {
+  running = false;
+  if (hits > best) { best = hits; try { localStorage.setItem("stVecnaBest", best); } catch (e) {} document.getElementById("best").textContent = best; }
+  panel.hidden = false;
+  panel.innerHTML = win
+    ? `<h2>🌈 You woke up!</h2><p>You hit <b>${hits}</b> beats and pulled yourself out of the trance.
+       Max would be proud. Your best ever is <b>${best}</b>.</p>`
+    : `<h2>🕰️ Vecna got you…</h2><p>You hit <b>${hits}</b> beats before the clock struck.
+       Try a different song and go again! Your best ever is <b>${best}</b>.</p>`;
+  const again = document.createElement("button"); again.textContent = "🔁 Play again"; again.onclick = () => { panel.innerHTML = ""; panel.hidden = false; rebuildPanel(); };
+  const back = document.createElement("a"); back.className = "btn ghost"; back.href = "games.html"; back.textContent = "← All mini games";
+  back.style.background = "rgba(255,255,255,.1)";
+  panel.appendChild(again); panel.appendChild(back);
+  tune(win ? [523, 659, 784, 1047] : [330, 262, 196]);
+}
+function rebuildPanel() {
+  panel.innerHTML = `<h2>🕰️ Pick your song</h2><p>Which song should your friends play on the Walkman?</p><div class="songpick" id="songs"></div>
+    <p class="keys">Tap a lane, or press <b>D F J K</b></p>`;
+  showSongs();
+}
+
+function loop() {
+  if (!running) return;
+  t++;
+  ctx.clearRect(0, 0, W, H);
+
+  /* creepy background: vines and a clock that gets closer */
+  const pulse = .5 + .5 * Math.sin(t * .05);
+  ctx.strokeStyle = `rgba(255,60,60,${.08 + .06 * pulse})`; ctx.lineWidth = 3;
+  for (let i = 0; i < 6; i++) {
+    ctx.beginPath();
+    for (let y = 0; y <= H; y += 24) ctx.lineTo(60 + i * 120 + Math.sin(y * .02 + i + t * .01) * 26, y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = .1 + .25 * (trance / 100);
+  ctx.font = `${90 + trance}px serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText("🕰️", W / 2, H * .3);
+  ctx.globalAlpha = 1;
+
+  /* lanes */
+  for (let i = 0; i < LANES; i++) {
+    ctx.fillStyle = flashLane[i] > 0 ? `rgba(79,210,255,${.1 + flashLane[i] * .22})` : "rgba(255,255,255,.035)";
+    ctx.fillRect(i * LANE_W + 6, 0, LANE_W - 12, H);
+    if (flashLane[i] > 0) flashLane[i] -= .06;
+  }
+  /* hit line */
+  ctx.strokeStyle = `rgba(111,255,156,${.6 + .4 * pulse})`; ctx.lineWidth = 5;
+  ctx.beginPath(); ctx.moveTo(0, HIT_Y); ctx.lineTo(W, HIT_Y); ctx.stroke();
+
+  /* spawn notes to a beat */
+  const beatFrames = Math.round(60 / (song.bpm / 60) / 2);
+  spawnT--;
+  if (spawnT <= 0) {
+    spawnT = beatFrames;
+    const lane = Math.floor(Math.random() * LANES);
+    notes.push({ lane, y: -30, v: 4.2 + t / 2400, note: song.scale[Math.floor(Math.random() * song.scale.length)] });
+    if (Math.random() < .25) {
+      let l2 = Math.floor(Math.random() * LANES);
+      if (l2 === lane) l2 = (l2 + 1) % LANES;
+      notes.push({ lane: l2, y: -30, v: 4.2 + t / 2400, note: song.scale[Math.floor(Math.random() * song.scale.length)] });
+    }
+  }
+
+  /* notes */
+  for (let i = notes.length - 1; i >= 0; i--) {
+    const n = notes[i];
+    n.y += n.v;
+    const x = n.lane * LANE_W + LANE_W / 2;
+    ctx.save();
+    ctx.shadowColor = "#4fd2ff"; ctx.shadowBlur = 18;
+    ctx.fillStyle = "#bfefff";
+    ctx.beginPath(); ctx.ellipse(x, n.y, 30, 20, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.font = "26px serif"; ctx.fillStyle = "#0a0414"; ctx.fillText("🎵", x, n.y + 1);
+    if (n.y > HIT_Y + 46) {   /* missed */
+      notes.splice(i, 1);
+      trance = Math.min(100, trance + 7); combo = 0;
+      beep(130, .25, "sawtooth", .07);
+      pops.push({ x, y: HIT_Y, text: "miss", color: "#ff5a5a", life: 1 });
+    }
+  }
+
+  /* slowly sinking deeper */
+  trance = Math.min(100, trance + .035);
+  wake = Math.max(0, wake - .01);
+  document.getElementById("m-wake").style.width = wake + "%";
+  document.getElementById("m-trance").style.width = trance + "%";
+
+  /* pops */
+  for (let i = pops.length - 1; i >= 0; i--) {
+    const p = pops[i]; p.y -= 1.2; p.life -= .022;
+    ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color; ctx.font = "800 22px Nunito, sans-serif";
+    ctx.fillText(p.text, p.x, p.y); ctx.globalAlpha = 1;
+    if (p.life <= 0) pops.splice(i, 1);
+  }
+
+  /* combo counter */
+  if (combo > 2) {
+    ctx.fillStyle = "rgba(255,213,74,.9)"; ctx.font = "800 26px Nunito, sans-serif";
+    ctx.fillText(combo + " in a row!", W / 2, 44);
+  }
+
+  if (wake >= 100) return finish(true);
+  if (trance >= 100) return finish(false);
+  requestAnimationFrame(loop);
+}
+
+function hitLane(lane) {
+  if (!running) return;
+  flashLane[lane] = 1;
+  let bestI = -1, bestD = 999;
+  notes.forEach((n, i) => {
+    if (n.lane !== lane) return;
+    const d = Math.abs(n.y - HIT_Y);
+    if (d < bestD) { bestD = d; bestI = i; }
+  });
+  const x = lane * LANE_W + LANE_W / 2;
+  if (bestI >= 0 && bestD < 54) {
+    const n = notes[bestI];
+    notes.splice(bestI, 1);
+    hits++; combo++;
+    const perfect = bestD < 24;
+    wake = Math.min(100, wake + (perfect ? 5.5 : 3.6) + Math.min(combo * .15, 2));
+    trance = Math.max(0, trance - (perfect ? 2.2 : 1.2));
+    beep(n.note, .18, "triangle", .1);
+    pops.push({ x, y: HIT_Y - 10, text: perfect ? "PERFECT!" : "nice!", color: perfect ? "#ffd54a" : "#6fff9c", life: 1 });
+  } else {
+    combo = 0; trance = Math.min(100, trance + 2);
+    beep(150, .14, "sawtooth", .05);
+  }
+}
+c.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  const r = c.getBoundingClientRect();
+  hitLane(Math.max(0, Math.min(LANES - 1, Math.floor((e.clientX - r.left) / r.width * LANES))));
+});
+document.addEventListener("keydown", e => {
+  const k = e.key.toLowerCase(), map = { d: 0, f: 1, j: 2, k: 3 };
+  if (k in map) { e.preventDefault(); hitLane(map[k]); }
+});
+</script>
+</body>
+</html>
