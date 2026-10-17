@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vecna's List · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕰️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .panel { max-width: 720px; margin: 0 auto; border-radius: 22px; padding: clamp(18px, 4vw, 30px); text-align: center;
+           background: radial-gradient(ellipse at 50% 20%, rgba(70, 22, 90, .5), rgba(12, 5, 20, .96));
+           border: 1px solid rgba(166, 107, 255, .35); box-shadow: 0 16px 50px rgba(0, 0, 0, .6); }
+  .nameline { width: min(100%, 380px); font-family: "Noto Serif Display", Georgia, serif; font-weight: 800;
+              font-size: 1.3rem; text-align: center; padding: 13px; border-radius: 12px;
+              border: 2px solid rgba(166, 107, 255, .5); background: rgba(10, 4, 16, .85); color: var(--text); }
+  .clock { width: min(220px, 60vw); margin: 0 auto 10px; }
+  .clock svg { display: block; width: 100%; height: auto; }
+  .hand { transform-origin: 100px 100px; transition: transform .9s cubic-bezier(.3,1.6,.5,1); }
+  .result { display: none; margin-top: 22px; text-align: left; }
+  .result.show { display: block; animation: fadein .6s; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(14px); } }
+  .fear { border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
+          background: rgba(166, 107, 255, .14); border: 1px solid rgba(166, 107, 255, .45); }
+  .fear b { display: block; font-size: .7rem; letter-spacing: 1.6px; color: #c9a4ff; text-transform: uppercase; margin-bottom: 4px; }
+  .fear .big { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.2rem, 4.4vw, 1.8rem); color: #fff; }
+  .song { border-radius: 16px; padding: 18px 20px; margin-bottom: 12px;
+          background: rgba(255, 213, 74, .14); border: 1px solid rgba(255, 213, 74, .5); }
+  .song b { display: block; font-size: .7rem; letter-spacing: 1.6px; color: var(--yellow); text-transform: uppercase; margin-bottom: 4px; }
+  .song .big { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.2rem, 4.4vw, 1.8rem); color: #fff; }
+  .steps { border-radius: 16px; padding: 18px 22px; background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .16); }
+  .steps li { margin-bottom: 8px; color: var(--dim); }
+  .survived { text-align: center; font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.4rem, 6vw, 2.4rem);
+              color: #6fff9c; text-shadow: 0 0 20px rgba(110, 255, 156, .6); margin: 16px 0 4px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Vecna's List</h1>
+  <p class="sub">Type your name and find out what the clock says about you — and the song that gets you out. 🕰️</p>
+
+  <section class="panel">
+    <div class="clock" id="clock"></div>
+    <input class="nameline" id="who" maxlength="20" placeholder="Type a name…" spellcheck="false">
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="go">🕰️ Check the list</button>
+    </div>
+    <div class="result" id="out"></div>
+  </section>
+
+  <p class="lead" style="text-align:center;margin-top:18px">
+    Everyone on this list escapes. That's the whole point — your friends, your music, your favourite memory. Those work. 💛
+  </p>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const FEARS = [
+  "the feeling that everyone is laughing at a joke you didn't hear",
+  "the dark hallway between your bedroom and the light switch",
+  "being the last one picked, again",
+  "that one embarrassing thing you said in third grade",
+  "getting lost somewhere you've been a hundred times",
+  "the sound of a phone ringing in an empty house",
+  "forgetting the words halfway through, in front of everyone",
+  "your friends having a whole day without you",
+  "a door that was definitely closed a second ago",
+  "the deep end, where you can't see the bottom",
+  "being the only one who notices something is wrong",
+  "a clock ticking somewhere you can't find it",
+];
+const SONGS = [
+  ["Running Up That Hill", "Kate Bush", "the official Max Mayfield escape song"],
+  ["Should I Stay or Should I Go", "The Clash", "Will's song, straight from Jonathan"],
+  ["Master of Puppets", "Metallica", "the Eddie Munson option, loud enough to split a sky"],
+  ["Every Breath You Take", "The Police", "the Snow Ball slow dance"],
+  ["Africa", "Toto", "nobody is scared during the drums"],
+  ["Material Girl", "Madonna", "Starcourt mall energy"],
+  ["Time After Time", "Cyndi Lauper", "the one that makes you brave and a little weepy"],
+  ["Never Ending Story", "Limahl", "Dustin and Suzie, over the radio"],
+  ["Rock You Like a Hurricane", "Scorpions", "Eddie approved"],
+  ["Girls Just Want to Have Fun", "Cyndi Lauper", "El and Max at the mall"],
+];
+const FRIENDS = ["Eleven", "Dustin", "Max", "Steve", "Robin", "Lucas", "Mike", "Nancy", "Erica", "Eddie", "Will", "Joyce"];
+const MEMORIES = [
+  "the first time you made your whole family laugh",
+  "a day at the pool that lasted about nine hours",
+  "the Halloween costume you were actually proud of",
+  "someone saving you a seat without being asked",
+  "the exact smell of your grandma's kitchen",
+  "riding your bike downhill with no hands",
+  "staying up way too late with your best friend",
+  "a snow day announced on the radio",
+];
+const TIMES = ["3 days", "4 days", "2 days", "a week", "5 days"];
+
+/* same name always gets the same reading */
+const hash = s => { let h = 2166136261; for (const c of s.toLowerCase().trim()) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return Math.abs(h); };
+
+function clock(angle, color) {
+  document.getElementById("clock").innerHTML = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="cg" cx=".5" cy=".4" r=".6">
+      <stop offset="0" stop-color="${color}" stop-opacity=".5"/><stop offset="1" stop-color="${color}" stop-opacity="0"/></radialGradient></defs>
+    <circle cx="100" cy="100" r="96" fill="url(#cg)"/>
+    <circle cx="100" cy="100" r="78" fill="#120716" stroke="${color}" stroke-width="4"/>
+    ${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6;
+      return `<line x1="${100 + Math.cos(a) * 68}" y1="${100 + Math.sin(a) * 68}" x2="${100 + Math.cos(a) * 60}" y2="${100 + Math.sin(a) * 60}"
+        stroke="${color}" stroke-width="3" opacity=".8"/>`; }).join("")}
+    <g class="hand" style="transform:rotate(${angle}deg)"><line x1="100" y1="100" x2="100" y2="44" stroke="#fff" stroke-width="5" stroke-linecap="round"/></g>
+    <g class="hand" style="transform:rotate(${angle * 2.4}deg)"><line x1="100" y1="100" x2="100" y2="58" stroke="${color}" stroke-width="7" stroke-linecap="round"/></g>
+    <circle cx="100" cy="100" r="7" fill="${color}"/>
+  </svg>`;
+}
+clock(0, "#a66bff");
+
+function go() {
+  const raw = document.getElementById("who").value.trim();
+  if (!raw) { document.getElementById("who").focus(); beep(240, .15); return; }
+  const name = raw.slice(0, 20);
+  const h = hash(name);
+  const fear = FEARS[h % FEARS.length];
+  const song = SONGS[(h >> 3) % SONGS.length];
+  const friend = FRIENDS[(h >> 7) % FRIENDS.length];
+  const memory = MEMORIES[(h >> 11) % MEMORIES.length];
+  const days = TIMES[(h >> 5) % TIMES.length];
+  const chimes = 1 + (h % 4);
+
+  clock(180 + (h % 180), "#ff2020");
+  let i = 0;
+  const ring = setInterval(() => { beep(180 - i * 8, .45, "sine", .09); if (++i >= chimes) clearInterval(ring); }, 620);
+
+  const out = document.getElementById("out");
+  out.innerHTML = `
+    <div class="fear"><b>Vecna thinks your weak spot is</b><div class="big">${fear}</div></div>
+    <div class="song"><b>The song that pulls you out</b><div class="big">🎵 ${song[0]}</div>
+      <p style="color:var(--dim);margin-top:4px">by ${song[1]} — ${song[2]}</p></div>
+    <div class="steps">
+      <b style="color:#fff">${name}'s escape plan</b>
+      <ol style="margin:10px 0 0 18px">
+        <li>The clock chimes <b>${chimes}</b> time${chimes === 1 ? "" : "s"}. You've got <b>${days}</b>.</li>
+        <li>Put your headphones on <em>before</em> you go anywhere alone. ${song[0]}, loud.</li>
+        <li>Think about ${memory}. Hold onto it.</li>
+        <li><b>${friend}</b> is the one who comes and gets you. Tell them everything, right away.</li>
+        <li>Run toward the light at the end. Don't look back at the clock.</li>
+      </ol>
+    </div>
+    <div class="survived">${name} escapes. 💛</div>
+    <p style="text-align:center;color:var(--dim)">Try another name — everybody's reading is different.</p>`;
+  out.classList.add("show");
+  setTimeout(() => tune([523, 659, 784, 1047]), chimes * 620 + 300);
+}
+document.getElementById("go").onclick = go;
+document.getElementById("who").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+</script>
+<script src="/secret.js"></script>
+</body>
+</html>
