@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Break the Russian Code · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .deck { max-width: 680px; margin: 0 auto; border-radius: 22px; padding: clamp(16px, 4vw, 28px);
+          background: linear-gradient(170deg, #22301f, #121a12 55%, #0a0f0a);
+          border: 2px solid #3d5438; box-shadow: 0 18px 50px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .08); }
+  .tape { border-radius: 12px; padding: 16px; min-height: 92px; margin-bottom: 14px;
+          background: #0a1608; border: 2px solid #050a04; box-shadow: inset 0 0 26px rgba(0, 0, 0, .9);
+          font-family: ui-monospace, "Courier New", monospace; font-size: clamp(.95rem, 3.4vw, 1.3rem);
+          letter-spacing: 2px; color: #7dff9b; line-height: 1.7; word-break: break-word; }
+  .tape.good { color: #ffd54a; text-shadow: 0 0 14px rgba(255, 213, 74, .6); }
+  .dial { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 6px 0 14px; }
+  .dial .num { font-family: "Noto Serif Display", Georgia, serif; font-size: 2.6rem; color: #fff; min-width: 80px; text-align: center;
+               text-shadow: 0 0 18px rgba(125, 255, 155, .7); }
+  .dial button { font-size: 1.5rem; padding: 14px 24px; }
+  .wheel { width: min(220px, 60vw); margin: 0 auto 8px; }
+  .wheel svg { display: block; width: 100%; height: auto; }
+  .hint { text-align: center; color: var(--dim); min-height: 1.6em; }
+  .pads { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  .lvls { display: flex; gap: 6px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .lvls span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: .75rem;
+               background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); }
+  .lvls span.done { background: rgba(110, 255, 156, .25); border-color: #6fff9c; color: #6fff9c; }
+  .lvls span.now { background: rgba(255, 213, 74, .25); border-color: var(--yellow); color: var(--yellow); }
+  .choice { display: grid; gap: 9px; margin-top: 10px; }
+  .choice button { text-align: left; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+  .won { text-align: center; }
+  .won h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.5rem, 6vw, 2.4rem); color: var(--yellow);
+            text-shadow: 0 0 20px rgba(255, 213, 74, .7); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Break the Russian Code</h1>
+  <p class="sub">You're Robin in the back of Scoops Ahoy. Turn the dial until the words make sense. 🔐</p>
+
+  <section class="deck">
+    <div class="lvls" id="lvls"></div>
+    <div id="play">
+      <div class="tape" id="tape"></div>
+      <div class="wheel" id="wheel"></div>
+      <div class="dial">
+        <button id="down">◀</button>
+        <div class="num" id="shiftnum">0</div>
+        <button id="up">▶</button>
+      </div>
+      <p class="hint" id="hint"></p>
+      <div class="pads">
+        <button id="check">🔓 That's it — decode!</button>
+        <button class="ghost" id="clue">💡 Give me a clue</button>
+      </div>
+    </div>
+  </section>
+
+  <p class="lead" style="text-align:center;margin-top:14px">Codes cracked: <b id="best" style="color:var(--yellow)">0</b></p>
+  <div class="row" style="justify-content:center"><a class="btn ghost" href="games.html">← All mini games</a></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const LEVELS = [
+  { msg: "THE SILVER CAT FEEDS", shift: 3, clue: "Dustin says the Russians love moving every letter along by a tiny number. Try small ones first." },
+  { msg: "WHEN BLUE MEETS YELLOW IN THE WEST", shift: 7, clue: "It's bigger than 5 but smaller than 10." },
+  { msg: "A TRIP TO CHINA SOUNDS NICE", shift: 14, clue: "Somewhere past halfway round the alphabet." },
+  { msg: "IF YOU SEE THE WEST GERMAN SUN", shift: 19, clue: "It's a big one — up in the high teens." },
+  { msg: "THE WEEK IS LONG", shift: 11, clue: "Eleven. It's always eleven." },
+  { quiz: true, msg: "THE WEEK IS LONG · THE SILVER CAT FEEDS WHEN BLUE MEETS YELLOW IN THE WEST",
+    q: "You cracked the whole transmission. Now the hard part — what does it actually MEAN?",
+    opts: [
+      ["It's directions to the secret door under Starcourt Mall.", true],
+      ["It's a shopping list for the ice cream shop.", false],
+      ["It's the Russian national anthem, backwards.", false],
+      ["It's a weather report for Hawkins.", false]],
+    why: "Robin figures out it's a Russian code telling someone where and when to make a delivery — straight into the base under the mall." },
+];
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const enc = (s, k) => s.replace(/[A-Z]/g, ch => A[(A.indexOf(ch) + k) % 26]);
+const dec = (s, k) => enc(s, (26 - (k % 26)) % 26);
+
+let lvl = 0, shift = 0, cracked = 0, usedClue = false;
+try { cracked = +(localStorage.getItem("stCodeBest") || 0); } catch (e) {}
+document.getElementById("best").textContent = cracked;
+
+function wheel(k) {
+  document.getElementById("wheel").innerHTML = `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="92" fill="#0d1a0c" stroke="#3d5438" stroke-width="4"/>
+    <g font-size="11" font-family="monospace" fill="#7dff9b">
+      ${Array.from({ length: 26 }, (_, i) => { const a = (i / 26) * Math.PI * 2 - Math.PI / 2;
+        return `<text x="${(100 + Math.cos(a) * 80).toFixed(1)}" y="${(100 + Math.sin(a) * 80).toFixed(1)}"
+          text-anchor="middle" dominant-baseline="central" opacity=".75">${A[i]}</text>`; }).join("")}
+    </g>
+    <g font-size="11" font-family="monospace" fill="#ffd54a" style="transition:transform .3s" transform="rotate(${-(k / 26) * 360} 100 100)">
+      ${Array.from({ length: 26 }, (_, i) => { const a = (i / 26) * Math.PI * 2 - Math.PI / 2;
+        return `<text x="${(100 + Math.cos(a) * 58).toFixed(1)}" y="${(100 + Math.sin(a) * 58).toFixed(1)}"
+          text-anchor="middle" dominant-baseline="central" transform="rotate(${(k / 26) * 360} ${(100 + Math.cos(a) * 58).toFixed(1)} ${(100 + Math.sin(a) * 58).toFixed(1)})">${A[i]}</text>`; }).join("")}
+    </g>
+    <circle cx="100" cy="100" r="30" fill="#0a0f0a" stroke="#3d5438" stroke-width="3"/>
+    <polygon points="100,2 94,18 106,18" fill="#ff2020"/>
+  </svg>`;
+}
+function show() {
+  const L = LEVELS[lvl];
+  document.getElementById("lvls").innerHTML = LEVELS.map((_, i) =>
+    `<span class="${i < lvl ? "done" : i === lvl ? "now" : ""}">${i + 1}</span>`).join("");
+  if (L.quiz) {
+    document.getElementById("play").innerHTML = `
+      <div class="tape good">${L.msg}</div>
+      <p style="font-weight:800;margin-bottom:8px">${L.q}</p>
+      <div class="choice">${L.opts.map((o, i) => `<button data-i="${i}">${o[0]}</button>`).join("")}</div>`;
+    document.querySelector(".choice").addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      const ok = L.opts[+b.dataset.i][1];
+      document.querySelectorAll(".choice button").forEach(x => x.disabled = true);
+      b.style.background = ok ? "rgba(60,200,110,.35)" : "rgba(255,50,50,.35)";
+      if (!ok) LEVELS[lvl].opts.forEach((o, i) => { if (o[1]) document.querySelector(`.choice button[data-i="${i}"]`).style.background = "rgba(60,200,110,.35)"; });
+      setTimeout(() => done(ok), 1500);
+      if (ok) tune([523, 659, 784, 1047]); else tune([330, 262]);
+    });
+    return;
+  }
+  shift = 0; usedClue = false;
+  document.getElementById("play").innerHTML = `
+    <div class="tape" id="tape"></div>
+    <div class="wheel" id="wheel"></div>
+    <div class="dial"><button id="down">◀</button><div class="num" id="shiftnum">0</div><button id="up">▶</button></div>
+    <p class="hint" id="hint">Transmission ${lvl + 1} of ${LEVELS.length}. Turn the dial.</p>
+    <div class="pads"><button id="check">🔓 That's it — decode!</button><button class="ghost" id="clue">💡 Give me a clue</button></div>`;
+  wire(); update();
+}
+function update() {
+  const L = LEVELS[lvl];
+  const coded = enc(L.msg, L.shift);
+  const t = document.getElementById("tape");
+  t.textContent = dec(coded, shift);
+  t.classList.toggle("good", shift === L.shift);
+  document.getElementById("shiftnum").textContent = shift;
+  wheel(shift);
+}
+function turn(d) {
+  shift = (shift + d + 26) % 26;
+  update(); beep(380 + shift * 12, .04, "square", .04);
+}
+function wire() {
+  document.getElementById("up").onclick = () => turn(1);
+  document.getElementById("down").onclick = () => turn(-1);
+  document.getElementById("check").onclick = () => {
+    const L = LEVELS[lvl];
+    if (shift === L.shift) { tune([659, 880, 1100]); done(true); }
+    else { document.getElementById("hint").textContent = "Nope — that's still gibberish. Keep turning."; tune([300, 230]); }
+  };
+  document.getElementById("clue").onclick = () => {
+    usedClue = true;
+    document.getElementById("hint").textContent = "💡 " + LEVELS[lvl].clue;
+    beep(700, .12, "triangle");
+  };
+}
+function done(ok) {
+  if (ok) { cracked++; try { localStorage.setItem("stCodeBest", cracked); } catch (e) {} }
+  document.getElementById("best").textContent = cracked;
+  lvl++;
+  if (lvl >= LEVELS.length) return finish();
+  document.getElementById("play").innerHTML = `<div class="won">
+    <div style="font-size:3rem">📼</div><h2>Transmission ${lvl} cracked!</h2>
+    <p style="color:var(--dim)">${ok ? "Robin would be proud." : "Close enough — Steve wouldn't have got it either."}</p>
+    <button id="next" style="margin-top:12px">▶ Next transmission</button></div>`;
+  document.getElementById("next").onclick = show;
+  document.getElementById("lvls").innerHTML = LEVELS.map((_, i) =>
+    `<span class="${i < lvl ? "done" : ""}">${i + 1}</span>`).join("");
+}
+function finish() {
+  tune([523, 659, 784, 1047, 1319]);
+  document.getElementById("play").innerHTML = `<div class="won">
+    <div style="font-size:3.4rem">🔓</div><h2>You cracked the whole thing</h2>
+    <p style="color:var(--dim);max-width:420px;margin:8px auto 0">${LEVELS[LEVELS.length - 1].why}</p>
+    <p style="margin-top:10px">You're officially a translator. Robin speaks four languages — you only needed one. 🍨</p>
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button id="again">🔁 Start over</button>
+      <a class="btn ghost" href="game-maze.html">🔦 Try the maze</a>
+    </div></div>`;
+  document.getElementById("again").onclick = () => { lvl = 0; show(); };
+}
+addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") { turn(1); e.preventDefault(); }
+  if (e.key === "ArrowLeft") { turn(-1); e.preventDefault(); }
+});
+show();
+</script>
+<script src="/secret.js"></script>
+<script src="/eggs.js"></script>
+</body>
+</html>

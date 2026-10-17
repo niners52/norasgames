@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Upside Down Maze · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔦</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .stage { max-width: 520px; margin: 0 auto; position: relative; }
+  canvas { width: 100%; display: block; border-radius: 18px; touch-action: none;
+           border: 2px solid rgba(166, 107, 255, .45); box-shadow: 0 14px 44px rgba(0, 0, 0, .65); background: #06040a; }
+  .hud2 { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 8px; color: var(--dim); max-width: 520px; margin-inline: auto; }
+  .hud2 b { color: var(--yellow); }
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+             text-align: center; border-radius: 18px; background: rgba(8, 3, 14, .9); padding: 20px; }
+  .overlay.hide { display: none; }
+  .overlay h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.4rem, 6vw, 2.3rem); color: #fff; text-shadow: 0 0 18px #a66bff; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(2, 56px); gap: 7px;
+          justify-content: center; margin-top: 14px; }
+  .dpad button { font-size: 1.4rem; padding: 0; }
+  .dpad .up { grid-column: 2; } .dpad .lf { grid-column: 1; grid-row: 2; }
+  .dpad .dn { grid-column: 2; grid-row: 2; } .dpad .rt { grid-column: 3; grid-row: 2; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Upside Down Maze</h1>
+  <p class="sub">You're on the wrong side. Find the three lost lights, then find the gate home. 🔦</p>
+
+  <div class="hud2">
+    <span>💡 <b id="found">0</b>/3 lights</span>
+    <span>🌀 Level <b id="lvl">1</b></span>
+    <span>⏱️ <b id="time">0</b>s</span>
+  </div>
+
+  <div class="stage">
+    <canvas id="c" width="520" height="520"></canvas>
+    <div class="overlay" id="ov">
+      <h2>You slipped through</h2>
+      <p style="color:var(--dim);max-width:360px;margin-top:8px">
+        Everything looks the same here, but dead and covered in vines.<br>
+        Swipe, use the arrow keys, or tap the buttons to move. Collect all 3 lights, then get to the glowing gate.</p>
+      <button id="startbtn" style="margin-top:14px">🔦 Go in</button>
+    </div>
+  </div>
+
+  <div class="dpad">
+    <button class="up" data-d="u">⬆️</button>
+    <button class="lf" data-d="l">⬅️</button>
+    <button class="dn" data-d="d">⬇️</button>
+    <button class="rt" data-d="r">➡️</button>
+  </div>
+
+  <p class="lead" style="text-align:center;margin-top:14px">Best level reached: <b id="best" style="color:var(--yellow)">1</b></p>
+  <div class="row" style="justify-content:center"><a class="btn ghost" href="games.html">← All mini games</a></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const c = document.getElementById("c"), x = c.getContext("2d");
+const W = c.width;
+let N = 11, cell = 0, grid = [], px = 0, py = 0, lights = [], gate = { x: 0, y: 0 }, got = 0, level = 1;
+let running = false, t0 = 0, timer = 0, raf = 0, seen = [];
+let best = 1; try { best = +(localStorage.getItem("stMazeBest") || 1); } catch (e) {}
+document.getElementById("best").textContent = best;
+
+/* maze: recursive backtracker. each cell holds walls [top,right,bottom,left] */
+function build() {
+  N = Math.min(19, 9 + level * 2);
+  cell = W / N;
+  grid = Array.from({ length: N }, () => Array.from({ length: N }, () => ({ w: [1, 1, 1, 1], v: false })));
+  seen = Array.from({ length: N }, () => Array(N).fill(false));
+  const stack = [[0, 0]];
+  grid[0][0].v = true;
+  while (stack.length) {
+    const [cx, cy] = stack[stack.length - 1];
+    const dirs = [[0, -1, 0, 2], [1, 0, 1, 3], [0, 1, 2, 0], [-1, 0, 3, 1]]
+      .filter(([dx, dy]) => { const nx = cx + dx, ny = cy + dy; return nx >= 0 && ny >= 0 && nx < N && ny < N && !grid[ny][nx].v; });
+    if (!dirs.length) { stack.pop(); continue; }
+    const [dx, dy, a, b] = dirs[Math.floor(Math.random() * dirs.length)];
+    grid[cy][cx].w[a] = 0; grid[cy + dy][cx + dx].w[b] = 0; grid[cy + dy][cx + dx].v = true;
+    stack.push([cx + dx, cy + dy]);
+  }
+  px = 0; py = 0; got = 0;
+  gate = { x: N - 1, y: N - 1 };
+  lights = [];
+  while (lights.length < 3) {
+    const lx = Math.floor(Math.random() * N), ly = Math.floor(Math.random() * N);
+    if ((lx + ly) < 4 || (lx === gate.x && ly === gate.y)) continue;
+    if (lights.some(l => l.x === lx && l.y === ly)) continue;
+    lights.push({ x: lx, y: ly, got: false });
+  }
+  document.getElementById("found").textContent = 0;
+  document.getElementById("lvl").textContent = level;
+}
+
+function vines(cx, cy, s, seedv) {
+  x.strokeStyle = "rgba(120,60,140,.5)"; x.lineWidth = Math.max(1, s * .06);
+  for (let i = 0; i < 2; i++) {
+    const o = ((seedv * (i + 3) * 37) % 100) / 100;
+    x.beginPath();
+    x.moveTo(cx + s * o, cy);
+    x.quadraticCurveTo(cx + s * (1 - o), cy + s * .5, cx + s * o * .8, cy + s);
+    x.stroke();
+  }
+}
+function draw() {
+  raf = requestAnimationFrame(draw);
+  if (running) timer = (Date.now() - t0) / 1000;
+  document.getElementById("time").textContent = timer.toFixed(1);
+
+  x.fillStyle = "#06040a"; x.fillRect(0, 0, W, W);
+  const r = 2.3;                      /* how many cells of flashlight */
+  for (let gy = 0; gy < N; gy++) for (let gx = 0; gx < N; gx++) {
+    const d = Math.hypot(gx - px, gy - py);
+    if (d <= r) seen[gy][gx] = true;
+    if (!seen[gy][gx]) continue;
+    const lit = d <= r;
+    const a = lit ? 1 : .26;
+    const X = gx * cell, Y = gy * cell;
+    x.fillStyle = lit ? `rgba(34,16,46,${a})` : "rgba(20,10,28,.55)";
+    x.fillRect(X, Y, cell, cell);
+    if (lit && ((gx * 7 + gy * 13) % 5 === 0)) vines(X, Y, cell, gx * 31 + gy * 17);
+    x.strokeStyle = lit ? "rgba(200,140,255,.85)" : "rgba(120,80,160,.3)";
+    x.lineWidth = Math.max(2, cell * .1); x.lineCap = "round";
+    const w = grid[gy][gx].w;
+    x.beginPath();
+    if (w[0]) { x.moveTo(X, Y); x.lineTo(X + cell, Y); }
+    if (w[1]) { x.moveTo(X + cell, Y); x.lineTo(X + cell, Y + cell); }
+    if (w[2]) { x.moveTo(X, Y + cell); x.lineTo(X + cell, Y + cell); }
+    if (w[3]) { x.moveTo(X, Y); x.lineTo(X, Y + cell); }
+    x.stroke();
+  }
+  /* lights */
+  const pulse = .7 + Math.sin(Date.now() / 300) * .3;
+  for (const l of lights) {
+    if (l.got || !seen[l.y][l.x]) continue;
+    const cx = l.x * cell + cell / 2, cy = l.y * cell + cell / 2;
+    x.save(); x.shadowBlur = 22 * pulse; x.shadowColor = "#ffd54a";
+    x.fillStyle = "#ffd54a"; x.beginPath(); x.arc(cx, cy, cell * .2, 0, 7); x.fill(); x.restore();
+  }
+  /* gate */
+  if (seen[gate.y][gate.x]) {
+    const cx = gate.x * cell + cell / 2, cy = gate.y * cell + cell / 2;
+    x.save(); x.shadowBlur = 26; x.shadowColor = got >= 3 ? "#6fff9c" : "#ff2020";
+    x.strokeStyle = got >= 3 ? "#6fff9c" : "#ff5a5a"; x.lineWidth = cell * .12;
+    x.beginPath(); x.arc(cx, cy, cell * .3 * pulse, 0, 7); x.stroke();
+    x.beginPath(); x.arc(cx, cy, cell * .15, 0, 7); x.stroke(); x.restore();
+  }
+  /* player torch */
+  const cx = px * cell + cell / 2, cy = py * cell + cell / 2;
+  const gr = x.createRadialGradient(cx, cy, cell * .3, cx, cy, cell * r);
+  gr.addColorStop(0, "rgba(255,240,200,.22)"); gr.addColorStop(1, "rgba(255,240,200,0)");
+  x.fillStyle = gr; x.beginPath(); x.arc(cx, cy, cell * r, 0, 7); x.fill();
+  x.save(); x.shadowBlur = 18; x.shadowColor = "#fff2c0";
+  x.fillStyle = "#1a1020"; x.beginPath(); x.arc(cx, cy, cell * .26, 0, 7); x.fill();
+  x.fillStyle = "#fff2c0"; x.beginPath(); x.arc(cx, cy, cell * .12, 0, 7); x.fill(); x.restore();
+}
+function move(d) {
+  if (!running) return;
+  const w = grid[py][px].w;
+  if (d === "u" && !w[0]) py--;
+  else if (d === "r" && !w[1]) px++;
+  else if (d === "d" && !w[2]) py++;
+  else if (d === "l" && !w[3]) px--;
+  else { beep(140, .07, "square", .03); return; }
+  beep(420 + Math.random() * 90, .035, "triangle", .03);
+  for (const l of lights) if (!l.got && l.x === px && l.y === py) {
+    l.got = true; got++; document.getElementById("found").textContent = got; tune([700, 950, 1200]);
+  }
+  if (px === gate.x && py === gate.y && got >= 3) win();
+}
+function win() {
+  running = false;
+  if (level + 1 > best) { best = level + 1; try { localStorage.setItem("stMazeBest", best); } catch (e) {} }
+  document.getElementById("best").textContent = best;
+  tune([523, 659, 784, 1047]);
+  const ov = document.getElementById("ov");
+  ov.classList.remove("hide");
+  ov.querySelector("h2").textContent = "You're home! 🌟";
+  ov.querySelector("p").innerHTML = `You got out of level ${level} in <b style="color:var(--yellow)">${timer.toFixed(1)} seconds</b>.<br>
+    The next one is bigger and darker.`;
+  document.getElementById("startbtn").textContent = `🌀 Level ${level + 1}`;
+  level++;
+}
+document.getElementById("startbtn").onclick = () => {
+  build(); running = true; t0 = Date.now();
+  document.getElementById("ov").classList.add("hide");
+  beep(300, .2, "sine", .07);
+};
+document.querySelector(".dpad").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (b) move(b.dataset.d);
+});
+addEventListener("keydown", e => {
+  const k = { ArrowUp: "u", ArrowDown: "d", ArrowLeft: "l", ArrowRight: "r", w: "u", s: "d", a: "l", d: "r" }[e.key];
+  if (k) { move(k); e.preventDefault(); }
+});
+let sx = null, sy = null;
+c.addEventListener("pointerdown", e => { sx = e.clientX; sy = e.clientY; });
+c.addEventListener("pointerup", e => {
+  if (sx === null) return;
+  const dx = e.clientX - sx, dy = e.clientY - sy;
+  if (Math.hypot(dx, dy) > 18) move(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "r" : "l") : (dy > 0 ? "d" : "u"));
+  sx = sy = null;
+});
+build(); draw();
+</script>
+<script src="/secret.js"></script>
+<script src="/eggs.js"></script>
+</body>
+</html>

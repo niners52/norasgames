@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkie Talkie · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .radio { max-width: 640px; margin: 0 auto; border-radius: 26px; padding: 18px; position: relative;
+           background: linear-gradient(170deg, #3a2f28, #221a16 40%, #140f0c);
+           border: 2px solid #5b483a; box-shadow: 0 20px 50px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .12); }
+  .radio::before { content: ""; position: absolute; top: -34px; right: 46px; width: 10px; height: 40px; border-radius: 6px;
+                   background: linear-gradient(180deg, #8a7563, #4a3b30); }
+  .speaker { height: 26px; border-radius: 8px; margin-bottom: 12px;
+             background: repeating-linear-gradient(90deg, #1b1411 0 5px, #2e241d 5px 10px); border: 1px solid #140f0c; }
+  .screen { border-radius: 14px; min-height: 230px; max-height: 42vh; overflow-y: auto; padding: 14px;
+            background: #0b1a0e; border: 2px solid #0a0f08; box-shadow: inset 0 0 26px rgba(0, 0, 0, .8);
+            font-family: ui-monospace, "Courier New", monospace; color: #7dff9b; font-size: .95rem; line-height: 1.6; }
+  .screen .me { color: #ffe37d; }
+  .screen .sys { color: rgba(125, 255, 155, .45); font-style: italic; }
+  .screen b { color: #fff; }
+  .choices { display: grid; gap: 8px; margin-top: 12px; }
+  .choices button { text-align: left; background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 255, 255, .22);
+                    box-shadow: none; font-size: .95rem; padding: 12px 14px; }
+  .choices button:hover { background: rgba(255, 213, 74, .2); border-color: var(--yellow); }
+  .picks { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-bottom: 16px; }
+  .picks button { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+  .picks button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .knob { position: absolute; top: -18px; left: 28px; width: 34px; height: 34px; border-radius: 50%;
+          background: radial-gradient(circle at 35% 30%, #8a7563, #3a2d24); border: 2px solid #5b483a; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Walkie Talkie</h1>
+  <p class="sub">Channel 11 is open. Pick who you're calling and talk to them. 📻</p>
+
+  <div class="picks" id="picks"></div>
+
+  <section class="radio">
+    <div class="knob"></div>
+    <div class="speaker"></div>
+    <div class="screen" id="screen"></div>
+    <div class="choices" id="choices"></div>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+/* each person is a little conversation tree */
+const PEOPLE = {
+  dustin: { name: "Dustin", emoji: "📻", color: "#7dff9b", start: "hi", tree: {
+    hi: { say: "This is Dustin Henderson, do you copy? Over.", c: [
+      ["I copy! Who is this channel for?", "chan"],
+      ["Dustin, there's something in the woods.", "woods"],
+      ["Is Suzie real?", "suzie"]] },
+    chan: { say: "Channel 11. It's our channel. Mike, Lucas, Will, me. And now you, apparently. Over.", c: [
+      ["What's the emergency plan?", "plan"], ["Tell me about Dart.", "dart"]] },
+    woods: { say: "Okay okay okay, do NOT go closer. Describe it. Does it have a face? Please say it has a face.", c: [
+      ["It has no face. Just petals.", "demo"], ["It's about the size of a dog.", "dart"]] },
+    demo: { say: "That's a Demogorgon. That is an actual Demogorgon. Get inside, grab a light, and call Steve. He has a bat.", c: [
+      ["Why Steve?", "steve"], ["What do I do with the light?", "plan"]] },
+    dart: { say: "If it's slimy and it likes nougat, that's a baby Demogorgon and I named mine Dart and it ate my cat. Learn from me. Over.", c: [
+      ["You named a monster?", "named"], ["What should I feed it?", "feed"]] },
+    named: { say: "He was CUTE. He had a little face. Scientific discovery of the century! And then he got teeth. Lots of teeth.", c: [
+      ["Okay, back to the emergency plan.", "plan"], ["Is Suzie real?", "suzie"]] },
+    feed: { say: "Nothing. Feed it nothing. That's how it starts. First nougat, then your cat, then the whole town. Over.", c: [
+      ["Got it. Emergency plan?", "plan"]] },
+    steve: { say: "Steve Harrington is scared of exactly nothing and he has great hair and a nail bat. He's basically my bodyguard. Over.", c: [
+      ["What's the emergency plan?", "plan"], ["Is Suzie real?", "suzie"]] },
+    suzie: { say: "SUZIE IS REAL. She's in Utah, she's a genius, and she knows the Never Ending Story song by heart. Do you copy? SHE IS REAL.", c: [
+      ["I believe you.", "believe"], ["Sure, Dustin.", "doubt"]] },
+    believe: { say: "Thank you. Finally. You're officially my favourite person on this channel. Over and out. 💛", c: [["Start again", "hi"]] },
+    doubt: { say: "Unbelievable. You're as bad as Mike. I'm going to go talk to someone who respects me. Over and OUT.", c: [["Wait, come back!", "believe"]] },
+    plan: { say: "Lights on, doors locked, stay in a group, and never ever split up. And keep this channel open. Always. Over.", c: [
+      ["Over and out.", "end"], ["One more thing…", "hi"]] },
+    end: { say: "Good luck out there. Channel 11 stays open for you. Over and out. 📻", c: [["Call again", "hi"]] } } },
+
+  eleven: { name: "Eleven", emoji: "🧇", color: "#ffb0c8", start: "hi", tree: {
+    hi: { say: "…Hello?", c: [["Hi El! How are you?", "how"], ["Are you okay?", "okay"], ["Do you want to hang out?", "hang"]] },
+    how: { say: "Good. Eggos. Mike says hi. I am learning words.", c: [["What's your favourite word?", "word"], ["What are your powers like?", "power"]] },
+    word: { say: "Friend. And pretty. And bitchin'. Max taught me that one.", c: [["Max is cool.", "max"], ["Tell me about your powers.", "power"]] },
+    okay: { say: "I am okay. The bad men are gone. Papa is gone. I have friends now.", c: [["Who are your friends?", "friends"], ["I'm glad you're okay.", "glad"]] },
+    friends: { say: "Mike. Dustin. Lucas. Will. Max. Hopper. Joyce. And you. Friends don't lie.", c: [["I promise I won't lie.", "promise"], ["What do friends do?", "do"]] },
+    promise: { say: "Promise. Good. 💛", c: [["Do you want to hang out?", "hang"], ["Bye El.", "end"]] },
+    do: { say: "They tell the truth. They come back for you. Always.", c: [["Always.", "always"]] },
+    always: { say: "Always. 📻", c: [["Bye El.", "end"], ["Talk more", "hi"]] },
+    glad: { say: "Me too.", c: [["What do you like doing now?", "hang"], ["Tell me about your powers.", "power"]] },
+    power: { say: "I move things. With my mind. It makes my nose bleed. But I am strong. I am the monster-closer.", c: [
+      ["That's amazing.", "amazing"], ["Does it hurt?", "hurt"]] },
+    amazing: { say: "Yes. Amazing. 😊", c: [["Do you want to hang out?", "hang"], ["Bye El.", "end"]] },
+    hurt: { say: "Sometimes. But I do it anyway. For my friends.", c: [["You're brave.", "amazing"], ["Bye El.", "end"]] },
+    max: { say: "Max is my best friend. We went to the mall. We got slushies and picked out bitchin' clothes.", c: [
+      ["That sounds fun!", "hang"], ["Bye El.", "end"]] },
+    hang: { say: "Yes. We will watch TV. And eat Eggos. And no boys allowed.", c: [["Deal.", "end"], ["Tell me about Max.", "max"]] },
+    end: { say: "Bye. …Over and out. 🧇", c: [["Call again", "hi"]] } } },
+
+  steve: { name: "Steve", emoji: "🏏", color: "#9fd8ff", start: "hi", tree: {
+    hi: { say: "Yeah, hello? Who is this? I'm kinda in the middle of something.", c: [
+      ["Steve! I need help.", "help"], ["Nice hair.", "hair"], ["Are you babysitting again?", "sit"]] },
+    help: { say: "Of course you do. Everybody needs my help. Okay — are you bleeding, are you on fire, or is it a monster thing?", c: [
+      ["Monster thing.", "monster"], ["Not yet.", "notyet"]] },
+    monster: { say: "Great. Fantastic. Okay, listen: get somewhere with a door that locks. I'm getting the bat. Do NOT be a hero.", c: [
+      ["The bat with the nails?", "bat"], ["Hurry, Steve!", "hurry"]] },
+    bat: { say: "The bat with the nails. Jonathan helped me make it. It's the single best thing I own, no offence to my car.", c: [
+      ["Hurry, Steve!", "hurry"], ["Nice hair, by the way.", "hair"]] },
+    hurry: { say: "I'm coming. I'm always coming. Stay by the light, keep talking to me on this thing. Over.", c: [["Thanks Steve.", "end"]] },
+    notyet: { say: "'Not yet.' Perfect. Love that. That's exactly what Dustin says right before it's definitely a monster thing.", c: [
+      ["It might be a monster thing.", "monster"], ["Are you babysitting again?", "sit"]] },
+    hair: { say: "Thank you. Four puffs of Farrah Fawcett spray. Don't tell Dustin I told you, he already copies everything I do.", c: [
+      ["I'll keep the secret.", "sit"], ["Steve, I need help.", "help"]] },
+    sit: { say: "I'm not babysitting, I'm — okay, yes. There are four of them, one has a slingshot, and one is Erica. Pray for me.", c: [
+      ["Erica's the scariest one.", "erica"], ["Steve, I need help.", "help"]] },
+    erica: { say: "She's ten and she negotiated free ice cream for life out of me. Ten! I'd pick the Demogorgon. Over.", c: [
+      ["Good luck, Steve.", "end"], ["Steve, I need help.", "help"]] },
+    end: { say: "Yeah, yeah. Keep this channel on. And seriously — don't be a hero. That's my job. Over and out. 🏏", c: [["Call again", "hi"]] } } },
+
+  eddie: { name: "Eddie", emoji: "🎸", color: "#ffd54a", start: "hi", tree: {
+    hi: { say: "You've reached the Hellfire Club hotline. Eddie 'The Freak' Munson speaking. State your business.", c: [
+      ["I want to join Hellfire.", "join"], ["Did you do it?", "didit"], ["Teach me guitar.", "guitar"]] },
+    join: { say: "Excellent. Excellent! We meet in the drama room. Bring dice, bring snacks, bring a character you actually care about.", c: [
+      ["What class should I be?", "class"], ["Teach me guitar.", "guitar"]] },
+    class: { say: "Everybody says fighter. Be the bard. Nobody is ever ready for the bard. Also, roll a d20 for me right now.", c: [
+      ["Rolled a 20!", "nat20"], ["Rolled a 1…", "nat1"]] },
+    nat20: { say: "A NATURAL TWENTY! Did you all see that?! That's the most metal thing I've seen all week. You're in. 🤘", c: [
+      ["Teach me guitar.", "guitar"], ["Over and out.", "end"]] },
+    nat1: { say: "Oof. Brutal. The dungeon master shows no mercy, but the dungeon master does respect commitment. Roll again tomorrow.", c: [
+      ["Teach me guitar.", "guitar"], ["Over and out.", "end"]] },
+    didit: { say: "No. I didn't. Nobody believes me except a handful of kids with walkie talkies, so — thanks for asking instead of running.", c: [
+      ["I believe you.", "believe"], ["What really happened?", "real"]] },
+    believe: { say: "…Huh. That's twice this week somebody said that to me. I could get used to it. 🤘", c: [
+      ["I want to join Hellfire.", "join"], ["Over and out.", "end"]] },
+    real: { say: "Something from another world, and a curse, and a clock. I know how it sounds. Ask Dustin. He has charts.", c: [
+      ["I believe you.", "believe"], ["Over and out.", "end"]] },
+    guitar: { say: "Step one: get loud. Step two: get louder. Step three: play Master of Puppets at the top of a trailer like the world's ending.", c: [
+      ["Why that song?", "why"], ["Over and out.", "end"]] },
+    why: { say: "Because if you're going down, you go down playing. That's the whole philosophy. Write it on your binder.", c: [
+      ["Over and out.", "end"]] },
+    end: { say: "Later, little radio friend. Hellfire's always got a chair for you. 🤘", c: [["Call again", "hi"]] } } },
+};
+
+let who = "dustin", node = "hi", typing = false;
+const screen = document.getElementById("screen");
+document.getElementById("picks").innerHTML = Object.entries(PEOPLE)
+  .map(([k, p]) => `<button data-k="${k}" class="${k === who ? "on" : ""}">${p.emoji} ${p.name}</button>`).join("");
+
+function line(html, cls = "") { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; screen.appendChild(d); screen.scrollTop = screen.scrollHeight; return d; }
+function statics() { for (let i = 0; i < 5; i++) setTimeout(() => beep(260 + Math.random() * 900, .025, "square", .025), i * 42); }
+
+async function say(text) {
+  typing = true;
+  document.getElementById("choices").innerHTML = "";
+  statics();
+  const p = PEOPLE[who];
+  const d = line(`<b style="color:${p.color}">${p.name}:</b> <span></span>`);
+  const span = d.querySelector("span");
+  for (let i = 0; i < text.length; i++) {
+    span.textContent += text[i];
+    screen.scrollTop = screen.scrollHeight;
+    if (i % 3 === 0) beep(640 + Math.random() * 120, .012, "square", .018);
+    await new Promise(r => setTimeout(r, 17));
+  }
+  typing = false;
+  choices();
+}
+function choices() {
+  const n = PEOPLE[who].tree[node];
+  document.getElementById("choices").innerHTML = n.c.map(([t, next], i) => `<button data-n="${next}" data-t="${i}">📣 ${t}</button>`).join("");
+}
+document.getElementById("choices").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b || typing) return;
+  const [text] = PEOPLE[who].tree[node].c[+b.dataset.t];
+  line(`<b style="color:#ffe37d">You:</b> <span class="me">${text}</span>`);
+  tune([880, 660]);
+  node = b.dataset.n;
+  say(PEOPLE[who].tree[node].say);
+});
+function openChannel(k) {
+  who = k; node = PEOPLE[k].start;
+  screen.innerHTML = "";
+  document.querySelectorAll("#picks button").forEach(b => b.classList.toggle("on", b.dataset.k === k));
+  line(`*** CHANNEL 11 · CALLING ${PEOPLE[k].name.toUpperCase()} ***`, "sys");
+  line("…kshhhhh…", "sys");
+  setTimeout(() => say(PEOPLE[k].tree[PEOPLE[k].start].say), 500);
+}
+document.getElementById("picks").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return; openChannel(b.dataset.k);
+});
+openChannel("dustin");
+</script>
+<script src="/secret.js"></script>
+<script src="/eggs.js"></script>
+</body>
+</html>

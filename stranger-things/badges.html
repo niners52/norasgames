@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trophy Case · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏆</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .meter { max-width: 620px; margin: 0 auto 6px; text-align: center; }
+  .meter .track { height: 16px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-top: 8px; }
+  .meter .fill { height: 100%; background: linear-gradient(90deg, #ff2020, #ffd54a); transition: width .6s; }
+  .meter .rank { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.3rem, 5vw, 2rem); color: #fff;
+                 text-shadow: 0 0 18px var(--red); margin-top: 10px; }
+  .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; margin-top: 20px; }
+  .badge { border-radius: 16px; padding: 16px 14px; text-align: center; position: relative;
+           background: linear-gradient(160deg, rgba(32, 12, 40, .9), rgba(14, 6, 22, .94));
+           border: 1px solid rgba(255, 255, 255, .12); opacity: .45; filter: grayscale(1); transition: .25s; }
+  .badge.got { opacity: 1; filter: none; border-color: var(--yellow); box-shadow: 0 0 22px rgba(255, 213, 74, .3); }
+  .badge .ico { font-size: 2.4rem; display: block; }
+  .badge h3 { font-size: .98rem; color: #fff; margin: 6px 0 4px; }
+  .badge p { font-size: .8rem; color: var(--dim); line-height: 1.4; }
+  .badge .lock { position: absolute; top: 8px; right: 10px; font-size: .8rem; }
+  .badge.got .lock { display: none; }
+  .badge .prog { font-size: .72rem; margin-top: 6px; color: var(--yellow); font-weight: 800; }
+  .groups h2 { margin-top: 26px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Trophy Case</h1>
+  <p class="sub">Everything you've done on this site, all in one place. 🏆</p>
+
+  <div class="meter" id="meter"></div>
+  <div class="badges" id="badges"></div>
+
+  <p class="lead" style="text-align:center;margin-top:20px">
+    Trophies are saved on this device only, so your iPad and the computer each keep their own. Nothing is sent anywhere.
+  </p>
+  <div class="row" style="justify-content:center"><button class="ghost" id="wipe">🗑️ Reset my trophies</button></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const num = k => { try { return +(localStorage.getItem(k) || 0); } catch (e) { return 0; } };
+const json = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || d); } catch (e) { return JSON.parse(d); } };
+
+const S = {
+  eggo: num("stEggoBest"), lights: num("stLightsBest"), vecna: num("stVecnaBest"),
+  trivia: num("stTriviaBest"), hard: num("stHardBest"), quotes: num("stQuotesBest"),
+  chase: num("stChaseBest"), maze: num("stMazeBest"), code: num("stCodeBest"),
+  clock: num("noraClockBest"), monsters: json("stMonsters", "[]").length,
+  seen: Object.keys(json("stSeen", "{}")).length,
+  secret: (() => { try { return localStorage.getItem("noraSecret") === "1"; } catch (e) { return false; } })(),
+};
+
+const BADGES = [
+  { i: "🧇", n: "First Waffle", d: "Catch 5 Eggos in the waffle game.", v: S.eggo, need: 5 },
+  { i: "🍴", n: "Eggo Hoarder", d: "Score 40 in the waffle game.", v: S.eggo, need: 40 },
+  { i: "💡", n: "Light Reader", d: "Reach round 4 of Light Code.", v: S.lights, need: 4 },
+  { i: "🔤", n: "Joyce's Alphabet", d: "Reach round 8 of Light Code.", v: S.lights, need: 8 },
+  { i: "🎸", n: "Still Playing", d: "Score 300 in Escape Vecna.", v: S.vecna, need: 300 },
+  { i: "🤘", n: "Master of Puppets", d: "Score 1200 in Escape Vecna.", v: S.vecna, need: 1200 },
+  { i: "🚲", n: "Mirkwood Rider", d: "Ride 300 m in Demogorgon Chase.", v: S.chase, need: 300 },
+  { i: "👹", n: "Outran It", d: "Ride 1000 m in Demogorgon Chase.", v: S.chase, need: 1000 },
+  { i: "🔦", n: "Way Out", d: "Escape the Upside Down Maze once.", v: S.maze, need: 2 },
+  { i: "🌀", n: "Maze Runner", d: "Reach maze level 4.", v: S.maze, need: 4 },
+  { i: "🔐", n: "Translator", d: "Crack 3 Russian transmissions.", v: S.code, need: 3 },
+  { i: "🍨", n: "Scoops Troop", d: "Crack all 6 transmissions.", v: S.code, need: 6 },
+  { i: "🔮", n: "Hawkins Know-It-All", d: "Score 8 on the regular trivia quiz.", v: S.trivia, need: 8 },
+  { i: "👑", n: "Queen of Hawkins", d: "Score 100% on the super hard quiz.", v: S.hard, need: 100 },
+  { i: "⚡", n: "Hawkins Legend", d: "Score 95% or more on the super hard quiz.", v: S.hard, need: 95 },
+  { i: "💬", n: "Good Ear", d: "Get 8 right in Who Said It?", v: S.quotes, need: 8 },
+  { i: "🎧", n: "Perfect Ear", d: "Get all 10 right in Who Said It?", v: S.quotes, need: 10 },
+  { i: "🧬", n: "Lab Assistant", d: "Save a monster in Monster Maker.", v: S.monsters, need: 1 },
+  { i: "🗂️", n: "Head of the Lab", d: "Save 5 monsters in Monster Maker.", v: S.monsters, need: 5 },
+  { i: "📺", n: "Started Watching", d: "Tick off 8 episodes.", v: S.seen, need: 8 },
+  { i: "🏅", n: "Seen It All", d: "Tick off all 42 episodes.", v: S.seen, need: 42 },
+  { i: "🕰️", n: "Faster Than Vecna", d: "Beat the clock game in under 400 ms.", v: S.clock && S.clock < 400 ? 1 : 0, need: 1, raw: S.clock ? S.clock + " ms" : "not yet" },
+  { i: "🔑", n: "Found the Gate", d: "Find the secret page.", v: S.secret ? 1 : 0, need: 1, hide: true },
+];
+
+const RANKS = [[0, "🧇", "Newie"], [3, "🚲", "Bike Kid"], [6, "📻", "Walkie Operator"], [9, "🎲", "Party Member"],
+               [12, "🎸", "Hellfire Member"], [15, "🔎", "Hawkins Detective"], [18, "🌀", "Upside Down Expert"],
+               [21, "⚡", "Hawkins Legend"], [23, "👑", "Queen of Hawkins"]];
+
+const got = BADGES.filter(b => b.v >= b.need).length;
+const rank = RANKS.filter(r => got >= r[0]).pop();
+document.getElementById("meter").innerHTML = `
+  <div style="font-weight:800;color:var(--dim)">You've earned <b style="color:var(--yellow)">${got} of ${BADGES.length}</b> trophies</div>
+  <div class="track"><div class="fill" style="width:${(got / BADGES.length) * 100}%"></div></div>
+  <div class="rank">${rank[1]} ${rank[2]}</div>`;
+
+document.getElementById("badges").innerHTML = BADGES.map(b => {
+  const done = b.v >= b.need;
+  if (b.hide && !done) return `<article class="badge"><span class="lock">🔒</span><span class="ico">❓</span>
+    <h3>???</h3><p>There's something on this site nobody has found yet.</p></article>`;
+  return `<article class="badge ${done ? "got" : ""}">
+    <span class="lock">🔒</span><span class="ico">${b.i}</span>
+    <h3>${b.n}</h3><p>${b.d}</p>
+    <div class="prog">${done ? "EARNED ✅" : (b.raw || `${b.v} / ${b.need}`)}</div></article>`;
+}).join("");
+
+if (got >= 1) tune([523, 659, 784].slice(0, Math.min(3, got)));
+document.getElementById("wipe").onclick = () => {
+  if (!confirm("Clear every score and trophy on this device? This can't be undone.")) return;
+  ["stEggoBest", "stLightsBest", "stVecnaBest", "stTriviaBest", "stHardBest", "stQuotesBest",
+   "stChaseBest", "stMazeBest", "stCodeBest", "stMonsters", "stSeen"].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  location.reload();
+};
+</script>
+<script src="/secret.js"></script>
+<script src="/eggs.js"></script>
+</body>
+</html>

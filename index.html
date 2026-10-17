@@ -77,6 +77,24 @@
     .card.gold   { --glow: rgba(255, 210, 90, .3); }
 
     footer { text-align: center; margin-top: 64px; color: rgba(150, 220, 255, 0.6); font-size: .9rem; }
+  
+    /* ---- the locked transmission box ---- */
+    #gatebox { max-width: 520px; margin: 34px auto 10px; border-radius: 16px; padding: 18px 20px; text-align: center;
+               background: rgba(6, 12, 20, .72); border: 1px solid rgba(120, 200, 255, .22);
+               box-shadow: 0 10px 30px rgba(0, 0, 0, .45); }
+    #gatebox .gb-top { font-size: .66rem; letter-spacing: 2px; font-weight: 800; color: rgba(160, 225, 255, .55); }
+    #gatebox .gb-riddle { margin: 12px 0 14px; font-style: italic; line-height: 1.7; color: rgba(214, 240, 255, .8); }
+    #gatebox .gb-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    #gatebox input { flex: 1 1 200px; max-width: 260px; padding: 12px 14px; border-radius: 10px; text-align: center;
+                     font: inherit; font-weight: 700; letter-spacing: 1px; color: #eaf6ff;
+                     background: rgba(2, 8, 14, .85); border: 1px solid rgba(120, 200, 255, .3); }
+    #gatebox button { padding: 12px 22px; border: 0; border-radius: 10px; cursor: pointer; font: inherit; font-weight: 800;
+                      letter-spacing: 1px; color: #04121c; background: linear-gradient(135deg, #7fe3ff, #39a9d8); }
+    #gatebox .gb-msg { min-height: 1.5em; margin-top: 10px; font-weight: 700; color: rgba(160, 225, 255, .75); }
+    #gatebox.open { border-color: #ff2020; box-shadow: 0 0 44px rgba(255, 32, 32, .55); }
+    #gatebox.open .gb-msg { color: #ff8a8a; }
+    #gatebox.shake { animation: gbshake .36s; }
+    @keyframes gbshake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
   </style>
 </head>
 <body>
@@ -145,6 +163,16 @@
       </a>
     </section>
 
+    <section id="gatebox">
+      <div class="gb-top">🔒 LOCKED TRANSMISSION · HAWKINS NATIONAL LABORATORY</div>
+      <p class="gb-riddle">"I am a girl, a number, and a door.<br>They put me in a tank and I opened the sky.<br>Say my name and the gate opens."</p>
+      <div class="gb-row">
+        <input id="gbin" maxlength="18" placeholder="type the password…" spellcheck="false" autocomplete="off">
+        <button id="gbgo">ENTER</button>
+      </div>
+      <p class="gb-msg" id="gbmsg"></p>
+    </section>
+
     <footer>🌊 Made with love by Nora 🌊 <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span></footer>
   </main>
 
@@ -187,6 +215,40 @@
     }
     loop();
   </script>
+
+  <script>
+    /* the front-page password: say her name and the gate opens */
+    (function gateBox() {
+      const OK = ["eleven", "11", "011", "el", "jane", "janehopper", "janeives"];
+      const NOPE = ["Nothing happens.", "The lights stay off.", "…static.", "Wrong. Try again.",
+                    "The gate does not move.", "Not that one."];
+      const box = document.getElementById("gatebox"), inp = document.getElementById("gbin"),
+            msg = document.getElementById("gbmsg");
+      let tries = 0;
+      function go() {
+        const v = inp.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+        if (!v) return;
+        if (OK.includes(v)) {
+          try { localStorage.setItem("noraSecret", "1"); } catch (e) {}
+          box.classList.add("open");
+          msg.textContent = "🌀 The gate is opening…";
+          document.documentElement.style.transition = "filter .8s";
+          document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
+          setTimeout(function () { location.href = "/secret.html"; }, 1200);
+          return;
+        }
+        tries++;
+        box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+        msg.textContent = tries >= 4
+          ? "…a hint, then: count to ten, then one more."
+          : NOPE[Math.floor(Math.random() * NOPE.length)];
+        inp.select();
+      }
+      document.getElementById("gbgo").addEventListener("click", go);
+      inp.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
+    })();
+  </script>
 <script src="/secret.js"></script>
+<script src="/eggs.js"></script>
 </body>
 </html>

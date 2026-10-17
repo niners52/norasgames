@@ -2,15 +2,16 @@
 /* =====================================================================
    THE SECRET GATE — four ways in, so it always works
      1. go to norasgames.com/upsidedown
-     2. tap the site title (or the little 11) five times
+     2. tap the tiny 11 in the footer eleven times
      3. type ELEVEN on a keyboard
      4. the old arrow code
-   The screen flickers as you get closer, so you know it's working.
+   Nothing flickers until tap 8, so you only see it if you meant it.
    ===================================================================== */
 (function secretGate() {
   const WORD = "ELEVEN";
   const ARROWS = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight"];
-  const TAP_TARGETS = ".secret-dot, .brand, h1.title, .logo, header .brand";
+  const TAP_TARGETS = ".secret-dot";   /* ONLY the little 11 in the footer */
+  const NEEDED = 11;                   /* eleven taps, obviously */
   let typed = "", arrows = [], taps = 0, tapTimer = null;
 
   function flicker(strength) {
@@ -34,18 +35,20 @@
     setTimeout(() => { location.href = "/secret.html"; }, 1100);
   }
 
-  /* 1. tapping the title or the 11 */
+  /* 1. tapping the little 11 in the footer, eleven times */
   function tap() {
     taps++;
     clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { taps = 0; }, 3000);
-    if (taps >= 3 && taps < 5) flicker(taps === 3 ? .25 : .5);
-    if (taps >= 5) { taps = 0; open(); }
+    tapTimer = setTimeout(() => { taps = 0; }, 2500);
+    if (taps >= 8 && taps < NEEDED) flicker((taps - 7) * .2);
+    if (taps >= NEEDED) { taps = 0; open(); }
   }
   document.addEventListener("click", e => { if (e.target.closest(TAP_TARGETS)) tap(); }, true);
 
   /* 2. typing */
   document.addEventListener("keydown", e => {
+    const t = e.target;
+    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
     if (e.key && e.key.length === 1) {
       typed = (typed + e.key.toUpperCase()).slice(-WORD.length);
       if (typed === WORD) { typed = ""; open(); }
@@ -54,15 +57,4 @@
     if (arrows.join(",") === ARROWS.join(",")) { arrows = []; open(); }
   });
 
-  /* 3. once you've found it, a key shows up in the menu */
-  function addKey() {
-    try { if (localStorage.getItem("noraSecret") !== "1") return; } catch (e) { return; }
-    const nav = document.querySelector("nav.links");
-    if (nav && !nav.querySelector(".secret-link")) {
-      const a = document.createElement("a");
-      a.href = "/secret.html"; a.className = "secret-link"; a.textContent = "🔑 Secret";
-      nav.appendChild(a);
-    }
-  }
-  if (document.readyState === "loading") window.addEventListener("DOMContentLoaded", addKey); else addKey();
 })();

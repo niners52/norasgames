@@ -38,16 +38,18 @@
     <a href="monster-maker.html">Monster Maker</a>
     <a href="dice.html">Dice</a>
     <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
     <a href="quiz.html">Quizzes</a>
     <a href="quiz-hard.html">Hard Quiz</a>
     <a href="quotes.html">Who Said It?</a>
     <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
   </nav>
 </header>
 
 <main>
   <h1 class="title">Mini Games</h1>
-  <p class="sub">Three games from the Palace Arcade. Each one opens on its own page so it loads fast. 🕹️</p>
+  <p class="sub">Six games from the Palace Arcade. Each one opens on its own page so it loads fast. 🕹️</p>
 
   <div class="grid">
     <a class="card game" href="game-eggo.html">
@@ -71,6 +73,27 @@
       <p class="how">Tap the glowing notes before they reach the line.</p>
       <p class="best" id="best-vecna"></p>
     </a>
+    <a class="card game" href="game-chase.html">
+      <span class="emoji">🚲</span>
+      <h3>Demogorgon Chase</h3>
+      <p>Ride your bike down Mirkwood at night while something with no face gains on you. Grab Eggos to buy yourself room.</p>
+      <p class="how">Swipe left and right, or use the arrow keys.</p>
+      <p class="best" id="best-chase"></p>
+    </a>
+    <a class="card game" href="game-maze.html">
+      <span class="emoji">🔦</span>
+      <h3>Upside Down Maze</h3>
+      <p>You're on the wrong side and your flashlight only reaches so far. Find three lost lights, then find the gate home.</p>
+      <p class="how">Swipe, use arrow keys, or tap the buttons. Each level gets bigger.</p>
+      <p class="best" id="best-maze"></p>
+    </a>
+    <a class="card game" href="game-code.html">
+      <span class="emoji">🔐</span>
+      <h3>Break the Russian Code</h3>
+      <p>Be Robin in the back of Scoops Ahoy. Turn the cipher wheel until the gibberish turns into actual words.</p>
+      <p class="how">Six transmissions, each one harder than the last.</p>
+      <p class="best" id="best-code"></p>
+    </a>
   </div>
 
   <section class="arcade">
@@ -81,8 +104,12 @@
       <div><b id="s-lights">0</b>Light Code rounds</div>
       <div><b id="s-vecna">0</b>Escape Vecna</div>
       <div><b id="s-trivia">0</b>Trivia best (out of 10)</div>
+      <div><b id="s-chase">0</b>Chase metres</div>
+      <div><b id="s-maze">0</b>Maze level reached</div>
+      <div><b id="s-code">0</b>Codes cracked</div>
     </div>
     <div class="row" style="margin-top:16px">
+      <a class="btn" href="badges.html">🏆 See my trophy case</a>
       <button class="ghost" id="clear">🧹 Clear my high scores</button>
     </div>
   </section>
@@ -98,6 +125,13 @@
 const get = k => { try { return +(localStorage.getItem(k) || 0); } catch (e) { return 0; } };
 function show() {
   const eggo = get("stEggoBest"), lights = get("stLightsBest"), vecna = get("stVecnaBest"), trivia = get("stTriviaBest");
+  const chase = get("stChaseBest"), maze = get("stMazeBest"), code = get("stCodeBest");
+  document.getElementById("s-chase").textContent = chase;
+  document.getElementById("s-maze").textContent = maze || 1;
+  document.getElementById("s-code").textContent = code;
+  document.getElementById("best-chase").textContent = chase ? `🏆 Your best: ${chase} m` : "";
+  document.getElementById("best-maze").textContent = maze > 1 ? `🏆 Reached level ${maze}` : "";
+  document.getElementById("best-code").textContent = code ? `🏆 Cracked: ${code}` : "";
   document.getElementById("s-eggo").textContent = eggo;
   document.getElementById("s-lights").textContent = lights;
   document.getElementById("s-vecna").textContent = vecna;
@@ -109,10 +143,11 @@ function show() {
 show();
 document.getElementById("clear").onclick = () => {
   if (!confirm("Clear all your high scores?")) return;
-  try { ["stEggoBest", "stLightsBest", "stVecnaBest", "stTriviaBest"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+  try { ["stEggoBest", "stLightsBest", "stVecnaBest", "stTriviaBest", "stChaseBest", "stMazeBest", "stCodeBest"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
   show(); beep(300, .2);
 };
 </script>
 <script src="/secret.js"></script>
+<script src="/eggs.js"></script>
 </body>
 </html>
