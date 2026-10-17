@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Who Said It? · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💬</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .box { max-width: 760px; margin: 0 auto; border-radius: 20px; padding: clamp(18px, 4vw, 30px);
+         background: linear-gradient(160deg, rgba(32, 12, 40, .94), rgba(14, 6, 22, .96));
+         border: 1px solid rgba(255, 90, 90, .35); box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+  .bubble { position: relative; background: #f3e6cf; color: #241a12; border-radius: 18px; padding: 22px 24px;
+            font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.1rem, 3.6vw, 1.6rem); line-height: 1.45; }
+  .bubble::after { content: ""; position: absolute; left: 40px; top: 100%; border: 14px solid transparent; border-top-color: #f3e6cf; }
+  .answers { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 28px; }
+  .answers button { background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .18); box-shadow: none; padding: 14px; }
+  .answers button:hover { background: rgba(255, 32, 32, .22); border-color: var(--red); }
+  .answers button.right { background: rgba(60, 200, 110, .32); border-color: #4cd97b; }
+  .answers button.wrong { background: rgba(255, 50, 50, .32); border-color: var(--red); }
+  .hud { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 14px; color: var(--dim); }
+  .hud b { color: var(--yellow); }
+  .feedback { min-height: 1.8em; text-align: center; font-weight: 800; margin-top: 14px; }
+  .result { text-align: center; }
+  .result .big { font-size: 4rem; }
+  .result h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.6rem, 6vw, 2.6rem); color: #fff;
+               text-shadow: 0 0 16px var(--red); margin: 6px 0; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Who Said It?</h1>
+  <p class="sub">Ten famous lines. Guess who said each one. 💬</p>
+  <section class="box" id="box"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const LINES = [
+  { q: "Friends don't lie.", who: "Eleven", why: "Her rule from season 1, and the rule of the whole show." },
+  { q: "Mornings are for coffee and contemplation.", who: "Hopper", why: "Hopper, every single morning, before anybody is allowed to talk to him." },
+  { q: "You can't spell America without Erica.", who: "Erica", why: "Erica Sinclair, who has never once been humble." },
+  { q: "This is the most metal thing I've ever seen.", who: "Eddie", why: "Eddie Munson, impressed in the middle of total chaos." },
+  { q: "Why are you keeping this curiosity door locked?", who: "Dustin", why: "Dustin, trying to get information out of a grown-up." },
+  { q: "I'm on a curiosity voyage, and I need my paddles to travel.", who: "Dustin", why: "Same voyage, same paddles. Classic Dustin." },
+  { q: "Mouthbreather.", who: "Eleven", why: "Eleven learned it from Mike and used it perfectly." },
+  { q: "Nobody normal ever accomplished anything meaningful in this world.", who: "Jonathan", why: "Jonathan Byers, telling Will it's fine to be different." },
+  { q: "She's our friend and she's crazy!", who: "Dustin", why: "Dustin yelling about Eleven, which is both true and loving." },
+  { q: "If we're both going crazy, then we'll go crazy together, right?", who: "Mike", why: "Mike to Eleven, promising to stick with her no matter what." },
+  { q: "Bob Newby, superhero.", who: "Bob", why: "Bob Newby, who really was one." },
+  { q: "We have a lot of rules in our party, but the most important is that friends don't lie.", who: "Lucas", why: "Lucas explaining the party rules to Eleven." },
+  { q: "You shouldn't like things because people tell you you're supposed to.", who: "Jonathan", why: "Jonathan, giving advice about being yourself." },
+  { q: "I cracked it. The code. The Russian code.", who: "Robin", why: "Robin Buckley, who figured it out while scooping ice cream." },
+];
+const PEOPLE = ["Eleven", "Mike", "Dustin", "Lucas", "Will", "Max", "Steve", "Robin", "Nancy", "Jonathan", "Eddie", "Hopper", "Joyce", "Erica", "Bob"];
+const FACE = { Eleven: "🧇", Mike: "🎲", Dustin: "📻", Lucas: "🎯", Will: "🎨", Max: "🛹", Steve: "🏏", Robin: "🎺",
+               Nancy: "📰", Jonathan: "📷", Eddie: "🎸", Hopper: "🚔", Joyce: "💡", Erica: "🍨", Bob: "🤓" };
+
+const box = document.getElementById("box");
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+let qs = [], idx = 0, correct = 0, streak = 0, bestStreak = 0;
+let best = 0;
+try { best = +(localStorage.getItem("stQuotesBest") || 0); } catch (e) {}
+
+function start() { qs = shuffle(LINES).slice(0, 10); idx = 0; correct = 0; streak = 0; bestStreak = 0; render(); }
+function render() {
+  if (idx >= qs.length) return finish();
+  const q = qs[idx];
+  const others = shuffle(PEOPLE.filter(p => p !== q.who)).slice(0, 3);
+  const opts = shuffle([q.who, ...others]);
+  box.innerHTML = `
+    <div class="hud"><span>Line ${idx + 1} of ${qs.length}</span><span>🔥 Streak: <b>${streak}</b></span><span>✅ <b>${correct}</b></span></div>
+    <div class="bubble">“${q.q}”</div>
+    <div class="answers">${opts.map(p => `<button data-p="${p}">${FACE[p]} ${p}</button>`).join("")}</div>
+    <p class="feedback" id="fb"></p>`;
+  box.querySelectorAll(".answers button").forEach(b => { b.onclick = () => choose(b, q); });
+}
+function choose(btn, q) {
+  box.querySelectorAll(".answers button").forEach(b => b.disabled = true);
+  const ok = btn.dataset.p === q.who;
+  btn.classList.add(ok ? "right" : "wrong");
+  if (!ok) box.querySelector(`.answers button[data-p="${q.who}"]`).classList.add("right");
+  if (ok) { correct++; streak++; bestStreak = Math.max(bestStreak, streak); tune([660, 880]); }
+  else { streak = 0; beep(170, .3, "sawtooth", .08); }
+  document.getElementById("fb").textContent = (ok ? "✅ Yes! " : `❌ It was ${q.who}. `) + q.why;
+  setTimeout(() => { idx++; render(); }, 1900);
+}
+function finish() {
+  if (correct > best) { best = correct; try { localStorage.setItem("stQuotesBest", best); } catch (e) {} }
+  const r = correct === 10 ? ["🏆", "Perfect ear!", "You know exactly how everyone talks."]
+    : correct >= 8 ? ["🎧", "Hawkins regular", "You've clearly watched this more than once."]
+    : correct >= 5 ? ["📻", "Walkie listener", "Not bad! A few more rewatches and you've got it."]
+    : ["🧇", "New in town", "Go watch some more and come back."];
+  tune(correct >= 8 ? [523, 659, 784, 1047] : [392, 330, 262]);
+  box.innerHTML = `<div class="result"><div class="big">${r[0]}</div><h3>${r[1]}</h3>
+    <p style="color:var(--dim)">You got <b>${correct} of 10</b> right. Longest streak: <b>${bestStreak}</b>.<br>${r[2]}<br>Your best ever: ${best}/10</p>
+    <div class="row" style="margin-top:16px">
+      <button onclick="start()">🔁 Play again</button>
+      <a class="btn ghost" href="quiz-hard.html" style="background:rgba(255,255,255,.1)">👑 Try the hard quiz</a>
+    </div></div>`;
+}
+start();
+</script>
+<script src="/secret.js"></script>
+</body>
+</html>

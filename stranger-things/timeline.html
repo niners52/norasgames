@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hawkins Timeline · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕰️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .line { position: relative; max-width: 860px; margin: 24px auto 0; padding-left: 54px; }
+  .line::before { content: ""; position: absolute; left: 20px; top: 0; bottom: 0; width: 4px; border-radius: 4px;
+                  background: linear-gradient(180deg, #ff2020, #ff9f3b, #a66bff); box-shadow: 0 0 18px rgba(255, 32, 32, .6); }
+  .ev { position: relative; margin-bottom: 20px; border-radius: 18px; padding: 18px 20px; cursor: pointer;
+        background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+        border: 1px solid rgba(255, 90, 90, .28); transition: transform .18s, border-color .18s; }
+  .ev:hover { transform: translateX(5px); border-color: var(--red); }
+  .ev::before { content: attr(data-emoji); position: absolute; left: -51px; top: 18px; width: 42px; height: 42px;
+                border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+                background: #1b0b22; border: 3px solid var(--red); box-shadow: 0 0 16px rgba(255, 32, 32, .7); }
+  .ev .when { font-weight: 800; color: var(--yellow); letter-spacing: 1px; font-size: .9rem; }
+  .ev h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.2rem, 3.6vw, 1.7rem); color: #fff; margin: 2px 0 6px; }
+  .ev p { color: var(--dim); }
+  .ev .more { max-height: 0; overflow: hidden; transition: max-height .4s; }
+  .ev.open .more { max-height: 420px; }
+  .ev ul { margin: 10px 0 0 18px; color: var(--dim); }
+  .ev li { margin-bottom: 5px; }
+  .ev .tag { margin-top: 10px; }
+  .ev .hint { font-size: .78rem; color: rgba(255, 233, 233, .4); margin-top: 8px; }
+  .ev.open .hint { display: none; }
+  .counter { text-align: center; margin: 18px auto 0; max-width: 620px; border-radius: 18px; padding: 16px;
+             background: rgba(255, 32, 32, .1); border: 1px solid rgba(255, 32, 32, .4); }
+  .counter b { color: var(--yellow); font-size: 1.5rem; font-family: "Noto Serif Display", Georgia, serif; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.4rem)">Hawkins Timeline</h1>
+  <p class="sub">Everything that happened, in order. Tap an event to open it. 🕰️</p>
+
+  <div class="counter" id="counter"></div>
+
+  <div class="line" id="line"></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+const EVENTS = [
+  { e: "🏚️", when: "1959", t: "The Creel house tragedy", season: "Season 4",
+    p: "A family moves into a big house on the edge of Hawkins, and it ends in horror. Victor Creel gets blamed and locked away.",
+    f: ["Everyone in town said the house was cursed after that night.",
+        "The real cause was Victor's own son, Henry, who had powers nobody knew about.",
+        "Nancy and Robin get the true story out of Victor in Pennhurst asylum, 27 years later."] },
+  { e: "🧪", when: "1979", t: "The massacre at Hawkins Lab", season: "Season 4",
+    p: "Henry Creel, now test subject One, turns on the lab and the other children. A little girl called Eleven fights back and sends him through a gate.",
+    f: ["That fight is what created Vecna and opened the first crack between the worlds.",
+        "Eleven doesn't remember it properly until season 4.",
+        "Dr. Brenner covered the whole thing up."] },
+  { e: "🚲", when: "November 6, 1983", t: "Will Byers disappears", season: "Season 1",
+    p: "Will rides his bike home from Mike's house, sees something in the dark on Mirkwood, and vanishes into the Upside Down.",
+    f: ["The same night, Eleven escapes from Hawkins Lab and ends up at Benny's diner.",
+        "Joyce starts getting phone calls with breathing on the line, then the Christmas lights start moving.",
+        "The town drags the quarry and finds a fake body."] },
+  { e: "💡", when: "Later in November 1983", t: "Will comes home", season: "Season 1",
+    p: "Joyce and Hopper go into the Upside Down and carry Will out, and Eleven faces the Demogorgon at the school.",
+    f: ["Joyce talks to Will through an alphabet painted on the wall.",
+        "Eleven blasts the Demogorgon apart and vanishes with it.",
+        "At Christmas dinner, Will coughs up a slug from the other side."] },
+  { e: "🐕", when: "October to December 1984", t: "The Mind Flayer and the Demodogs", season: "Season 2",
+    p: "Will keeps seeing visions, and a giant shadow in the sky starts using him. Dustin raises a 'pet' that turns out to be a baby Demogorgon.",
+    f: ["Eleven has been hiding in Hopper's cabin the whole time.",
+        "Bob Newby saves everyone at the lab and doesn't make it out.",
+        "Eleven closes the Mothergate, and the Demodogs drop all at once.",
+        "It ends at the Snow Ball in December 1984."] },
+  { e: "🛍️", when: "Summer 1985", t: "Starcourt Mall and the Russians", season: "Season 3",
+    p: "A shiny new mall opens, and underneath it Russian scientists are trying to blast the gate back open.",
+    f: ["Steve and Robin work at Scoops Ahoy and accidentally crack a secret code.",
+        "The Mind Flayer builds itself a body out of melted rats and people.",
+        "The mall burns down on July 4, 1985, and Hopper disappears in the explosion.",
+        "Billy saves Eleven at the very end."] },
+  { e: "🕰️", when: "March 1986", t: "Vecna wakes up", season: "Season 4",
+    p: "Teenagers in Hawkins start dying in a terrible way, with a grandfather clock chiming before each one. Eddie Munson gets blamed for it.",
+    f: ["Max escapes Vecna the first time because her friends play Running Up That Hill.",
+        "Hopper turns out to be alive in a Russian prison.",
+        "Eddie plays Master of Puppets in the Upside Down to pull the bats away.",
+        "Four gates tear open and a crack splits right through the middle of Hawkins."] },
+  { e: "🌀", when: "Fall 1987", t: "The last adventure", season: "Season 5",
+    p: "Four years to the week after Will vanished, everyone is back in Hawkins for the end of the story.",
+    f: ["The season came out in three parts across the end of 2025.",
+        "The finale is called The Rightside Up and came out on New Year's Eve.",
+        "It's the last season, so this is where Hawkins' story finishes."] },
+];
+
+document.getElementById("line").innerHTML = EVENTS.map((v, i) => `
+  <article class="ev" data-emoji="${v.e}" data-i="${i}">
+    <div class="when">${v.when}</div>
+    <h3>${v.t}</h3>
+    <p>${v.p}</p>
+    <div class="more"><ul>${v.f.map(f => `<li>${f}</li>`).join("")}</ul><span class="tag">${v.season}</span></div>
+    <p class="hint">Tap for more ▾</p>
+  </article>`).join("");
+
+document.getElementById("line").addEventListener("click", e => {
+  const ev = e.target.closest(".ev");
+  if (!ev) return;
+  ev.classList.toggle("open");
+  beep(ev.classList.contains("open") ? 660 : 420, .1, "triangle");
+});
+
+/* how long ago Will disappeared, counted from today */
+(function counter() {
+  const start = new Date("1983-11-06T00:00:00");
+  const years = ((Date.now() - start) / (365.25 * 24 * 3600 * 1000));
+  document.getElementById("counter").innerHTML =
+    `🚲 Will Byers disappeared <b>${years.toFixed(1)} years</b> ago today, on November 6, 1983.`;
+})();
+</script>
+<script src="/secret.js"></script>
+</body>
+</html>
