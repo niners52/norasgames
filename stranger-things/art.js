@@ -51,309 +51,303 @@ const defs = id => `
     <filter id="${id}soft"><feGaussianBlur stdDeviation="2.4"/></filter>
   </defs>`;
 
-/* ---------- 1. the Demogorgon in the foggy woods ---------- */
-ART.demogorgon = () => `
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
-  ${defs("dg")}
-  <rect width="400" height="500" fill="url(#dgsky)"/>
-  <circle cx="312" cy="78" r="34" fill="#f3e9d8" opacity=".22" filter="url(#dgblur)"/>
-  <circle cx="312" cy="78" r="21" fill="#f6efe0" opacity=".5"/>
-  ${pines(420, "#0d0a14", 9, 1.5, -10)}
-  ${pines(440, "#070510", 7, 2.1, 20)}
-  <ellipse cx="200" cy="300" rx="150" ry="170" fill="url(#dgglow)"/>
-  <!-- the creature -->
-  <g>
-    <!-- legs -->
-    <path d="M186 452 C182 402 176 372 172 336 L206 330 C206 372 206 410 208 452 Z" fill="url(#dgskin)"/>
-    <path d="M232 452 C232 404 230 370 226 336 L198 330 C198 372 198 412 196 452 Z" fill="#6b5f66"/>
-    <path d="M168 452 l34 0 -6 14 -24 0 Z" fill="#4a4148"/>
-    <path d="M198 452 l34 0 -4 14 -26 0 Z" fill="#4a4148"/>
-    <!-- torso -->
-    <path d="M200 196 C236 206 252 250 248 300 C246 324 236 338 200 344 C164 338 154 324 152 300 C148 250 164 206 200 196 Z" fill="url(#dgskin)"/>
-    <g stroke="#6a5c62" stroke-width="2" opacity=".65" fill="none">
-      <path d="M176 240 C186 250 214 250 224 240"/><path d="M172 266 C186 278 214 278 228 266"/>
-      <path d="M174 292 C188 304 212 304 226 292"/><path d="M178 316 C190 326 210 326 222 316"/>
+/* =====================================================================
+   THE MONSTERS
+   Drawn as dark creatures lit from behind, the way they look when a
+   flashlight catches them in the fog. Shadow first, glowing edges after.
+   ===================================================================== */
+const SHADOW = "#07050b";
+const scene = (id, c1, c2, c3) => `
+  <defs>
+    <linearGradient id="${id}sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${c1}"/><stop offset=".55" stop-color="${c2}"/><stop offset="1" stop-color="${c3}"/>
+    </linearGradient>
+    <radialGradient id="${id}back" cx=".5" cy=".46" r=".52">
+      <stop offset="0" stop-color="#ffb08a" stop-opacity=".85"/><stop offset=".35" stop-color="#ff4a3a" stop-opacity=".45"/>
+      <stop offset="1" stop-color="#ff2020" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="${id}mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd9c8" stop-opacity="0"/><stop offset="1" stop-color="#ffb9a0" stop-opacity=".30"/>
+    </linearGradient>
+    <linearGradient id="${id}rim" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a6a"/><stop offset=".5" stop-color="#ffd9c0"/><stop offset="1" stop-color="#ff5a4a"/>
+    </linearGradient>
+    <filter id="${id}blur"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="${id}soft"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="${id}glow"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="400" height="500" fill="url(#${id}sky)"/>`;
+const mist = id => `<rect y="250" width="400" height="250" fill="url(#${id}mist)"/>
+  <ellipse cx="200" cy="470" rx="230" ry="60" fill="#ffd0c0" opacity=".10" filter="url(#${id}blur)"/>`;
+const grain = n => Array.from({ length: n }, (_, i) =>
+  `<circle cx="${(i * 149) % 400}" cy="${(i * 97) % 500}" r="${.7 + (i % 3) * .5}" fill="#ffe8e0" opacity="${.12 + (i % 5) * .08}"/>`).join("");
+
+/* the flower head: petals that open out like a blossom, teeth inside */
+const petalHead = (id, R, n = 7, spread = 1.15) => {
+  let s = `<ellipse rx="${R * .5}" ry="${R * .44}" fill="${SHADOW}"/>`;
+  for (let i = 0; i < n; i++) {
+    const mid = (n - 1) / 2;
+    const a = -Math.PI / 2 + (i - mid) * (Math.PI * spread / n);
+    const len = R * (1 - Math.abs(i - mid) / n * .3);
+    const x = Math.cos(a) * len, y = Math.sin(a) * len;
+    const nx = -Math.sin(a), ny = Math.cos(a), w = R * .3;
+    s += `<path d="M0 0 C${x * .3 + nx * w} ${y * .3 + ny * w} ${x * .78 + nx * w * .7} ${y * .78 + ny * w * .7} ${x} ${y}
+            C${x * .78 - nx * w * .7} ${y * .78 - ny * w * .7} ${x * .3 - nx * w} ${y * .3 - ny * w} 0 0 Z"
+          fill="${SHADOW}" stroke="url(#${id}rim)" stroke-width="1.7" stroke-opacity=".65"/>`;
+  }
+  s += `<g filter="url(#${id}glow)"><ellipse rx="${R * .36}" ry="${R * .3}" fill="#4a0b12"/>
+        <ellipse rx="${R * .23}" ry="${R * .18}" fill="#8a1118"/></g>`;
+  const t = Math.round(n * 2.6);
+  for (let i = 0; i < t; i++) {
+    const a = (i / t) * Math.PI * 2, r = R * .34;
+    s += `<path d="M${Math.cos(a) * r} ${Math.sin(a) * r * .84} l${Math.cos(a) * R * .15} ${Math.sin(a) * R * .14}
+            l${-Math.sin(a) * R * .055} ${Math.cos(a) * R * .055} Z" fill="#ffd9c8" opacity=".92"/>`;
+  }
+  return s + `<ellipse rx="${R * .12}" ry="${R * .1}" fill="#14040a"/>`;
+};
+
+/* ---------- 1. the Demogorgon ---------- */
+ART.demogorgon = () => {
+  const id = "dg";
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
+    ${scene(id, "#2b1016", "#180a14", "#0a040c")}
+    <ellipse cx="200" cy="250" rx="190" ry="210" fill="url(#${id}back)"/>
+    ${pines(470, "#0d060f", 7, 2.3, 10)}
+    ${pines(500, "#07040a", 5, 3, 60)}
+    <!-- glow along the ground so the legs show as shadow against it -->
+    <ellipse cx="200" cy="440" rx="250" ry="120" fill="url(#${id}back)" opacity=".7"/>
+    <ellipse cx="200" cy="470" rx="190" ry="60" fill="#ffb9a0" opacity=".18" filter="url(#${id}blur)"/>
+    <g stroke="${SHADOW}" fill="none" stroke-linecap="round">
+      <!-- legs: thick thighs, bent backwards like an animal's -->
+      <path d="M182 310 C166 352 160 398 170 444" stroke-width="40"/>
+      <path d="M220 310 C238 352 244 398 234 444" stroke-width="36"/>
+      <!-- arms: way too long, nearly to the ground -->
+      <path d="M166 212 C122 250 100 312 96 372" stroke-width="27"/>
+      <path d="M234 212 C278 250 300 312 304 372" stroke-width="25"/>
     </g>
-    <!-- arms -->
-    <path d="M160 214 C130 236 112 278 104 322 L122 330 C134 288 150 254 172 232 Z" fill="#8d8187"/>
-    <path d="M240 214 C270 236 288 278 296 322 L278 330 C266 288 250 254 228 232 Z" fill="#a89ba1"/>
-    <g stroke="#cfc3c8" stroke-width="4" stroke-linecap="round">
-      <path d="M110 326 l-16 26"/><path d="M118 330 l-6 30"/><path d="M126 330 l6 28"/>
-      <path d="M290 326 l16 26"/><path d="M282 330 l6 30"/><path d="M274 330 l-6 28"/>
+    <g fill="${SHADOW}">
+      <!-- feet -->
+      <path d="M146 440 l48 0 8 22 -64 0 Z"/><path d="M206 440 l48 0 6 22 -62 0 Z"/>
+      <!-- torso: broad chest, thin waist -->
+      <path d="M200 150 C248 160 266 206 260 254 C254 300 232 324 200 330 C168 324 146 300 140 254 C134 206 152 160 200 150 Z"/>
+      <ellipse cx="200" cy="196" rx="66" ry="24"/>
     </g>
-    <!-- neck + closed head base -->
-    <path d="M186 180 h28 v26 h-28 Z" fill="#9b8d92"/>
-    <!-- the flower head, open -->
-    <g transform="translate(200 150)">
-      <ellipse rx="34" ry="30" fill="#2a1016"/>
-      <g fill="url(#dgskin)" stroke="#6b5f66" stroke-width="1.5">
-        <path d="M0 -6 C26 -26 58 -40 78 -24 C62 -4 30 10 0 8 Z"/>
-        <path d="M0 -6 C-26 -26 -58 -40 -78 -24 C-62 -4 -30 10 0 8 Z"/>
-        <path d="M0 -6 C14 -40 10 -74 -12 -82 C-22 -56 -18 -24 -4 -6 Z"/>
-        <path d="M0 -6 C34 -30 56 -62 44 -82 C22 -70 6 -36 2 -8 Z"/>
-        <path d="M0 -6 C-34 -30 -56 -62 -44 -82 C-22 -70 -6 -36 -2 -8 Z"/>
-        <path d="M0 2 C22 20 54 34 70 22 C54 4 26 -4 2 0 Z"/>
-        <path d="M0 2 C-22 20 -54 34 -70 22 C-54 4 -26 -4 -2 0 Z"/>
-      </g>
-      <g fill="#fff6f6">
-        ${Array.from({ length: 14 }, (_, i) => {
-          const a = (i / 14) * Math.PI * 2, r = 26;
-          return `<path d="M${Math.cos(a) * r} ${Math.sin(a) * r * .86}
-            l${Math.cos(a) * 9} ${Math.sin(a) * 8} l${-Math.sin(a) * 4} ${Math.cos(a) * 4} Z" opacity=".9"/>`;
-        }).join("")}
-      </g>
-      <ellipse rx="17" ry="13" fill="#4a0d14"/>
-      <ellipse rx="8" ry="6" fill="#19050a"/>
+    <!-- claws -->
+    <g stroke="url(#${id}rim)" stroke-width="4" stroke-linecap="round" opacity=".85">
+      <path d="M92 374 l-20 36"/><path d="M98 380 l-4 40"/><path d="M108 376 l14 36"/>
+      <path d="M308 374 l20 36"/><path d="M302 380 l4 40"/><path d="M292 376 l-14 36"/>
     </g>
-  </g>
-  <rect y="330" width="400" height="170" fill="url(#dgfog)"/>
-  <ellipse cx="200" cy="470" rx="180" ry="40" fill="#d8e0ff" opacity=".08" filter="url(#dgblur)"/>
-  ${spores(26, 1)}
-</svg>`;
+    <!-- rim light where the glow behind catches the body -->
+    <g stroke="url(#${id}rim)" stroke-width="3" fill="none" opacity=".7" filter="url(#${id}glow)">
+      <path d="M200 150 C152 162 134 206 140 254 C146 300 168 324 198 330"/>
+      <path d="M166 212 C124 252 102 312 98 368"/>
+      <path d="M182 310 C166 352 160 398 170 440"/>
+    </g>
+    <g stroke="url(#${id}rim)" stroke-width="2" fill="none" opacity=".3">
+      <path d="M166 214 C184 228 216 228 234 214"/><path d="M160 248 C182 264 218 264 240 248"/>
+      <path d="M166 282 C184 296 216 296 234 282"/>
+    </g>
+    <!-- the head, opened into a flower -->
+    <g transform="translate(200 136)">${petalHead(id, 66, 7)}</g>
+    ${mist(id)}${grain(26)}
+    <rect width="400" height="500" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="16"/>
+  </svg>`;
+};
 
 /* ---------- 2. Demodog ---------- */
-ART.demodog = () => `
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
-  ${defs("dd")}
-  <rect width="400" height="500" fill="url(#ddsky)"/>
-  <rect y="300" width="400" height="200" fill="#120a16"/>
-  ${pines(330, "#0a0712", 8, 1.2, 0)}
-  <ellipse cx="200" cy="330" rx="170" ry="120" fill="url(#ddglow)"/>
-  <!-- tunnel vines -->
-  ${vine(0, 420, 160, 330, 9, "#2b1a20")}
-  ${vine(400, 440, 250, 340, 7, "#2b1a20")}
-  <g transform="translate(200 350)">
-    <!-- tail -->
-    <path d="M112 -10 C150 -30 170 -70 150 -96 C140 -70 122 -40 100 -24 Z" fill="#6b5f66"/>
-    <!-- back legs -->
-    <path d="M78 10 C92 40 92 70 80 92 l-22 0 C66 68 66 40 58 14 Z" fill="#6b5f66"/>
-    <path d="M-70 14 C-60 44 -60 70 -70 92 l-22 0 C-80 66 -82 40 -90 18 Z" fill="#6b5f66"/>
-    <!-- body -->
-    <path d="M-104 6 C-96 -46 -40 -70 10 -66 C70 -62 112 -40 116 0 C118 36 70 56 6 56 C-56 56 -106 44 -104 6 Z" fill="url(#ddskin)"/>
-    <g stroke="#6a5c62" stroke-width="2.4" fill="none" opacity=".6">
-      <path d="M-70 -34 C-56 -12 -56 20 -70 42"/><path d="M-30 -48 C-16 -16 -16 24 -30 52"/>
-      <path d="M12 -50 C26 -18 26 24 12 54"/><path d="M54 -44 C66 -16 66 20 54 46"/>
+ART.demodog = () => {
+  const id = "dd";
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
+    ${scene(id, "#241019", "#140a14", "#08040a")}
+    <ellipse cx="230" cy="300" rx="200" ry="170" fill="url(#${id}back)"/>
+    <!-- tunnel of vines -->
+    <g stroke="#1a0c14" stroke-width="16" fill="none" stroke-linecap="round">
+      <path d="M-10 60 C80 150 70 300 20 470"/><path d="M410 40 C320 140 330 300 380 470"/>
+      <path d="M-10 200 C60 240 90 260 120 340"/><path d="M410 180 C340 230 310 260 280 330"/>
     </g>
-    <!-- front legs -->
-    <path d="M-86 16 C-96 48 -98 74 -88 96 l24 0 C-72 70 -70 44 -62 20 Z" fill="#8d8187"/>
-    <path d="M76 20 C88 50 90 74 80 96 l-24 0 C64 72 62 46 54 24 Z" fill="#8d8187"/>
-    <g fill="#cfc3c8">
-      <path d="M-92 96 l28 0 4 10 -36 0 Z"/><path d="M56 96 l28 0 4 10 -36 0 Z"/>
-    </g>
-    <!-- head: open petals -->
-    <g transform="translate(-116 -26) rotate(-14)">
-      <ellipse rx="26" ry="22" fill="#2a1016"/>
-      <g fill="url(#ddskin)" stroke="#6b5f66" stroke-width="1.4">
-        <path d="M0 -4 C-20 -22 -44 -34 -58 -20 C-44 -2 -20 8 0 6 Z"/>
-        <path d="M0 -4 C-10 -32 -6 -56 10 -60 C18 -38 14 -16 4 -4 Z"/>
-        <path d="M0 -4 C-28 -24 -42 -48 -32 -62 C-16 -50 -4 -24 -2 -6 Z"/>
-        <path d="M0 4 C-18 18 -42 28 -52 16 C-38 2 -18 -4 -2 0 Z"/>
-        <path d="M0 4 C-8 28 -4 48 10 52 C16 32 12 14 4 4 Z"/>
+    <!-- glow behind the legs -->
+    <ellipse cx="210" cy="430" rx="230" ry="110" fill="url(#${id}back)" opacity=".8"/>
+    <ellipse cx="210" cy="460" rx="180" ry="56" fill="#ffb9a0" opacity=".2" filter="url(#${id}blur)"/>
+    <g transform="translate(200 360)">
+      <!-- tail -->
+      <path d="M120 -16 C166 -40 186 -92 160 -124 C152 -86 130 -48 104 -28 Z" fill="${SHADOW}"/>
+      <!-- far legs, a touch lighter so they read behind the body -->
+      <path d="M86 6 C102 52 102 92 88 124 l-28 0 C76 90 74 52 62 10 Z" fill="#1a0d14"/>
+      <path d="M-80 10 C-66 56 -66 92 -80 124 l-28 0 C-92 88 -94 52 -104 14 Z" fill="#1a0d14"/>
+      <g fill="#1a0d14"><path d="M58 124 l30 0 4 12 -38 0 Z"/><path d="M-110 124 l30 0 4 12 -38 0 Z"/></g>
+      <!-- body -->
+      <path d="M-112 2 C-104 -54 -44 -82 10 -78 C76 -74 122 -48 126 -2 C128 40 76 62 6 62 C-62 62 -114 48 -112 2 Z" fill="${SHADOW}"/>
+      <g stroke="url(#${id}rim)" stroke-width="2.2" fill="none" opacity=".45">
+        <path d="M-74 -40 C-58 -14 -58 24 -74 48"/><path d="M-30 -56 C-14 -20 -14 28 -30 58"/>
+        <path d="M14 -58 C30 -22 30 28 14 60"/><path d="M58 -50 C72 -18 72 24 58 52"/>
       </g>
-      <g fill="#fff6f6">
-        ${Array.from({ length: 10 }, (_, i) => {
-          const a = Math.PI * .45 + (i / 10) * Math.PI * 1.6, r = 20;
-          return `<path d="M${Math.cos(a) * r} ${Math.sin(a) * r * .86} l${Math.cos(a) * 7} ${Math.sin(a) * 7} l${-Math.sin(a) * 3} ${Math.cos(a) * 3} Z"/>`;
-        }).join("")}
+      <!-- near legs -->
+      <path d="M-96 14 C-110 58 -112 96 -98 126 l30 0 C-78 92 -76 54 -68 20 Z" fill="${SHADOW}"/>
+      <path d="M88 18 C104 60 106 96 92 126 l-30 0 C74 94 72 56 62 24 Z" fill="${SHADOW}"/>
+      <g fill="${SHADOW}"><path d="M-102 126 l34 0 4 14 -42 0 Z"/><path d="M62 126 l34 0 4 14 -42 0 Z"/></g>
+      <g stroke="url(#${id}rim)" stroke-width="2.4" fill="none" opacity=".55" filter="url(#${id}glow)">
+        <path d="M-96 14 C-110 58 -112 96 -98 124"/><path d="M88 18 C104 60 106 96 92 124"/>
       </g>
-      <ellipse rx="12" ry="9" fill="#4a0d14"/>
+      <!-- rim light along the back -->
+      <path d="M-112 2 C-104 -54 -44 -82 10 -78 C76 -74 122 -48 126 -2"
+            fill="none" stroke="url(#${id}rim)" stroke-width="3" opacity=".8" filter="url(#${id}glow)"/>
+      <!-- head -->
+      <g transform="translate(-132 -34) rotate(-108)">${petalHead(id, 62, 6, 1.1)}</g>
     </g>
-  </g>
-  <rect y="330" width="400" height="170" fill="url(#ddfog)"/>
-  ${spores(22, 3)}
-</svg>`;
+    ${mist(id)}${grain(22)}
+    <rect width="400" height="500" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="16"/>
+  </svg>`;
+};
 
-/* ---------- 3. the Mind Flayer over Hawkins ---------- */
-ART.mindflayer = () => `
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
-  ${defs("mf")}
-  <defs>
-    <linearGradient id="mfred" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5c0f1c"/><stop offset=".5" stop-color="#2a0a16"/><stop offset="1" stop-color="#11040c"/>
-    </linearGradient>
-    <radialGradient id="mfstorm" cx=".5" cy=".3" r=".6">
-      <stop offset="0" stop-color="#ff5a3c" stop-opacity=".5"/><stop offset="1" stop-color="#ff2020" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="400" height="500" fill="url(#mfred)"/>
-  <ellipse cx="200" cy="150" rx="210" ry="150" fill="url(#mfstorm)"/>
-  <!-- swirling clouds -->
-  <g stroke="#ff8a6a" stroke-width="2" fill="none" opacity=".25">
-    <path d="M-20 90 C60 50 140 120 220 70 C280 34 340 80 420 50"/>
-    <path d="M-20 130 C60 94 150 160 230 112 C290 78 350 118 420 92"/>
-    <path d="M-20 54 C70 20 130 70 210 34 C280 2 350 44 420 18"/>
-  </g>
-  <!-- lightning -->
-  <path d="M120 40 l14 48 -20 6 26 58 -8 -44 20 -6 Z" fill="#ffd0a0" opacity=".8"/>
-  <!-- the shadow monster -->
-  <g fill="#120208" opacity=".95">
-    <path d="M200 150 C236 150 258 178 254 214 C250 246 228 262 200 262 C172 262 150 246 146 214 C142 178 164 150 200 150 Z"/>
-    <path d="M196 152 C190 120 176 96 150 80 C170 112 178 132 182 156 Z"/>
-    <path d="M206 152 C214 118 232 94 258 80 C236 110 226 132 222 156 Z"/>
-    <!-- long legs -->
-    <path d="M160 220 C110 250 70 300 44 370 l16 10 C92 318 128 272 172 244 Z"/>
-    <path d="M176 236 C140 282 118 330 104 400 l18 6 C140 344 162 300 190 262 Z"/>
-    <path d="M240 220 C290 250 330 300 356 370 l-16 10 C308 318 272 272 228 244 Z"/>
-    <path d="M224 236 C260 282 282 330 296 400 l-18 6 C260 344 238 300 210 262 Z"/>
-    <path d="M200 262 C196 320 186 370 170 430 l20 6 C206 378 214 322 216 266 Z"/>
-    <path d="M200 262 C212 318 228 364 252 420 l-18 10 C206 372 194 318 190 266 Z"/>
-  </g>
-  <!-- smoky edges -->
-  <g fill="#1b0410" opacity=".55" filter="url(#mfsoft)">
-    <ellipse cx="200" cy="206" rx="74" ry="56"/>
-    <ellipse cx="150" cy="300" rx="20" ry="60" transform="rotate(22 150 300)"/>
-    <ellipse cx="256" cy="300" rx="20" ry="60" transform="rotate(-22 256 300)"/>
-  </g>
-  <!-- Hawkins below -->
-  <rect y="420" width="400" height="80" fill="#0a0410"/>
-  <g fill="#060208">
-    <path d="M0 430 h60 v70 h-60 Z"/>
-    <path d="M70 440 l30 -24 30 24 v60 h-60 Z"/>
-    <path d="M140 452 h54 v48 h-54 Z"/>
-    <path d="M204 430 l22 -26 22 26 v70 h-44 Z"/>
-    <path d="M258 446 h40 v54 h-40 Z"/>
-    <path d="M306 420 h16 v80 h-16 Z M300 436 h28 v10 h-28 Z"/>
-    <path d="M336 448 h64 v52 h-64 Z"/>
-  </g>
-  <g fill="#ffcf6a" opacity=".85">
-    <rect x="12" y="448" width="9" height="11"/><rect x="34" y="448" width="9" height="11"/>
-    <rect x="82" y="460" width="9" height="11"/><rect x="156" y="466" width="9" height="11"/>
-    <rect x="268" y="462" width="9" height="11"/><rect x="352" y="464" width="9" height="11"/>
-  </g>
-  ${spores(18, 5)}
-</svg>`;
+/* ---------- 3. the Mind Flayer ---------- */
+ART.mindflayer = () => {
+  const id = "mf";
+  const leg = (sx, sy, cx1, cy1, cx2, cy2, ex, ey, w) =>
+    `<path d="M${sx} ${sy} C${cx1} ${cy1} ${cx2} ${cy2} ${ex} ${ey}" fill="none" stroke="${SHADOW}" stroke-width="${w}" stroke-linecap="round"/>
+     <path d="M${sx} ${sy} C${cx1} ${cy1} ${cx2} ${cy2} ${ex} ${ey}" fill="none" stroke="url(#${id}rim)" stroke-width="${w * .22}" opacity=".5"/>`;
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
+    ${scene(id, "#4a0f1a", "#250a14", "#0d040a")}
+    <ellipse cx="200" cy="170" rx="240" ry="190" fill="url(#${id}back)" opacity=".9"/>
+    <!-- storm clouds -->
+    <g stroke="#ff8a6a" stroke-width="2" fill="none" opacity=".2">
+      <path d="M-20 70 C70 28 140 110 230 56 C290 20 350 70 420 36"/>
+      <path d="M-20 118 C70 80 160 150 240 98 C300 62 360 106 420 78"/>
+      <path d="M-20 34 C80 2 140 54 220 18 C290 -12 360 28 420 2"/>
+    </g>
+    <path d="M118 28 l16 54 -24 8 30 66 -10 -50 24 -8 Z" fill="#ffe0b8" opacity=".75" filter="url(#${id}soft)"/>
+    <!-- the shadow itself -->
+    <g>
+      ${leg(176, 212, 120, 250, 80, 330, 34, 430, 20)}
+      ${leg(186, 226, 140, 300, 120, 360, 96, 470, 16)}
+      ${leg(224, 212, 280, 250, 320, 330, 366, 430, 20)}
+      ${leg(214, 226, 260, 300, 280, 360, 304, 470, 16)}
+      ${leg(200, 238, 196, 320, 186, 380, 170, 480, 14)}
+      ${leg(202, 238, 214, 320, 226, 380, 240, 480, 12)}
+      <path d="M200 120 C246 120 272 158 268 204 C264 246 236 268 200 268 C164 268 136 246 132 204 C128 158 154 120 200 120 Z" fill="${SHADOW}"/>
+      <path d="M196 122 C188 86 170 58 138 36 C166 76 178 100 182 128 Z" fill="${SHADOW}"/>
+      <path d="M206 122 C216 84 238 56 268 36 C242 74 228 100 224 128 Z" fill="${SHADOW}"/>
+      <!-- smoky edge -->
+      <g fill="#1a0610" opacity=".6" filter="url(#${id}soft)">
+        <ellipse cx="200" cy="196" rx="86" ry="64"/><ellipse cx="150" cy="150" rx="26" ry="36" transform="rotate(24 150 150)"/>
+        <ellipse cx="252" cy="150" rx="26" ry="36" transform="rotate(-24 252 150)"/>
+      </g>
+      <path d="M200 120 C154 120 128 158 132 204" fill="none" stroke="url(#${id}rim)" stroke-width="3" opacity=".55" filter="url(#${id}glow)"/>
+    </g>
+    <!-- Hawkins underneath -->
+    <rect y="436" width="400" height="64" fill="#07030a"/>
+    <g fill="#050208">
+      <path d="M0 446 h66 v54 h-66 Z"/><path d="M76 456 l32 -26 32 26 v44 h-64 Z"/>
+      <path d="M150 468 h58 v32 h-58 Z"/><path d="M216 444 l24 -28 24 28 v56 h-48 Z"/>
+      <path d="M272 460 h44 v40 h-44 Z"/><path d="M322 430 h16 v70 h-16 Z M316 446 h28 v10 h-28 Z"/>
+      <path d="M350 462 h50 v38 h-50 Z"/>
+    </g>
+    <g fill="#ffc46a" opacity=".9">
+      <rect x="14" y="462" width="9" height="11"/><rect x="38" y="462" width="9" height="11"/>
+      <rect x="90" y="470" width="9" height="11"/><rect x="166" y="478" width="9" height="11"/>
+      <rect x="284" y="472" width="9" height="11"/><rect x="368" y="476" width="9" height="11"/>
+    </g>
+    ${grain(20)}
+    <rect width="400" height="500" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="16"/>
+  </svg>`;
+};
 
 /* ---------- 4. Demobats ---------- */
-ART.demobat = () => `
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
-  ${defs("db")}
-  <defs>
-    <linearGradient id="dbsky2" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#3a0e1a"/><stop offset=".6" stop-color="#1a0712"/><stop offset="1" stop-color="#0a0410"/>
-    </linearGradient>
-  </defs>
-  <rect width="400" height="500" fill="url(#dbsky2)"/>
-  <ellipse cx="200" cy="240" rx="190" ry="150" fill="url(#dbglow)"/>
-  <!-- far bats -->
-  <g fill="#1a0a12">
-    ${Array.from({ length: 9 }, (_, i) => {
-      const x = 30 + (i * 83) % 360, y = 60 + (i * 57) % 300, s = .25 + (i % 3) * .1;
-      return `<g transform="translate(${x} ${y}) scale(${s})">
-        <path d="M0 0 C-40 -26 -80 -20 -96 8 C-70 2 -44 10 -12 22 Z"/>
-        <path d="M0 0 C40 -26 80 -20 96 8 C70 2 44 10 12 22 Z"/>
-        <ellipse rx="16" ry="22" fill="#241018"/></g>`;
-    }).join("")}
-  </g>
-  <!-- vines framing -->
-  ${vine(-10, 0, 120, 200, 10, "#2a121a")}
-  ${vine(410, 20, 280, 220, 12, "#2a121a")}
-  <!-- the big bat -->
-  <g transform="translate(200 250)">
-    <path d="M-10 30 C-40 90 -30 150 10 190 C-4 140 -6 90 6 44 Z" fill="#6b4048"/>
-    <g fill="#50242e" stroke="#2a1016" stroke-width="2">
-      <path d="M-14 -10 C-80 -70 -150 -66 -178 -8 C-140 -22 -108 -8 -70 26 C-100 10 -126 14 -148 34 C-112 36 -70 52 -24 30 Z"/>
-      <path d="M14 -10 C80 -70 150 -66 178 -8 C140 -22 108 -8 70 26 C100 10 126 14 148 34 C112 36 70 52 24 30 Z"/>
+ART.demobat = () => {
+  const id = "db";
+  const bat = (x, y, s, o) => `<g transform="translate(${x} ${y}) scale(${s})" opacity="${o}">
+      <path d="M0 0 C-36 -30 -84 -30 -104 2 C-74 -6 -44 6 -14 24 Z" fill="${SHADOW}"/>
+      <path d="M0 0 C36 -30 84 -30 104 2 C74 -6 44 6 14 24 Z" fill="${SHADOW}"/>
+      <ellipse rx="15" ry="22" fill="${SHADOW}"/>
+      <path d="M0 22 C10 54 2 86 -14 104" fill="none" stroke="${SHADOW}" stroke-width="7" stroke-linecap="round"/>
+    </g>`;
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
+    ${scene(id, "#5a1420", "#2a0b16", "#0c040a")}
+    <ellipse cx="200" cy="230" rx="210" ry="190" fill="url(#${id}back)"/>
+    <g stroke="#2a0e16" stroke-width="18" fill="none" stroke-linecap="round">
+      <path d="M-10 0 C90 90 70 250 30 500"/><path d="M410 -10 C310 80 340 240 380 500"/>
     </g>
-    <g stroke="#2a1016" stroke-width="2" fill="none" opacity=".8">
-      <path d="M-20 -4 L-150 -20 M-20 4 L-120 26 M-20 12 L-86 40"/>
-      <path d="M20 -4 L150 -20 M20 4 L120 26 M20 12 L86 40"/>
-    </g>
-    <ellipse rx="30" ry="42" fill="url(#dbskin)"/>
-    <path d="M-16 -34 C-10 -62 10 -62 16 -34 C8 -46 -8 -46 -16 -34 Z" fill="#8d8187"/>
-    <g transform="translate(0 -22)">
-      <ellipse rx="18" ry="15" fill="#2a1016"/>
-      <g fill="url(#dbskin)" stroke="#5d5258" stroke-width="1.2">
-        <path d="M0 -2 C-18 -16 -34 -24 -42 -12 C-30 0 -14 6 0 5 Z"/>
-        <path d="M0 -2 C18 -16 34 -24 42 -12 C30 0 14 6 0 5 Z"/>
-        <path d="M0 -2 C-8 -26 -4 -42 8 -44 C12 -28 8 -12 2 -3 Z"/>
-        <path d="M0 -2 C8 -26 4 -42 -8 -44 C-12 -28 -8 -12 -2 -3 Z"/>
+    ${[[70, 90, .3, .5], [330, 70, .26, .45], [120, 170, .22, .4], [300, 190, .2, .38], [60, 300, .18, .3], [350, 320, .16, .3], [200, 70, .2, .35]]
+      .map(([x, y, s, o]) => bat(x, y, s, o)).join("")}
+    <!-- the big one -->
+    <g transform="translate(200 270)">
+      <path d="M-18 24 C-44 92 -22 150 20 186 C-2 140 -10 86 -2 40 Z" fill="${SHADOW}"/>
+      <path d="M-16 -12 C-86 -84 -162 -74 -190 -8 C-146 -28 -108 -8 -66 30 C-100 10 -132 16 -156 42 C-112 44 -62 60 -20 34 Z" fill="${SHADOW}"/>
+      <path d="M16 -12 C86 -84 162 -74 190 -8 C146 -28 108 -8 66 30 C100 10 132 16 156 42 C112 44 62 60 20 34 Z" fill="#0b0510"/>
+      <g stroke="url(#${id}rim)" stroke-width="2" fill="none" opacity=".55">
+        <path d="M-20 -6 L-160 -22 M-20 4 L-124 30 M-20 14 L-86 46"/>
+        <path d="M20 -6 L160 -22 M20 4 L124 30 M20 14 L86 46"/>
       </g>
-      <g fill="#fff6f6">
-        ${Array.from({ length: 9 }, (_, i) => {
-          const a = (i / 9) * Math.PI * 2, r = 14;
-          return `<path d="M${Math.cos(a) * r} ${Math.sin(a) * r * .85} l${Math.cos(a) * 6} ${Math.sin(a) * 6} l${-Math.sin(a) * 2.6} ${Math.cos(a) * 2.6} Z"/>`;
-        }).join("")}
-      </g>
-      <ellipse rx="8" ry="6" fill="#4a0d14"/>
+      <path d="M-16 -12 C-86 -84 -162 -74 -190 -8" fill="none" stroke="url(#${id}rim)" stroke-width="3" opacity=".75" filter="url(#${id}glow)"/>
+      <ellipse rx="34" ry="46" fill="${SHADOW}"/>
+      <g transform="translate(0 -30)">${petalHead(id, 44, 5, 1.05)}</g>
     </g>
-  </g>
-  ${spores(24, 7)}
-</svg>`;
+    ${mist(id)}${grain(24)}
+    <rect width="400" height="500" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="16"/>
+  </svg>`;
+};
 
 /* ---------- 5. Vecna ---------- */
-ART.vecna = () => `
-<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
-  ${defs("vc")}
-  <defs>
-    <linearGradient id="vcbody" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#9a6b55"/><stop offset=".5" stop-color="#6b4436"/><stop offset="1" stop-color="#36211c"/>
-    </linearGradient>
-    <radialGradient id="vcclock" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#ffb648" stop-opacity=".95"/><stop offset=".7" stop-color="#ff5a1e" stop-opacity=".35"/><stop offset="1" stop-color="#ff2020" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="400" height="500" fill="url(#vcsky)"/>
-  <!-- the grandfather clock glowing behind him -->
-  <g transform="translate(200 210)">
-    <ellipse rx="150" ry="150" fill="url(#vcclock)"/>
-    <g opacity=".5">
-      <rect x="-54" y="-120" width="108" height="240" rx="10" fill="#1a0f12" stroke="#5a3a28" stroke-width="3"/>
-      <circle cy="-62" r="40" fill="#f2e2c4" stroke="#5a3a28" stroke-width="3"/>
-      <g stroke="#2a1a12" stroke-width="4" stroke-linecap="round">
-        <path d="M0 -62 L0 -92"/><path d="M0 -62 L24 -54"/>
+ART.vecna = () => {
+  const id = "vc";
+  return `<svg viewBox="0 0 400 500" xmlns="http://www.w3.org/2000/svg" class="art">
+    ${scene(id, "#2e1208", "#1a0a0c", "#09040a")}
+    <defs>
+      <radialGradient id="${id}clock" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#ffcf7a" stop-opacity=".95"/><stop offset=".55" stop-color="#ff7a2e" stop-opacity=".4"/>
+        <stop offset="1" stop-color="#ff2020" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <ellipse cx="200" cy="210" rx="190" ry="200" fill="url(#${id}clock)"/>
+    <!-- the grandfather clock behind him -->
+    <g opacity=".55">
+      <rect x="146" y="80" width="108" height="300" rx="10" fill="#140a0c" stroke="#6b4420" stroke-width="3"/>
+      <circle cx="200" cy="146" r="40" fill="#f3e2bc" stroke="#6b4420" stroke-width="3"/>
+      <g stroke="#2a1a12" stroke-width="4" stroke-linecap="round"><path d="M200 146 L200 116"/><path d="M200 146 L224 154"/></g>
+      <circle cx="200" cy="146" r="4" fill="#2a1a12"/>
+      <circle cx="200" cy="300" r="18" fill="#d8a93c" stroke="#6b4420" stroke-width="3"/>
+    </g>
+    <!-- vines -->
+    <g stroke="#1b0d10" stroke-width="14" fill="none" stroke-linecap="round">
+      <path d="M-10 500 C70 400 60 300 130 240"/><path d="M410 490 C330 400 340 300 270 240"/>
+      <path d="M-10 300 C60 260 80 180 100 90"/><path d="M410 280 C340 250 320 170 300 80"/>
+    </g>
+    <g transform="translate(200 300)">
+      <!-- body -->
+      <path d="M-58 40 C-76 120 -62 180 -30 220 L30 220 C62 180 76 120 58 40 Z" fill="${SHADOW}"/>
+      <!-- raised arm with long fingers -->
+      <path d="M46 8 C104 -22 140 -78 148 -140 l-26 -10 C112 -92 82 -46 34 -24 Z" fill="${SHADOW}"/>
+      <g stroke="url(#${id}rim)" stroke-width="4.6" stroke-linecap="round" opacity=".9">
+        <path d="M142 -146 l12 -46"/><path d="M150 -140 l26 -36"/><path d="M154 -130 l36 -22"/><path d="M154 -118 l38 -2"/>
       </g>
-      <circle cy="-62" r="4" fill="#2a1a12"/>
-      <path d="M0 -10 L0 90" stroke="#5a3a28" stroke-width="3"/>
-      <circle cy="92" r="16" fill="#d8a93c" stroke="#5a3a28" stroke-width="3"/>
-    </g>
-  </g>
-  <!-- vines all around -->
-  ${vine(-10, 480, 130, 260, 14, "#2e1a1e")}
-  ${vine(410, 470, 270, 250, 12, "#2e1a1e")}
-  ${vine(-10, 300, 90, 120, 7, "#3a2126")}
-  ${vine(410, 280, 320, 110, 8, "#3a2126")}
-  <!-- Vecna -->
-  <g transform="translate(200 270)">
-    <path d="M-54 36 C-70 110 -60 170 -30 210 L30 210 C60 168 70 110 54 36 Z" fill="url(#vcbody)"/>
-    <path d="M-50 60 C-30 92 30 92 50 60" fill="none" stroke="#2c1a16" stroke-width="3" opacity=".7"/>
-    <!-- raised arm with long fingers -->
-    <path d="M44 10 C96 -20 128 -70 136 -126 l-22 -8 C104 -86 78 -46 34 -22 Z" fill="url(#vcbody)"/>
-    <g stroke="#b08a6a" stroke-width="5" stroke-linecap="round">
-      <path d="M130 -130 l10 -40"/><path d="M138 -126 l22 -32"/><path d="M142 -118 l32 -20"/><path d="M142 -108 l34 -2"/>
-    </g>
-    <path d="M-44 14 C-90 -4 -116 -46 -124 -96 l22 -10 C-92 -62 -70 -30 -34 -14 Z" fill="#7a5243"/>
-    <g stroke="#b08a6a" stroke-width="4.5" stroke-linecap="round">
-      <path d="M-120 -100 l-12 -34"/><path d="M-126 -94 l-26 -24"/><path d="M-128 -86 l-32 -10"/>
-    </g>
-    <!-- chest vines -->
-    <g stroke="#3f2a22" stroke-width="4" fill="none" opacity=".9">
-      <path d="M-30 40 C-10 70 10 70 30 40"/><path d="M-34 86 C-12 118 12 118 34 86"/>
-      <path d="M-26 134 C-8 160 8 160 26 134"/>
-    </g>
-    <!-- head -->
-    <g transform="translate(0 -34)">
-      <path d="M0 -58 C34 -58 50 -30 48 4 C46 36 26 54 0 56 C-26 54 -46 36 -48 4 C-50 -30 -34 -58 0 -58 Z" fill="url(#vcbody)"/>
-      <!-- gnarled ridges -->
-      <g fill="none" stroke="#3a241d" stroke-width="3" opacity=".9">
-        <path d="M-40 -16 C-20 -26 20 -26 40 -16"/><path d="M-44 2 C-20 -6 20 -6 44 2"/>
-        <path d="M-38 20 C-18 12 18 12 38 20"/><path d="M-30 38 C-14 30 14 30 30 38"/>
+      <path d="M-46 14 C-98 -6 -126 -52 -134 -106 l24 -12 C-100 -70 -76 -34 -36 -16 Z" fill="#0c060e"/>
+      <g stroke="url(#${id}rim)" stroke-width="4" stroke-linecap="round" opacity=".7">
+        <path d="M-130 -112 l-14 -38"/><path d="M-136 -104 l-28 -26"/><path d="M-138 -94 l-36 -10"/>
       </g>
-      <!-- horn-like vines on the head -->
-      <g stroke="#4a2f24" stroke-width="6" stroke-linecap="round" fill="none">
-        <path d="M-30 -50 C-44 -76 -40 -96 -22 -104"/><path d="M30 -50 C44 -76 40 -96 22 -104"/>
-        <path d="M-10 -58 C-14 -84 -6 -100 6 -104"/>
+      <!-- vine ridges across the chest -->
+      <g stroke="url(#${id}rim)" stroke-width="2.6" fill="none" opacity=".45">
+        <path d="M-34 44 C-12 76 12 76 34 44"/><path d="M-40 92 C-14 126 14 126 40 92"/><path d="M-30 140 C-10 168 10 168 30 140"/>
       </g>
-      <!-- glowing eyes -->
-      <ellipse cx="-17" cy="-4" rx="7" ry="5" fill="#ffd27a"/>
-      <ellipse cx="17" cy="-4" rx="7" ry="5" fill="#ffd27a"/>
-      <ellipse cx="-17" cy="-4" rx="12" ry="9" fill="#ffb648" opacity=".35" filter="url(#vcsoft)"/>
-      <ellipse cx="17" cy="-4" rx="12" ry="9" fill="#ffb648" opacity=".35" filter="url(#vcsoft)"/>
-      <path d="M-14 26 C-6 34 6 34 14 26" fill="none" stroke="#2c1a16" stroke-width="3"/>
+      <path d="M-58 40 C-76 120 -62 180 -30 220" fill="none" stroke="url(#${id}rim)" stroke-width="3" opacity=".7" filter="url(#${id}glow)"/>
+      <!-- head -->
+      <g transform="translate(0 -40)">
+        <path d="M0 -64 C38 -64 56 -32 54 6 C52 42 30 60 0 62 C-30 60 -52 42 -54 6 C-56 -32 -38 -64 0 -64 Z" fill="${SHADOW}"/>
+        <g fill="none" stroke="url(#${id}rim)" stroke-width="2.4" opacity=".5">
+          <path d="M-44 -18 C-22 -30 22 -30 44 -18"/><path d="M-48 2 C-22 -8 22 -8 48 2"/>
+          <path d="M-42 22 C-20 12 20 12 42 22"/><path d="M-32 42 C-14 32 14 32 32 42"/>
+        </g>
+        <g stroke="${SHADOW}" stroke-width="7" stroke-linecap="round" fill="none">
+          <path d="M-32 -54 C-48 -84 -42 -108 -22 -116"/><path d="M32 -54 C48 -84 42 -108 22 -116"/><path d="M-8 -62 C-14 -92 -4 -110 8 -116"/>
+        </g>
+        <g filter="url(#${id}glow)">
+          <ellipse cx="-18" cy="-4" rx="8" ry="5.5" fill="#ffcf7a"/><ellipse cx="18" cy="-4" rx="8" ry="5.5" fill="#ffcf7a"/>
+        </g>
+        <path d="M-16 28 C-6 38 6 38 16 28" fill="none" stroke="url(#${id}rim)" stroke-width="2.6" opacity=".7"/>
+      </g>
     </g>
-  </g>
-  <rect y="360" width="400" height="140" fill="#0a0410" opacity=".55"/>
-  ${spores(20, 11)}
-</svg>`;
+    ${mist(id)}${grain(22)}
+    <rect width="400" height="500" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="16"/>
+  </svg>`;
+};
 
 /* ---------- 6. the Upside Down (cover art) ---------- */
 ART.upsidedown = () => `

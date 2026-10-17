@@ -52,6 +52,10 @@
   <h1 class="title" style="font-size:clamp(1.9rem,7vw,3.6rem)">Super Hard Quiz</h1>
   <p class="sub">12 brutal questions. Climb from Newie all the way to Queen of Hawkins. 👑</p>
   <p class="warn">⚠️ Spoilers for every season, including the ending.</p>
+  <div class="row" style="margin-bottom:14px">
+    <button id="mode" class="ghost">😈 Nightmare mode: OFF</button>
+    <span style="color:var(--dim);font-size:.9rem">Nightmare mode: 20 questions and only 12 seconds each.</span>
+  </div>
 
   <section class="quizbox" id="quizbox"></section>
 </main>
@@ -109,6 +113,34 @@ const Q = [
     why: "Tammy Thompson, the girl who sang at the talent show." },
   { q: "Which teacher helps the kids with science all the time?", a: ["Mr. Clarke", "Ms. Kelley", "Mr. Wheeler", "Mr. Munson"], r: 0,
     why: "Mr. Clarke, who explains the Upside Down with a plate and a flea." },
+  { q: "What is Eleven's mother's name?", a: ["Terry Ives", "Becky Ives", "Karen Wheeler", "Diane Hopper"], r: 0,
+    why: "Terry Ives. Becky is her sister, Eleven's aunt." },
+  { q: "What was Dustin's cat called, before Dart ate it?", a: ["Mews", "Tews", "Yertle", "Pickles"], r: 0,
+    why: "Mews. Poor Mews." },
+  { q: "Where did Bob Newby work?", a: ["Melvald's", "RadioShack", "The Palace Arcade", "Hawkins Lab"], r: 1,
+    why: "RadioShack. Bob Newby, superhero." },
+  { q: "Which hospital was Victor Creel locked up in?", a: ["Pennhurst", "Hawkins General", "Roane Asylum", "Brenner House"], r: 0,
+    why: "Pennhurst Mental Hospital, where Nancy and Robin interview him." },
+  { q: "What is Eddie's uncle's name?", a: ["Wayne", "Victor", "Murray", "Jim"], r: 0,
+    why: "Wayne Munson, who raised him in the trailer park." },
+  { q: "Which basketball player does Vecna kill in season 4?", a: ["Jason Carver", "Patrick McKinney", "Lucas Sinclair", "Fred Benson"], r: 1,
+    why: "Patrick McKinney, at the lake. Fred was the newspaper kid." },
+  { q: "What is the Hawkins High sports team called?", a: ["The Tigers", "The Demogorgons", "The Hawks", "The Bears"], r: 0,
+    why: "The Hawkins Tigers, with Jason Carver as captain." },
+  { q: "Where does Argyle work?", a: ["Surfer Boy Pizza", "Scoops Ahoy", "Family Video", "Melvald's"], r: 0,
+    why: "Surfer Boy Pizza, and his van saves the day." },
+  { q: "What nickname does the Russian guard Dmitri go by?", a: ["Enzo", "Yuri", "Grigori", "Alexei"], r: 0,
+    why: "Enzo, named after the restaurant where Hopper planned a date." },
+  { q: "What does the smuggler Yuri sell?", a: ["Peanut butter", "Coca-Cola", "Eggo waffles", "Cigarettes"], r: 0,
+    why: "Peanut butter, smuggled into Russia." },
+  { q: "What is Erica's Dungeons & Dragons character called?", a: ["Lady Applejack", "Erica the Bold", "Lady Sinclair", "Queen Erica"], r: 0,
+    why: "Lady Applejack, a chaotic good rogue." },
+  { q: "How many gates are open around Hawkins at the end of season 4?", a: ["One", "Two", "Four", "Eleven"], r: 2,
+    why: "Four, one for each of Vecna's victims, and they tear the town apart." },
+  { q: "What city does Kali live in when Eleven finds her?", a: ["Chicago", "Detroit", "Indianapolis", "New York"], r: 0,
+    why: "Chicago, where she lives with her gang." },
+  { q: "How many times does Vecna's clock chime before he takes you?", a: ["Three", "Four", "Seven", "Eleven"], r: 1,
+    why: "Four chimes. If you hear the fourth one, you're already his." },
 ];
 
 /* ---------- the ranks ---------- */
@@ -129,32 +161,53 @@ const rankFor = pct => RANKS.filter(r => pct >= r.min).pop();
 /* ---------- run the quiz ---------- */
 const box = document.getElementById("quizbox");
 const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
-const COUNT = 12;
-let qs = [], idx = 0, correct = 0;
+let nightmare = false, qs = [], idx = 0, correct = 0, timer = null, timeLeft = 0;
+const count = () => nightmare ? 20 : 12;
 
 function start() {
-  qs = shuffle(Q).slice(0, COUNT); idx = 0; correct = 0; render();
+  qs = shuffle(Q).slice(0, count()); idx = 0; correct = 0; render();
 }
 function render() {
+  clearInterval(timer);
   if (idx >= qs.length) return finish();
   const q = qs[idx];
   box.innerHTML = `
     <div class="progress"><div style="width:${idx / qs.length * 100}%"></div></div>
-    <p style="color:var(--dim);font-weight:800">Question ${idx + 1} of ${qs.length} · ${correct} right so far</p>
+    <p style="color:var(--dim);font-weight:800">Question ${idx + 1} of ${qs.length} · ${correct} right so far
+      <span id="clock" style="float:right;color:var(--yellow)"></span></p>
     <p class="qtext">${q.q}</p>
     <div class="answers">${q.a.map((t, i) => `<button data-i="${i}">${t}</button>`).join("")}</div>
     <p class="feedback" id="fb"></p>`;
   box.querySelectorAll(".answers button").forEach(b => { b.onclick = () => choose(b, q); });
+  if (nightmare) {
+    timeLeft = 12;
+    document.getElementById("clock").textContent = "⏱ 12s";
+    timer = setInterval(() => {
+      timeLeft--;
+      const c = document.getElementById("clock");
+      if (c) c.textContent = "⏱ " + timeLeft + "s";
+      if (timeLeft <= 3 && timeLeft > 0) beep(900, .08, "square", .05);
+      if (timeLeft <= 0) { clearInterval(timer); choose(null, q); }
+    }, 1000);
+  }
 }
 function choose(btn, q) {
+  clearInterval(timer);
   box.querySelectorAll(".answers button").forEach(b => b.disabled = true);
-  const ok = +btn.dataset.i === q.r;
-  btn.classList.add(ok ? "right" : "wrong");
+  const ok = btn && +btn.dataset.i === q.r;
+  if (btn) btn.classList.add(ok ? "right" : "wrong");
   if (!ok) box.querySelector(`.answers button[data-i="${q.r}"]`).classList.add("right");
   if (ok) { correct++; tune([660, 880]); } else beep(170, .3, "sawtooth", .08);
-  document.getElementById("fb").textContent = (ok ? "✅ Correct! " : "❌ Nope. ") + q.why;
-  setTimeout(() => { idx++; render(); }, 2100);
+  document.getElementById("fb").textContent = (ok ? "✅ Correct! " : btn ? "❌ Nope. " : "⏱ Out of time! ") + q.why;
+  setTimeout(() => { idx++; render(); }, nightmare ? 1500 : 2100);
 }
+document.getElementById("mode").onclick = e => {
+  nightmare = !nightmare;
+  e.currentTarget.textContent = "😈 Nightmare mode: " + (nightmare ? "ON" : "OFF");
+  e.currentTarget.classList.toggle("ghost", !nightmare);
+  beep(nightmare ? 180 : 700, .25, "sawtooth", .08);
+  start();
+};
 function finish() {
   const pct = Math.round(correct / qs.length * 100), rank = rankFor(pct);
   let best = pct;
