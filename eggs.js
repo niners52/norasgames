@@ -1,12 +1,17 @@
 "use strict";
 /* =====================================================================
-   HIDDEN CODES — type these anywhere on the site and something happens.
+   HIDDEN CODES — two ways to set them off.
+
+   WITH A KEYBOARD: type the word anywhere on the page.
+   WITH A FINGER:   tap one of the faint little emojis in the footer
+                    THREE times in a row. Works great on an iPad.
      EGGO        waffle rain
      VECNA       the clock chimes and the screen cracks
      HELLFIRE    the whole page catches fire
      RUN         everything on the page runs away from you
      LIGHTS      a string of Christmas lights spells a message
      FLIP        the world turns upside down until you tap
+     RAINBOW     Kali's illusion — only unlocked inside Room 11
    Clues live on the secret page. Nothing here breaks the page —
    every effect cleans itself up when it's done.
    ===================================================================== */
@@ -215,8 +220,74 @@
     setTimeout(() => addEventListener("pointerdown", back, { once: true }), 900);
   }
 
+  /* ======== RAINBOW — Kali's illusion. Only people who found Room 11 know this one. ======== */
+  function rainbow() {
+    const L = layer(9400);
+    L.innerHTML = '<div style="position:absolute;inset:0;background:linear-gradient(120deg,' +
+      '#ff2020,#ff8a00,#ffd54a,#6fff9c,#4fd2ff,#a66bff,#ff5fc8);opacity:.26;' +
+      'animation:eggpulse 1.4s ease-in-out 3"></div>';
+    for (let i = 0; i < 60; i++) {
+      const p = document.createElement("div");
+      const hue = (i * 37) % 360;
+      p.style.cssText = `position:absolute;top:-40px;left:${Math.random() * 100}vw;width:${6 + Math.random() * 12}px;
+        height:${10 + Math.random() * 18}px;border-radius:3px;background:hsl(${hue} 100% 62%);
+        box-shadow:0 0 14px hsl(${hue} 100% 62%);--spin:${Math.random() * 900 - 450}deg;
+        animation:eggfall ${2 + Math.random() * 2.6}s linear ${Math.random() * 1.4}s forwards`;
+      L.appendChild(p);
+    }
+    /* the illusion: the page briefly doubles */
+    const body = document.body;
+    const old = body.style.cssText;
+    body.style.transition = "filter 1.2s";
+    body.style.filter = "hue-rotate(90deg) drop-shadow(14px 0 rgba(255,0,120,.45)) drop-shadow(-14px 0 rgba(0,200,255,.45))";
+    setTimeout(() => { body.style.filter = "hue-rotate(260deg)"; }, 1400);
+    setTimeout(() => { body.style.cssText = old; }, 2800);
+    melody([523, 587, 659, 698, 784, 880, 988, 1047], 110, "triangle");
+    toast("🌈 Kali says hello.", 3200);
+    setTimeout(() => { L.style.transition = "opacity 1s"; L.style.opacity = "0"; }, 3400);
+    setTimeout(() => L.remove(), 4500);
+  }
+
+  /* ---------- the emoji strip (for iPads and anyone without a keyboard) ---------- */
+  const STRIP = [["🧇", "EGGO"], ["🕰️", "VECNA"], ["🎸", "HELLFIRE"], ["🏃", "RUN"], ["💡", "LIGHTS"], ["🙃", "FLIP"]];
+  try { if (localStorage.getItem("noraRoom") === "1") STRIP.push(["🌈", "RAINBOW"]); } catch (e) {}
+  function buildStrip() {
+    if (document.getElementById("egg-strip")) return;
+    const foot = document.querySelector("footer");
+    if (!foot) return;
+    const wrap = document.createElement("div");
+    wrap.id = "egg-strip";
+    wrap.style.cssText = "margin-top:10px;display:flex;gap:14px;justify-content:center;flex-wrap:wrap;user-select:none";
+    wrap.innerHTML = STRIP.map(function (e) {
+      return '<span data-egg="' + e[1] + '" role="button" style="opacity:.22;cursor:pointer;font-size:1.25rem;' +
+             'line-height:1;padding:7px;border-radius:10px;transition:opacity .15s, transform .15s, background .15s;' +
+             '-webkit-tap-highlight-color:transparent">' + e[0] + '</span>';
+    }).join("");
+    foot.appendChild(wrap);
+
+    let last = "", count = 0, timer = null;
+    wrap.addEventListener("click", function (ev) {
+      const el = ev.target.closest("[data-egg]");
+      if (!el) return;
+      const code = el.dataset.egg;
+      if (code !== last) { last = code; count = 0; wrap.querySelectorAll("[data-egg]").forEach(function (o) { o.style.opacity = ".22"; o.style.transform = ""; o.style.background = ""; }); }
+      count++;
+      clearTimeout(timer);
+      timer = setTimeout(function () { count = 0; last = ""; el.style.opacity = ".22"; el.style.transform = ""; el.style.background = ""; }, 2200);
+      el.style.opacity = String(.22 + count * .26);
+      el.style.transform = "scale(" + (1 + count * .14) + ")";
+      el.style.background = count >= 2 ? "rgba(255,32,32,.18)" : "";
+      note(520 + count * 120, .06, "triangle", .04);
+      if (count >= 3) {
+        count = 0; last = "";
+        el.style.opacity = ".22"; el.style.transform = ""; el.style.background = "";
+        if (CODES[code]) CODES[code]();
+      }
+    });
+  }
+
   /* ---------- listen for the words ---------- */
-  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip };
+  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow };
   const LONGEST = Math.max(...Object.keys(CODES).map(k => k.length));
   let buf = "";
   addEventListener("keydown", e => {
@@ -226,6 +297,9 @@
     buf = (buf + e.key.toUpperCase()).replace(/[^A-Z]/g, "").slice(-LONGEST);
     for (const code in CODES) if (buf.endsWith(code)) { buf = ""; CODES[code](); return; }
   });
+  if (document.readyState === "loading") addEventListener("DOMContentLoaded", buildStrip); else buildStrip();
+
   /* so other pages can fire one on purpose (the secret page does) */
   window.noraEggs = CODES;
+  window.noraEggStrip = STRIP;
 })();

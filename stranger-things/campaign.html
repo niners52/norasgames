@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eddie's Campaign · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐉</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .table2 { max-width: 760px; margin: 0 auto; border-radius: 22px; padding: clamp(16px, 4vw, 28px);
+            background: radial-gradient(ellipse at 50% 0%, rgba(90, 24, 34, .5), rgba(12, 5, 20, .96));
+            border: 1px solid rgba(255, 90, 90, .35); box-shadow: 0 18px 50px rgba(0, 0, 0, .65); }
+  .sheet2 { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            border-radius: 14px; padding: 10px 14px; margin-bottom: 14px; font-weight: 800;
+            background: rgba(255, 255, 255, .06); border: 1px solid rgba(255, 255, 255, .14); }
+  .hpbar { flex: 1 1 140px; height: 14px; border-radius: 99px; background: rgba(255, 255, 255, .12); overflow: hidden; min-width: 120px; }
+  .hpbar div { height: 100%; background: linear-gradient(90deg, #ff2020, #ff8a3b); transition: width .4s; }
+  .dm { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .dm .who { font-size: 1.8rem; }
+  .dm .bubble2 { flex: 1; border-radius: 16px; padding: 14px 16px; background: rgba(255, 213, 74, .12);
+                 border: 1px solid rgba(255, 213, 74, .4); font-style: italic; color: #ffeec0; }
+  .story { font-size: clamp(1rem, 3.4vw, 1.15rem); line-height: 1.75; margin-bottom: 8px; }
+  .story b { color: var(--yellow); }
+  .picks2 { display: grid; gap: 9px; margin-top: 14px; }
+  .picks2 button { text-align: left; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2);
+                   box-shadow: none; font-size: .98rem; padding: 13px 15px; }
+  .picks2 button:hover { background: rgba(255, 32, 32, .22); border-color: var(--red); }
+  .picks2 .need { display: block; font-size: .76rem; color: var(--yellow); margin-top: 3px; font-weight: 800; }
+  .rollbox { text-align: center; padding: 14px 0; }
+  .rollbox .d { font-family: "Noto Serif Display", Georgia, serif; font-size: 4rem; color: #fff; }
+  .rollbox .d.nat20 { color: var(--yellow); text-shadow: 0 0 26px #ffd54a; }
+  .rollbox .d.nat1 { color: var(--red); text-shadow: 0 0 26px var(--red); }
+  .bag { display: flex; gap: 6px; flex-wrap: wrap; }
+  .bag span { font-size: .78rem; background: rgba(166, 107, 255, .2); border: 1px solid rgba(166, 107, 255, .5);
+              border-radius: 99px; padding: 3px 10px; }
+  .log2 { margin-top: 16px; font-size: .84rem; color: rgba(255, 233, 233, .45); max-height: 130px; overflow-y: auto; }
+  .ending { text-align: center; }
+  .ending h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.5rem, 6vw, 2.4rem); color: #fff; text-shadow: 0 0 20px var(--red); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="would-you-rather.html">Would You Rather</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">The Vale of Shadows</h1>
+  <p class="sub">A Hellfire Club campaign. Eddie is the dungeon master, and the dice decide everything. 🐉</p>
+
+  <section class="table2">
+    <div class="sheet2" id="sheet"></div>
+    <div id="scene"></div>
+    <div class="log2" id="log"></div>
+  </section>
+
+  <div class="row" style="justify-content:center;margin-top:16px">
+    <button class="ghost" id="restart">↺ Start the campaign over</button>
+    <a class="btn ghost" href="hellfire-card.html">🤘 Change my character</a>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+/* ---------- who are you? comes from the Hellfire card if you made one ---------- */
+const CLASS_INFO = { bard: ["Bard", "🎸", "CHA"], fighter: ["Fighter", "🗡️", "STR"], rogue: ["Rogue", "🗝️", "DEX"],
+                     cleric: ["Cleric", "✨", "WIS"], wizard: ["Wizard", "📜", "INT"], barbarian: ["Barbarian", "🪓", "STR"] };
+let HERO = { name: "Traveller", cls: "bard", stats: { STR: 10, DEX: 10, CON: 10, INT: 10, WIS: 10, CHA: 10 } };
+try { const sv = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (sv && sv.stats) HERO = Object.assign(HERO, sv); } catch (e) {}
+const HNAME = (HERO.name || "Traveller").slice(0, 18);
+const HCLASS = CLASS_INFO[HERO.cls] || CLASS_INFO.bard;
+
+let hp = 20, maxhp = 20, bag = [], at = "start", log = [], lastRoll = null;
+
+/* ---------- the adventure ---------- */
+const N = {
+  start: {
+    dm: "Alright. Everybody shut up. You've been walking for three days and the road just ended.",
+    t: `The village of <b>Mirkwood Hollow</b> is twelve houses and a well, and every single door is shut in the middle of the afternoon.
+        A girl's shoe sits in the mud by the gate. Her name was <b>Wren</b>, and she went missing four nights ago.<br><br>
+        Somebody is watching you from the chapel window.`,
+    c: [
+      { t: "Knock on the chapel door.", to: "chapel" },
+      { t: "Follow the muddy footprints into the woods.", to: "woods" },
+      { t: "Go to the tavern and ask loud questions.", to: "tavern" },
+    ],
+  },
+  tavern: {
+    dm: "The tavern smells like wet dog and old soup. Nice.",
+    t: `Six villagers stop talking the second you walk in. The innkeeper polishes a mug that is already clean.<br><br>
+        "We don't go past the old stones," he says. "Not since the humming started."`,
+    c: [
+      { t: "Charm him into telling you everything.", roll: { stat: "CHA", dc: 11 }, win: "tavern_win", lose: "tavern_lose" },
+      { t: "Leave quietly and take the woods path.", to: "woods" },
+      { t: "Try the chapel instead.", to: "chapel" },
+    ],
+  },
+  tavern_win: {
+    dm: "Nice roll. He folds like a lawn chair.",
+    t: `"There's a ring of stones past the black pines. Four nights ago it started <i>humming</i>, and the sound got in my teeth.
+        Wren went to look." He slides something across the bar. "Take this. My brother never came back either."<br><br>
+        You got the <b>Silver Bell</b>. 🔔`,
+    item: "Silver Bell 🔔",
+    c: [{ t: "Head for the stones.", to: "woods" }],
+  },
+  tavern_lose: {
+    dm: "Brutal. He just stares at you until you leave. I love this game.",
+    t: `Nobody says anything else. A woman by the fire mouths one word at you: <i>"Run."</i><br><br>
+        You lose a little nerve on the way out. <b>-2 HP</b>`,
+    hp: -2,
+    c: [{ t: "Try the chapel.", to: "chapel" }, { t: "Take the woods path anyway.", to: "woods" }],
+  },
+  chapel: {
+    dm: "The door opens before you knock. Of course it does.",
+    t: `Inside, an old priest is lighting candles he has clearly lit a hundred times already.
+        Behind him, every window has been painted black except one.<br><br>
+        "You're here about the girl," he says. "The Vale takes the ones who listen."`,
+    c: [
+      { t: "Ask what the Vale is.", to: "chapel_vale" },
+      { t: "Look at the window he didn't paint.", roll: { stat: "WIS", dc: 12 }, win: "chapel_win", lose: "chapel_lose" },
+      { t: "Leave. Head for the woods.", to: "woods" },
+    ],
+  },
+  chapel_vale: {
+    dm: "He does the whole dramatic pause thing. I'd give him a 6 out of 10.",
+    t: `"A place under this one. Same trees, same houses, no people, no sun. Something down there has been awake for a long time,
+        and lately it has been <i>bored</i>."<br><br>
+        He presses a stub of candle into your hand. "It burns in the dark down there. That's rarer than you think."<br><br>
+        You got the <b>Everburning Candle</b>. 🕯️`,
+    item: "Everburning Candle 🕯️",
+    c: [{ t: "Examine the unpainted window.", roll: { stat: "WIS", dc: 12 }, win: "chapel_win", lose: "chapel_lose" }, { t: "Go to the woods.", to: "woods" }],
+  },
+  chapel_win: {
+    dm: "Ooooh. You notice it. Everybody else at this table walked right past it.",
+    t: `The glass isn't painted because it isn't glass. It's a <i>hole</i>, and the trees on the other side are the wrong colour —
+        grey, wet, breathing. You can see a small footprint in the ash. Wren's.<br><br>
+        You know exactly where the real door is now. <b>+2 HP</b> of pure confidence.`,
+    hp: 2,
+    item: "Wren's Trail 👣",
+    c: [{ t: "Go to the stone ring.", to: "stones" }],
+  },
+  chapel_lose: {
+    dm: "You squint at a window for a solid minute. The priest watches you do it. Awkward.",
+    t: `Nothing. It's just a window, and now the priest thinks you're strange.<br><br>
+        Outside, the humming has got louder.`,
+    c: [{ t: "Go to the woods.", to: "woods" }],
+  },
+  woods: {
+    dm: "Roll for how fast you can walk through a forest that doesn't want you in it.",
+    t: `The black pines close over the path. Every needle on the ground points the same direction,
+        like something enormous was dragged through here.<br><br>
+        Halfway in, you hear it: a low hum, right at the bottom of your ears, with a heartbeat behind it.`,
+    c: [
+      { t: "Sneak forward, carefully.", roll: { stat: "DEX", dc: 11 }, win: "woods_sneak", lose: "woods_caught" },
+      { t: "Shout. Let whatever it is come to you.", to: "woods_caught" },
+      { t: "Climb a pine and look for the stones.", roll: { stat: "STR", dc: 12 }, win: "woods_climb", lose: "woods_fall" },
+    ],
+  },
+  woods_sneak: {
+    dm: "Silent. Like a cat made of nothing. Good.",
+    t: `You slip past something tall and still standing between two trunks. It doesn't turn around.
+        You never find out what it was, which is its own kind of mercy.<br><br>
+        The stone ring is just ahead.`,
+    c: [{ t: "Enter the stone ring.", to: "stones" }],
+  },
+  woods_climb: {
+    dm: "Up you go, you absolute squirrel.",
+    t: `From the top you can see the whole forest, and in the middle of it — a ring of nine standing stones
+        with light leaking up out of the ground between them.<br><br>
+        You also spot a shortcut, and a sack somebody dropped. <b>Rope and iron spikes.</b> 🪢`,
+    item: "Rope & Spikes 🪢",
+    c: [{ t: "Climb down and head for the ring.", to: "stones" }],
+  },
+  woods_fall: {
+    dm: "Yeah, the branch breaks. Take three.",
+    t: `Halfway up, a branch snaps and the forest floor comes up to meet you. <b>-3 HP</b><br><br>
+        Lying on your back, though, you can see the glow through the trees.`,
+    hp: -3,
+    c: [{ t: "Get up. Go to the stones.", to: "stones" }],
+  },
+  woods_caught: {
+    dm: "Okay. Something heard that. Roll initiative — no, I'm kidding. Kind of.",
+    t: `Branches crack. Something with far too many legs steps onto the path and unfolds a head made of
+        black petals. It has no eyes and it is absolutely looking at you.<br><br>
+        <b>The Petal Beast.</b>`,
+    c: [
+      { t: "Fight it.", roll: { stat: "STR", dc: 13 }, win: "beast_win", lose: "beast_lose" },
+      { t: "Play music at it. (Loud.)", roll: { stat: "CHA", dc: 12 }, win: "beast_music", lose: "beast_lose" },
+      { t: "Throw the candle and run.", to: "beast_run", needs: "Everburning Candle 🕯️" },
+      { t: "Run, with no plan whatsoever.", roll: { stat: "DEX", dc: 14 }, win: "woods_sneak", lose: "beast_lose" },
+    ],
+  },
+  beast_win: {
+    dm: "YES. Describe it. Actually no, I'll describe it, it's my campaign.",
+    t: `You get inside its reach before it can open, and the petals come apart like a slammed door.
+        It folds up and goes quiet.<br><br>
+        One of its claws snaps off clean. That's a weapon now. <b>Petal Claw</b> 🗡️`,
+    item: "Petal Claw 🗡️",
+    c: [{ t: "Keep going to the stones.", to: "stones" }],
+  },
+  beast_music: {
+    dm: "Are you serious. You played music at it. …It worked. That's metal.",
+    t: `You hit one long, ugly, beautiful note and the thing <i>freezes</i>. The petals shiver and close.
+        It backs into the trees without ever turning around.<br><br>
+        You've learned something: down here, <b>sound</b> works.`,
+    item: "A Very Loud Song 🎸",
+    c: [{ t: "Go to the stones.", to: "stones" }],
+  },
+  beast_run: {
+    dm: "Using an item. Look at you, actually playing properly.",
+    t: `You hurl the burning candle. The flame catches on the wet air itself and the beast recoils from the light,
+        shrieking through a mouth it doesn't have.<br><br>
+        You lose the candle, but you keep all your arms and legs.`,
+    drop: "Everburning Candle 🕯️",
+    c: [{ t: "Run to the stones.", to: "stones" }],
+  },
+  beast_lose: {
+    dm: "Ohhh, that hurts. Take five.",
+    t: `It's faster than anything that size has a right to be. A claw opens a line across your shoulder before
+        you throw yourself into the brambles. <b>-5 HP</b><br><br>
+        It loses interest. For now.`,
+    hp: -5,
+    c: [{ t: "Limp on to the stones.", to: "stones" }],
+  },
+  stones: {
+    dm: "Everybody roll perception. No? Fine, I'll just tell you. You're all terrible at this.",
+    t: `Nine stones, taller than you, standing in a ring. The grass inside is dead in a perfect circle, and the air above it
+        <i>wobbles</i>, like heat over a road.<br><br>
+        The hum is enormous here. On one stone, scratched with a rock, is a shaky message: <b>"IT LISTENS — W."</b>`,
+    c: [
+      { t: "Walk into the middle of the ring.", to: "vale" },
+      { t: "Ring the Silver Bell first.", to: "bell", needs: "Silver Bell 🔔" },
+      { t: "Hammer in the spikes and tie the rope to a stone, so you can find the way back.", to: "anchor", needs: "Rope & Spikes 🪢" },
+    ],
+  },
+  bell: {
+    dm: "Oh, you brought the bell. That's going to matter. Remember this moment.",
+    t: `You ring it once. The hum <i>stops</i> — completely — for three full seconds, and in the silence you hear,
+        very far away and very small, a girl shouting.<br><br>
+        She's alive. And now you know the Vale can be interrupted.`,
+    item: "The Bell Rings True 🔔✨",
+    c: [{ t: "Step into the ring.", to: "vale" }],
+  },
+  anchor: {
+    dm: "Boring? Maybe. Smart? Annoyingly, yes.",
+    t: `You drive the spikes in deep and knot the rope around the tallest stone, then loop the other end around your wrist.<br><br>
+        A way home. Most people who come here never thought of that.`,
+    item: "A Way Home 🪢✨",
+    c: [{ t: "Step into the ring.", to: "vale" }, { t: "Ring the bell first.", to: "bell", needs: "Silver Bell 🔔" }],
+  },
+  vale: {
+    dm: "Okay. Lights off. Everybody lean in.",
+    t: `Stepping through is like stepping into cold water with your whole body at once.<br><br>
+        It's the same forest. Same stones, same village in the distance. But the sky is gone, the air is full of drifting ash,
+        and everything is covered in black vines that move when you aren't looking.<br><br>
+        This is <b>the Vale of Shadows</b>. Somewhere in it, something very old just noticed you arrive.`,
+    c: [
+      { t: "Follow the small footprints.", to: "wren", needs: "Wren's Trail 👣" },
+      { t: "Head for the dead village.", to: "village" },
+      { t: "Call out Wren's name.", to: "shout" },
+    ],
+  },
+  shout: {
+    dm: "You shout. In the monster dimension. Bold strategy.",
+    t: `Your voice goes further than it should, and comes back wrong — slower, lower, like something repeating it badly.<br><br>
+        But then, thin and real, from the direction of the village: <i>"HERE! I'm HERE!"</i><br><br>
+        Everything in the Vale heard that. Including the thing with the clock.`,
+    c: [{ t: "Run for the village.", to: "village" }],
+  },
+  wren: {
+    dm: "Tracking. Nice. That's what the footprints were for, everybody.",
+    t: `The prints lead you around the village instead of into it, down to a root cellar with the door wedged shut from inside.<br><br>
+        You knock. A very small voice says: "Is it you, or is it wearing you?"`,
+    c: [
+      { t: `"It's me. My name is ${HNAME}."`, to: "wren_found" },
+      { t: "Say nothing and open the door.", roll: { stat: "DEX", dc: 10 }, win: "wren_found", lose: "wren_scared" },
+    ],
+  },
+  wren_scared: {
+    dm: "You yanked a door open in a horror dimension. Classic.",
+    t: `Wren screams, throws a jar at your head and bolts past you into the ash. You catch her forty feet later and she
+        apologises about nine times.<br><br>
+        <b>-1 HP</b>, mostly pride.`,
+    hp: -1,
+    c: [{ t: "Tell her you're getting her out.", to: "wren_found" }],
+  },
+  wren_found: {
+    dm: "Alright, roleplay this properly. She's nine and she's been down here four days.",
+    t: `The door opens. Wren is filthy, furious and absolutely fine. "It's in the church," she says. "It sits in a chair and
+        it counts. When it gets to the end of counting, it <i>takes</i> someone."<br><br>
+        She grabs your sleeve. "It knows your name now. It always knows the name."`,
+    item: "Wren 🧍‍♀️",
+    c: [{ t: "Go to the church. End this.", to: "church" }, { t: "Try to leave with her right now.", to: "early_exit" }],
+  },
+  village: {
+    dm: "The village, but dead. Everything is the same, and that's the scary part.",
+    t: `Twelve houses, a well, and no sound at all. Every door hangs open. In the chapel doorway at the end of the road,
+        candlelight is moving — but there's nobody to light candles here.<br><br>
+        A floorboard creaks behind you. You turn. Nothing. The vines are closer than they were.`,
+    c: [
+      { t: "Search the houses for Wren.", roll: { stat: "INT", dc: 12 }, win: "wren", lose: "village_lost" },
+      { t: "Walk straight to the chapel.", to: "church" },
+    ],
+  },
+  village_lost: {
+    dm: "You search four identical empty houses. It takes an hour. The vines use that hour.",
+    t: `Nothing but ash and furniture in the wrong places. When you come out, the vines have crossed the road behind you
+        and something has written your name on the well. <b>-3 HP</b>`,
+    hp: -3,
+    c: [{ t: "Go to the chapel.", to: "church" }],
+  },
+  early_exit: {
+    dm: "Running away is allowed. It's not always smart, but it's allowed.",
+    t: `You take Wren's hand and run for the stones.`,
+    c: [
+      { t: "Follow the rope home.", to: "end_rope", needs: "A Way Home 🪢✨" },
+      { t: "Run and hope you remember the way.", roll: { stat: "WIS", dc: 14 }, win: "end_lucky", lose: "church" },
+    ],
+  },
+  church: {
+    dm: "Okay. This is it. Everybody put your hands on the table.",
+    t: `The chapel doors are already open.<br><br>
+        Inside, in a high-backed chair grown through with vines, sits something that used to be a person.
+        Its fingers are too long. Behind it, a grandfather clock with no hands ticks anyway.<br><br>
+        <b>"I have been counting,"</b> it says, and it uses your voice. <b>"${HNAME}. Twenty. Nineteen. Eighteen."</b>`,
+    c: [
+      { t: "Ring the Silver Bell. Break the counting.", to: "end_bell", needs: "The Bell Rings True 🔔✨" },
+      { t: "Play the loudest song you know.", to: "end_song", needs: "A Very Loud Song 🎸" },
+      { t: "Charge it with the Petal Claw.", roll: { stat: "STR", dc: 15 }, win: "end_fight", lose: "end_lost", needs: "Petal Claw 🗡️" },
+      { t: "Talk to it. Ask what it's counting to.", roll: { stat: "CHA", dc: 14 }, win: "end_talk", lose: "end_lost" },
+      { t: "Smash the clock.", roll: { stat: "DEX", dc: 13 }, win: "end_clock", lose: "end_lost" },
+    ],
+  },
+
+  /* ---------------- endings ---------------- */
+  end_bell: { end: "best", dm: "THE BELL. I TOLD YOU THE BELL WOULD MATTER. Nobody ever listens to me.",
+    t: `You ring it. The sound is small and bright and completely wrong for this place.<br><br>
+        The counting stops. The thing in the chair opens a mouth that goes too far back and <i>cannot find the next number</i>.
+        The clock cracks down the middle. The vines let go of the walls all at once.<br><br>
+        You walk out of the Vale with Wren on your shoulders and the sun actually hurts.`,
+    title: "🔔 The Bell Ringer", note: "You found the one object that could stop it — and you kept it all the way to the end." },
+  end_song: { end: "best", dm: "You played it the loudest song you know. In the chapel. To its face. Ten out of ten.",
+    t: `The first chord goes through the Vale like a crack through ice.<br><br>
+        It hates sound. It has always hated sound — sound is the one thing down here that belongs to <i>you</i>.
+        The chair splinters. The clock falls forward and stops. Somewhere above, a forest full of birds starts up again.`,
+    title: "🎸 Loudest in the Vale", note: "Eddie is standing on his chair. The whole table is yelling." },
+  end_fight: { end: "good", dm: "Natural muscle. Fine. FINE. That works too.",
+    t: `You go straight down the aisle with the claw and you do not stop. It's not even close, in the end —
+        the thing in the chair has been sitting for a very long time and has forgotten how to move fast.<br><br>
+        You carry Wren out through the stones with your arm in a sling.`,
+    title: "🗡️ The Claw of the Vale", note: "Not elegant. Extremely effective." },
+  end_clock: { end: "good", dm: "The clock. Of course it's the clock. I'm so glad somebody worked that out.",
+    t: `You dive past the chair and put your shoulder through the clock face.<br><br>
+        Everything stops. The counting, the ticking, the humming under the whole forest. The thing in the chair
+        turns to ash from the fingers inward, politely, like it was waiting for permission.`,
+    title: "🕰️ Clockbreaker", note: "You figured out the real rule: the counting was the monster." },
+  end_talk: { end: "good", dm: "Nobody ever talks to the final boss. NOBODY. And it worked.",
+    t: `"What are you counting to?" you ask.<br><br>
+        It stops. It doesn't know. It has been counting for so long that it has forgotten there was supposed to be an end.
+        And the moment it realises that, it goes out like a candle in a draught.`,
+    title: "💬 The One Who Asked", note: "You beat a monster with a question. Eddie writes it on the board." },
+  end_rope: { end: "ok", dm: "You used the rope. You actually used the rope. Honestly? Respect.",
+    t: `Hand over hand, with Wren on your back, you follow your own rope out of the Vale and fall into real grass
+        under a real sky.<br><br>
+        You didn't beat the thing in the chair. It's still in there, still counting. But Wren is home, and you know the way now.`,
+    title: "🪢 The Way Home", note: "Everybody lived. That's a win. There's just a sequel." },
+  end_lucky: { end: "ok", dm: "Pure luck. I'm not even mad.",
+    t: `You run the wrong way twice and the right way once, and the right way is the one that counts.
+        You come out of the stones at a dead sprint with Wren yelling in your ear.<br><br>
+        Behind you, the humming goes on.`,
+    title: "🍀 The Lucky Escape", note: "You got out. You didn't finish it." },
+  end_lost: { end: "bad", dm: "…Okay. Everybody take a breath. That's how the dice went.",
+    t: `It's too fast, and it's been waiting too long.<br><br>
+        The last thing you hear is your own voice saying <b>"three… two…"</b><br><br>
+        And then Eddie throws his dice on the table and says: <i>"And THAT is why you bring the bell."</i>`,
+    title: "💀 Taken by the Vale", note: "Every campaign needs one of these. Roll a new character and go again." },
+  end_dead: { end: "bad", dm: "You're out of hit points, dude. I don't make the rules. (I do make the rules.)",
+    t: `You go down in the ash with the vines already moving.<br><br>
+        Eddie leans back. "Here's the thing though," he says, shuffling his notes.
+        "You were SO close. Same character, same dice, one more go?"`,
+    title: "💀 Down in the Ash", note: "Hit zero HP. Try a safer route next time — or bring more items." },
+};
+
+/* ---------- engine ---------- */
+const $ = id => document.getElementById(id);
+const has = it => bag.includes(it);
+const mod = stat => Math.max(-2, Math.min(5, Math.floor(((HERO.stats[stat] || 10) - 10) / 3)));
+
+function sheet() {
+  $("sheet").innerHTML = `
+    <span>${HCLASS[1]} <b style="color:var(--yellow)">${HNAME}</b> the ${HCLASS[0]}</span>
+    <span>❤️ ${hp}/${maxhp}</span>
+    <div class="hpbar"><div style="width:${Math.max(0, hp / maxhp * 100)}%"></div></div>
+    <div class="bag">${bag.length ? bag.map(b => `<span>${b}</span>`).join("") : '<span style="opacity:.5">empty pack</span>'}</div>`;
+}
+function note(s) { log.unshift(s); $("log").innerHTML = log.slice(0, 14).map(l => `• ${l}`).join("<br>"); }
+
+function go(id) {
+  at = id;
+  const n = N[id];
+  if (n.hp) { hp = Math.min(maxhp, hp + n.hp); note(`${n.hp > 0 ? "+" : ""}${n.hp} HP`); }
+  if (n.item && !has(n.item)) { bag.push(n.item); note(`Picked up ${n.item}`); }
+  if (n.drop) { bag = bag.filter(b => b !== n.drop); note(`Used up ${n.drop}`); }
+  sheet();
+  if (hp <= 0 && !n.end) return go("end_dead");
+  if (n.end) return ending(n);
+
+  $("scene").innerHTML = `
+    <div class="dm"><span class="who">🎸</span><div class="bubble2">${n.dm}</div></div>
+    <p class="story">${n.t}</p>
+    <div class="picks2">${n.c.map((ch, i) => {
+      const locked = ch.needs && !has(ch.needs);
+      if (locked) return "";
+      return `<button data-i="${i}">${ch.t}${ch.roll ? `<span class="need">🎲 Roll ${ch.roll.stat} — you need ${ch.roll.dc} or more (your bonus: ${mod(ch.roll.stat) >= 0 ? "+" : ""}${mod(ch.roll.stat)})</span>` : ""}${ch.needs ? `<span class="need">Using: ${ch.needs}</span>` : ""}</button>`;
+    }).join("")}</div>`;
+  $("scene").querySelectorAll(".picks2 button").forEach(b => {
+    b.onclick = () => pick(n.c[+b.dataset.i]);
+  });
+  beep(300 + Math.random() * 120, .07, "triangle", .04);
+}
+
+function pick(ch) {
+  if (!ch.roll) { tune([520, 660]); return go(ch.to); }
+  /* roll the dice */
+  const box = document.createElement("div");
+  box.className = "rollbox";
+  box.innerHTML = `<div class="d" id="dface">?</div><p style="color:var(--dim)">Rolling ${ch.roll.stat}…</p>`;
+  $("scene").querySelector(".picks2").replaceWith(box);
+  let ticks = 0;
+  const spin = setInterval(() => {
+    $("dface").textContent = 1 + Math.floor(Math.random() * 20);
+    beep(360 + Math.random() * 300, .03, "square", .03);
+    if (++ticks > 10) {
+      clearInterval(spin);
+      const raw = 1 + Math.floor(Math.random() * 20), m = mod(ch.roll.stat), total = raw + m;
+      const ok = raw === 20 ? true : raw === 1 ? false : total >= ch.roll.dc;
+      lastRoll = raw;
+      $("dface").textContent = raw;
+      $("dface").className = "d" + (raw === 20 ? " nat20" : raw === 1 ? " nat1" : "");
+      box.querySelector("p").innerHTML = raw === 20 ? "<b style='color:var(--yellow)'>NATURAL TWENTY!</b> Eddie stands up."
+        : raw === 1 ? "<b style='color:var(--red)'>Natural one.</b> Eddie grins."
+        : `${raw} ${m >= 0 ? "+" : ""}${m} = <b>${total}</b> — you needed ${ch.roll.dc}. ${ok ? "✅ Success!" : "❌ Failed."}`;
+      note(`Rolled ${raw}${m ? ` (${m >= 0 ? "+" : ""}${m})` : ""} for ${ch.roll.stat} — ${ok ? "success" : "fail"}`);
+      if (raw === 20) tune([523, 659, 784, 1047, 1319]); else if (ok) tune([523, 659]); else tune([330, 247]);
+      setTimeout(() => go(ok ? ch.win : ch.lose), 1700);
+    }
+  }, 60);
+}
+
+function ending(n) {
+  const medal = { best: "🏆", good: "⭐", ok: "🧭", bad: "💀" }[n.end];
+  tune(n.end === "bad" ? [392, 330, 262, 196] : [523, 659, 784, 1047]);
+  let seen = [];
+  try {
+    seen = JSON.parse(localStorage.getItem("stCampaign") || "[]");
+    if (!seen.includes(n.title)) { seen.push(n.title); localStorage.setItem("stCampaign", JSON.stringify(seen)); }
+  } catch (e) {}
+  $("scene").innerHTML = `
+    <div class="dm"><span class="who">🎸</span><div class="bubble2">${n.dm}</div></div>
+    <p class="story">${n.t}</p>
+    <div class="ending">
+      <div style="font-size:3.4rem">${medal}</div>
+      <h2>${n.title}</h2>
+      <p style="color:var(--dim);max-width:460px;margin:6px auto 0">${n.note}</p>
+      <p style="margin-top:12px;color:var(--dim)">Endings you've found: <b style="color:var(--yellow)">${seen.length} of 8</b><br>
+        <span style="font-size:.86rem">${seen.join(" · ")}</span></p>
+      <div class="row" style="justify-content:center;margin-top:14px">
+        <button id="again2">🔁 Play it again</button>
+        <a class="btn ghost" href="hellfire-card.html">🤘 Roll a new character</a>
+      </div>
+    </div>`;
+  $("again2").onclick = restart;
+}
+function restart() { hp = 20; bag = []; log = []; $("log").innerHTML = ""; go("start"); }
+$("restart").onclick = restart;
+restart();
+</script>
+<script src="/secret.js"></script>
+<script src="/eggs.js"></script>
+</body>
+</html>

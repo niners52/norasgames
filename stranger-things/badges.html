@@ -41,10 +41,13 @@
     <a href="monsters.html">Monster Files</a>
     <a href="monster-maker.html">Monster Maker</a>
     <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
     <a href="vecna.html">Vecna's List</a>
     <a href="walkie.html">Walkie Talkie</a>
     <a href="quiz.html">Quizzes</a>
     <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="would-you-rather.html">Would You Rather</a>
     <a href="quotes.html">Who Said It?</a>
     <a href="games.html">Mini Games</a>
     <a href="badges.html">Trophies</a>
@@ -81,6 +84,9 @@ const S = {
   chase: num("stChaseBest"), maze: num("stMazeBest"), code: num("stCodeBest"),
   clock: num("noraClockBest"), monsters: json("stMonsters", "[]").length,
   seen: Object.keys(json("stSeen", "{}")).length,
+  endings: json("stCampaign", "[]").length,
+  card: (() => { try { return localStorage.getItem("stHellfire") ? 1 : 0; } catch (e) { return 0; } })(),
+  room: (() => { try { return localStorage.getItem("noraRoom") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
   secret: (() => { try { return localStorage.getItem("noraSecret") === "1"; } catch (e) { return false; } })(),
 };
 
@@ -107,12 +113,16 @@ const BADGES = [
   { i: "📺", n: "Started Watching", d: "Tick off 8 episodes.", v: S.seen, need: 8 },
   { i: "🏅", n: "Seen It All", d: "Tick off all 42 episodes.", v: S.seen, need: 42 },
   { i: "🕰️", n: "Faster Than Vecna", d: "Beat the clock game in under 400 ms.", v: S.clock && S.clock < 400 ? 1 : 0, need: 1, raw: S.clock ? S.clock + " ms" : "not yet" },
+  { i: "🤘", n: "Card Carrying Member", d: "Make your Hellfire Club card.", v: S.card, need: 1 },
+  { i: "🐉", n: "Survived the Vale", d: "Finish Eddie's campaign once.", v: S.endings, need: 1 },
+  { i: "📖", n: "Every Last Ending", d: "Find all 8 endings of the campaign.", v: S.endings, need: 8 },
   { i: "🔑", n: "Found the Gate", d: "Find the secret page.", v: S.secret ? 1 : 0, need: 1, hide: true },
+  { i: "🌈", n: "Room 11", d: "Find the room behind the room.", v: S.room, need: 1, hide: true },
 ];
 
 const RANKS = [[0, "🧇", "Newie"], [3, "🚲", "Bike Kid"], [6, "📻", "Walkie Operator"], [9, "🎲", "Party Member"],
                [12, "🎸", "Hellfire Member"], [15, "🔎", "Hawkins Detective"], [18, "🌀", "Upside Down Expert"],
-               [21, "⚡", "Hawkins Legend"], [23, "👑", "Queen of Hawkins"]];
+               [21, "⚡", "Hawkins Legend"], [25, "👑", "Queen of Hawkins"]];
 
 const got = BADGES.filter(b => b.v >= b.need).length;
 const rank = RANKS.filter(r => got >= r[0]).pop();

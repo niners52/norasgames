@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🌈 Room 11</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #efe6ff; --dim: #b9a7e0; --hot: #ff5fc8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif; line-height: 1.6;
+         background: radial-gradient(ellipse at 50% -10%, #341046, #140726 55%, #080312); }
+  main { max-width: 860px; margin: 0 auto; padding: 28px 18px 60px; }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(2rem, 9vw, 4rem); text-align: center;
+       margin: 10px 0 4px; letter-spacing: 2px;
+       background: linear-gradient(90deg, #ff2020, #ff8a00, #ffd54a, #6fff9c, #4fd2ff, #a66bff, #ff5fc8);
+       -webkit-background-clip: text; background-clip: text; color: transparent;
+       filter: drop-shadow(0 0 18px rgba(255, 95, 200, .5)); }
+  h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.3rem, 5vw, 2rem); margin: 30px 0 10px; }
+  .sub { text-align: center; color: var(--dim); margin-bottom: 8px; }
+  .card { border-radius: 18px; padding: 18px 20px; margin-bottom: 14px;
+          background: linear-gradient(160deg, rgba(52, 20, 72, .8), rgba(16, 7, 28, .92));
+          border: 1px solid rgba(166, 107, 255, .35); }
+  .card h3 { margin: 0 0 6px; color: #fff; font-family: "Noto Serif Display", Georgia, serif; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  ul { margin: 8px 0 0 18px; } li { margin-bottom: 6px; }
+  .btn, button { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+                 padding: 12px 20px; border-radius: 12px; border: 0; color: #fff;
+                 background: linear-gradient(135deg, #a66bff, #5a1fb0); }
+  .btn.ghost, button.ghost { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+  .codes { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px; }
+  .codes div { background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 10px 12px; }
+  .codes b { color: #ffd54a; }
+  .logline { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+  .logline input { flex: 1 1 200px; max-width: 260px; padding: 12px; border-radius: 10px; text-align: center; font: inherit;
+                   font-weight: 800; color: var(--ink); background: rgba(6, 2, 12, .85); border: 2px solid rgba(166, 107, 255, .45); }
+  .names { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .names span { background: rgba(255, 95, 200, .18); border: 1px solid rgba(255, 95, 200, .5); border-radius: 99px;
+                padding: 5px 13px; font-weight: 800; font-size: .9rem; }
+  footer { text-align: center; color: rgba(185, 167, 224, .5); padding: 22px 12px 10px; font-size: .88rem; }
+  .big { text-align: center; font-size: 3.4rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="big">🌈</div>
+  <h1>ROOM 11</h1>
+  <p class="sub">The room behind the room. Almost nobody gets this far.</p>
+
+  <div class="card" style="text-align:center">
+    <h3>🌈 You just unlocked the seventh secret</h3>
+    <p>A rainbow has been added to the little row of emojis at the bottom of <b>every page on this site</b>.
+      Tap it three times and Kali's illusion takes over the screen.<br>
+      Nobody who hasn't been in this room even has that emoji.</p>
+    <div class="row"><button id="tryrainbow">🌈 Try it right now</button></div>
+  </div>
+
+  <h2>✍️ The visitor log</h2>
+  <div class="card">
+    <p>Everyone who makes it in here signs the log. It's saved on this device only — so this is the list of people
+      who have been in Room 11 <em>on this iPad or computer</em>.</p>
+    <div class="logline">
+      <input id="signname" maxlength="16" placeholder="your name…" spellcheck="false" autocomplete="off">
+      <button id="sign">Sign the log</button>
+    </div>
+    <div class="names" id="names"></div>
+  </div>
+
+  <h2>🗝️ Every secret on this site</h2>
+  <div class="card">
+    <p>The complete list. You're the only one holding it.</p>
+    <div class="codes">
+      <div><b>🧇 EGGO</b> — waffles rain down the screen.</div>
+      <div><b>🕰️ VECNA</b> — four chimes, the screen cracks, an eye opens.</div>
+      <div><b>🎸 HELLFIRE</b> — the page catches fire and plays a chord.</div>
+      <div><b>🏃 RUN</b> — everything runs away from your finger.</div>
+      <div><b>💡 LIGHTS</b> — Joyce's alphabet spells a message.</div>
+      <div><b>🙃 FLIP</b> — the world turns over until you tap.</div>
+      <div><b>🌈 RAINBOW</b> — Kali's illusion. Room 11 only.</div>
+    </div>
+    <p style="margin-top:12px"><b>Two ways to set any of them off:</b> tap its emoji in the footer three times,
+      or type the word if you have a keyboard.</p>
+    <ul>
+      <li>The front door: <b>norasgames.com/upsidedown</b></li>
+      <li>The password box on the home page and the Hawkins home page — the answer is her name.</li>
+      <li>Tap the tiny <b>11</b> in any footer eleven times.</li>
+      <li>The old arrow code: ↑ ↑ ↓ ↓ ← → ← →</li>
+      <li>This room: the four emojis on the secret page, in the order the story happened.</li>
+      <li>Bookmark this page — <b>norasgames.com/room.html</b> — it works straight away once you know it.</li>
+    </ul>
+  </div>
+
+  <h2>📓 Things only you know</h2>
+  <div class="grid">
+    <div class="card"><h3>About the art</h3>
+      <p>Every monster, every character card, the whole map of Hawkins and all six game screens were drawn with code —
+        shapes, gradients and glow, no photos. The Demogorgon's head is seven petals drawn in a loop.</p></div>
+    <div class="card"><h3>About the quizzes</h3>
+      <p>The personality quiz used to give everyone Eddie, because ties always picked the first name on the list.
+        Now ties are broken by a coin flip. It was tested 400 times to make sure.</p></div>
+    <div class="card"><h3>About Vecna's List</h3>
+      <p>It isn't random. Your name is turned into a number, and that number picks your fear and your song —
+        which is why you get the same reading every time, and your friend gets a different one.</p></div>
+    <div class="card"><h3>About the campaign</h3>
+      <p>There are <b>eight</b> different endings to The Vale of Shadows. Two of them are only possible if you
+        pick up the right item early — and one of them you win by asking the monster a question.</p></div>
+  </div>
+
+  <div class="row">
+    <a class="btn" href="/secret.html">🌀 Back to the Upside Down</a>
+    <a class="btn ghost" href="/">🏠 Back to Nora's Games</a>
+    <a class="btn ghost" href="/stranger-things/index.html">🔦 Hawkins</a>
+  </div>
+</main>
+
+<footer>
+  Room 11 · built by Nora · if you're reading this, somebody trusted you with the code.
+  <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script>
+  try { localStorage.setItem("noraRoom", "1"); localStorage.setItem("noraSecret", "1"); } catch (e) {}
+
+  const load = () => { try { return JSON.parse(localStorage.getItem("noraRoomLog") || "[]"); } catch (e) { return []; } };
+  function drawNames() {
+    const list = load();
+    document.getElementById("names").innerHTML = list.length
+      ? list.map(n => `<span>${n.name} · ${n.when}</span>`).join("")
+      : '<span style="opacity:.6">nobody has signed yet</span>';
+  }
+  document.getElementById("sign").onclick = () => {
+    const el = document.getElementById("signname");
+    const name = el.value.trim().slice(0, 16);
+    if (!name) { el.focus(); return; }
+    const list = load();
+    list.push({ name, when: new Date().toLocaleDateString() });
+    try { localStorage.setItem("noraRoomLog", JSON.stringify(list.slice(-20))); } catch (e) {}
+    el.value = ""; drawNames();
+  };
+  document.getElementById("signname").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("sign").click(); });
+  drawNames();
+  document.getElementById("tryrainbow").onclick = () => { if (window.noraEggs) window.noraEggs.RAINBOW(); };
+</script>
+<script src="/eggs.js"></script>
+</body>
+</html>

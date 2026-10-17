@@ -55,6 +55,21 @@
   .facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-top: 18px; }
   .fact { border-radius: 16px; padding: 16px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); }
   .fact b { color: var(--yellow); display: block; font-size: 1.6rem; font-family: "Noto Serif Display", Georgia, serif; }
+  /* ---- locked transmission box ---- */
+  #gatebox { max-width: 560px; margin: 34px auto 6px; border-radius: 18px; padding: 20px; text-align: center;
+             background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(10, 4, 16, .96));
+             border: 1px solid rgba(255, 90, 90, .3); box-shadow: 0 12px 34px rgba(0, 0, 0, .5); }
+  #gatebox .gb-top { font-size: .66rem; letter-spacing: 2px; font-weight: 800; color: rgba(255, 150, 150, .6); }
+  #gatebox .gb-riddle { margin: 12px 0 14px; font-family: "Noto Serif Display", Georgia, serif; font-style: italic;
+                        line-height: 1.7; color: #ffdede; }
+  #gatebox .gb-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  #gatebox input { flex: 1 1 200px; max-width: 260px; padding: 13px 14px; border-radius: 10px; text-align: center;
+                   font: inherit; font-weight: 800; letter-spacing: 1px; color: var(--text);
+                   background: rgba(6, 2, 10, .9); border: 2px solid rgba(255, 90, 90, .35); }
+  #gatebox .gb-msg { min-height: 1.5em; margin-top: 10px; font-weight: 700; color: rgba(255, 200, 200, .8); }
+  #gatebox.open { border-color: var(--red); box-shadow: 0 0 46px rgba(255, 32, 32, .6); }
+  #gatebox.shake { animation: gbshake .36s; }
+  @keyframes gbshake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 </style>
 </head>
 <body>
@@ -71,10 +86,13 @@
     <a href="monsters.html">Monster Files</a>
     <a href="monster-maker.html">Monster Maker</a>
     <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
     <a href="vecna.html">Vecna's List</a>
     <a href="walkie.html">Walkie Talkie</a>
     <a href="quiz.html">Quizzes</a>
     <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="would-you-rather.html">Would You Rather</a>
     <a href="quotes.html">Who Said It?</a>
     <a href="games.html">Mini Games</a>
     <a href="badges.html">Trophies</a>
@@ -197,7 +215,25 @@
       <span class="emoji">🏆</span>
       <h3>Trophy Case</h3>
       <p>Every trophy you have earned anywhere on this site, and the rank you have climbed to.</p>
-      <span class="tag">23 trophies</span>
+      <span class="tag">27 trophies</span>
+    </a>
+    <a class="card" href="hellfire-card.html">
+      <span class="emoji">🤘</span>
+      <h3>Hellfire Club Card</h3>
+      <p>Make your own membership card: pick your class, roll your stats with a d20, and save it as a picture.</p>
+      <span class="tag">New</span>
+    </a>
+    <a class="card" href="campaign.html">
+      <span class="emoji">🐉</span>
+      <h3>The Vale of Shadows</h3>
+      <p>Eddie runs a whole campaign just for you. The dice decide what happens, and there are eight different endings.</p>
+      <span class="tag">8 endings</span>
+    </a>
+    <a class="card" href="would-you-rather.html">
+      <span class="emoji">🤔</span>
+      <h3>Would You Rather</h3>
+      <p>Fifteen impossible choices. After every one you find out which of the party picked the same thing as you.</p>
+      <span class="tag">Hawkins edition</span>
     </a>
     <a class="card" href="games.html">
       <span class="emoji">🎮</span>
@@ -234,6 +270,16 @@
     </div>
   </div>
 </main>
+
+<section id="gatebox">
+  <div class="gb-top">🔒 LOCKED TRANSMISSION · HAWKINS NATIONAL LABORATORY</div>
+  <p class="gb-riddle">"I am a girl, a number, and a door.<br>They put me in a tank and I opened the sky.<br>Say my name and the gate opens."</p>
+  <div class="gb-row">
+    <input id="gbin" maxlength="18" placeholder="type the password…" spellcheck="false" autocomplete="off">
+    <button id="gbgo">ENTER</button>
+  </div>
+  <p class="gb-msg" id="gbmsg"></p>
+</section>
 
 <footer>
   Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.<br>
@@ -310,6 +356,34 @@ document.getElementById("wall").addEventListener("click", e => {
   setTimeout(() => b.classList.remove("lit"), 600);
 });
 setTimeout(() => spell("WELCOME TO HAWKINS"), 900);
+</script>
+<script>
+  /* the password: say her name and the gate opens */
+  (function gateBox() {
+    const OK = ["eleven", "11", "011", "el", "jane", "janehopper", "janeives"];
+    const NOPE = ["Nothing happens.", "The lights stay off.", "…static.", "The gate does not move.", "Not that one."];
+    const box = document.getElementById("gatebox"), inp = document.getElementById("gbin"), msg = document.getElementById("gbmsg");
+    let tries = 0;
+    function go() {
+      const v = inp.value.toLowerCase().replace(/[^a-z0-9]/g, "");
+      if (!v) return;
+      if (OK.indexOf(v) >= 0) {
+        try { localStorage.setItem("noraSecret", "1"); } catch (e) {}
+        box.classList.add("open");
+        msg.textContent = "🌀 The gate is opening…";
+        document.documentElement.style.transition = "filter .8s";
+        document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
+        setTimeout(function () { location.href = "/secret.html"; }, 1200);
+        return;
+      }
+      tries++;
+      box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+      msg.textContent = tries >= 4 ? "…a hint, then: count to ten, then one more." : NOPE[Math.floor(Math.random() * NOPE.length)];
+      inp.select();
+    }
+    document.getElementById("gbgo").addEventListener("click", go);
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
+  })();
 </script>
 <script src="/secret.js"></script>
 <script src="/eggs.js"></script>
