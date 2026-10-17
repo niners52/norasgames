@@ -42,6 +42,7 @@
     <a href="characters.html">Characters</a>
     <a href="monsters.html">Monster Files</a>
     <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
     <a href="games.html">Mini Games</a>
   </nav>
 </header>
@@ -53,6 +54,7 @@
   <div class="tabs">
     <button id="tab-who" class="on">🔮 Which character are you?</button>
     <button id="tab-trivia">🧠 Hawkins trivia</button>
+    <a class="btn" href="quiz-hard.html" style="background:linear-gradient(135deg,#ffb347,#ff2020)">👑 Super hard quiz</a>
   </div>
 
   <section class="quizbox" id="quizbox"></section>
@@ -66,6 +68,7 @@
 <script>
 "use strict";
 /* ============ quiz 1: which character are you? ============ */
+/* every character shows up the same number of times, so nobody wins by accident */
 const WHO_Q = [
   { q: "Your friends are in trouble. What do you do?", a: [
     ["Go straight at the monster. No plan needed.", "el"],
@@ -80,41 +83,65 @@ const WHO_Q = [
   { q: "What do you do on a Saturday?", a: [
     ["Beat the high score at the arcade.", "max"],
     ["Run a Dungeons & Dragons campaign.", "eddie"],
-    ["Hang out with my best friend talking nonstop.", "robin"],
-    ["Stay home where it's quiet.", "el"]] },
+    ["Talk to my best friend for five straight hours.", "robin"],
+    ["Draw in my room where it's quiet.", "will"]] },
   { q: "Someone is being mean to a kid at school.", a: [
     ["Stare them down until they leave.", "el"],
     ["Make a joke so everyone laughs at them instead.", "eddie"],
-    ["Tell a teacher, then sit with the kid.", "robin"],
+    ["Tell them exactly what I think of them.", "erica"],
     ["Walk the kid home so nobody bothers them.", "steve"]] },
-  { q: "Pick a way to travel Hawkins.", a: [
-    ["Bike, with everyone riding together.", "dustin"],
+  { q: "Pick a way to travel around Hawkins.", a: [
+    ["Bike, with the whole party riding together.", "mike"],
     ["Skateboard, going way too fast.", "max"],
-    ["A beat-up van with music blasting.", "eddie"],
-    ["My own two feet, running.", "el"]] },
+    ["Roller skates, obviously.", "erica"],
+    ["Walking, so I can keep an eye out.", "lucas"]] },
   { q: "What's your superpower if you could pick?", a: [
     ["Moving things with my mind.", "el"],
     ["Knowing every fact about everything.", "dustin"],
     ["Understanding any language or code.", "robin"],
-    ["Being brave even when I'm scared.", "steve"]] },
+    ["Never missing what I aim at.", "lucas"]] },
   { q: "Your favorite part of the show?", a: [
-    ["The scary monsters.", "el"],
-    ["The friendship and the jokes.", "dustin"],
-    ["The music and the 80s stuff.", "eddie"],
+    ["The spooky Upside Down stuff.", "will"],
+    ["The adventure and the plans.", "mike"],
+    ["The music and the 80s clothes.", "eddie"],
     ["The mysteries and the clues.", "robin"]] },
   { q: "Pick a hiding spot in the Upside Down.", a: [
-    ["Castle Byers, my own fort.", "el"],
+    ["Castle Byers, my own fort.", "will"],
     ["A trailer with a guitar in it.", "eddie"],
-    ["The arcade, lights off.", "max"],
+    ["The arcade with the lights off.", "max"],
     ["Behind the biggest person I know.", "dustin"]] },
+  { q: "What's your job in the group?", a: [
+    ["The leader with the plan.", "mike"],
+    ["The one who keeps us all realistic.", "lucas"],
+    ["The one who says what everyone's thinking.", "erica"],
+    ["The one who drives and protects everybody.", "steve"]] },
+  { q: "What scares you the most?", a: [
+    ["Something waiting in the dark.", "will"],
+    ["Nothing. Next question.", "erica"],
+    ["Losing one of my friends.", "mike"],
+    ["Being left behind again.", "max"]] },
+  { q: "Pick a job in Hawkins.", a: [
+    ["Scooping ice cream at the mall.", "steve"],
+    ["Working the counter and reading everyone.", "robin"],
+    ["Negotiating for free stuff.", "erica"],
+    ["Fixing radios in my garage.", "dustin"]] },
+  { q: "Pick your Dungeons & Dragons character.", a: [
+    ["The Dungeon Master who runs it all.", "mike"],
+    ["Will the Wise, the wizard.", "will"],
+    ["A wild bard with a guitar.", "eddie"],
+    ["A knight with the best aim.", "lucas"]] },
 ];
 const WHO_R = {
   el: { face: "🧇", name: "Eleven", text: "Quiet, powerful, and done letting anybody push your friends around. You'd rather show up than talk about it, and you'd flip a van for the people you love." },
-  dustin: { face: "🦷", name: "Dustin", text: "The brain and the heart of the party. You know a weirdly specific fact for every situation, and you always want everyone in on the plan." },
+  mike: { face: "🎲", name: "Mike", text: "The leader with the plan. You're the one who says 'here's what we're going to do', and you never, ever give up on your friends." },
+  dustin: { face: "📻", name: "Dustin", text: "The brain and the heart of the party. You know a weirdly specific fact for every situation, and you always want everyone in on the plan." },
+  lucas: { face: "🎯", name: "Lucas", text: "The one with real aim and real sense. You ask the hard questions nobody else wants to ask, and you're right more often than you get credit for." },
+  will: { face: "🎨", name: "Will", text: "Gentle, brave and way tougher than anybody realizes. You feel things before everyone else does, and you'd go back into the dark for your friends." },
+  max: { face: "🛹", name: "Max", text: "Fast, fearless, and way tougher than people expect. You handle hard things on your own, but your friends always come find you anyway." },
   steve: { face: "🏏", name: "Steve", text: "The protector. You might act goofy, but when something scary shows up you put yourself in front of everyone else. Great hair, too." },
   robin: { face: "🎺", name: "Robin", text: "The one who cracks the code. You notice everything, talk a mile a minute, and you're loyal to your best friend forever." },
-  max: { face: "🛹", name: "Max", text: "Fast, fearless, and way tougher than people expect. You handle hard things on your own, but your friends always come find you anyway." },
   eddie: { face: "🎸", name: "Eddie", text: "Loud, funny, and totally yourself. People misjudge you until the moment it counts, and then you turn out to be the bravest one in the room." },
+  erica: { face: "🍨", name: "Erica", text: "Fearless, hilarious, and absolutely not scared of anybody. You say exactly what you think, and you always get your way in the end." },
 };
 
 /* ============ quiz 2: trivia ============ */
@@ -175,8 +202,10 @@ function choose(btn, q) {
 }
 function finish() {
   if (mode === "who") {
-    let best = "el", bestN = -1;
-    for (const k in scores) if (scores[k] > bestN) { bestN = scores[k]; best = k; }
+    /* if there's a tie, pick randomly between the tied characters so nobody always wins */
+    const top = Math.max(...Object.values(scores));
+    const tied = Object.keys(scores).filter(k => scores[k] === top);
+    const best = tied[Math.floor(Math.random() * tied.length)] || "el";
     const r = WHO_R[best];
     tune([523, 659, 784, 1047]);
     box.innerHTML = `

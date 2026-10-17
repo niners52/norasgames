@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Super Hard Quiz · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .quizbox { max-width: 780px; margin: 0 auto; border-radius: 20px; padding: clamp(18px, 4vw, 30px);
+             background: linear-gradient(160deg, rgba(40, 10, 24, .94), rgba(14, 6, 22, .96));
+             border: 1px solid rgba(255, 32, 32, .45); box-shadow: 0 14px 44px rgba(0, 0, 0, .6); }
+  .progress { height: 10px; border-radius: 999px; background: rgba(255, 255, 255, .12); overflow: hidden; margin-bottom: 18px; }
+  .progress div { height: 100%; background: linear-gradient(90deg, #ff2020, #ffd54a); width: 0; transition: width .35s; }
+  .qtext { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.15rem, 3.6vw, 1.6rem); margin-bottom: 16px; }
+  .answers { display: grid; gap: 10px; }
+  .answers button { text-align: left; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .18);
+                    box-shadow: none; font-size: 1rem; padding: 14px 16px; line-height: 1.4; }
+  .answers button:hover { background: rgba(255, 32, 32, .22); border-color: var(--red); }
+  .answers button.right { background: rgba(60, 200, 110, .32); border-color: #4cd97b; }
+  .answers button.wrong { background: rgba(255, 50, 50, .32); border-color: var(--red); }
+  .feedback { min-height: 1.6em; text-align: center; font-weight: 800; margin-top: 14px; }
+  .scoreline { font-size: 1.05rem; color: var(--dim); margin: 10px 0 16px; }
+  .result { text-align: center; }
+  .result .big { font-size: 4.4rem; line-height: 1; }
+  .result h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.7rem, 7vw, 2.8rem); margin: 6px 0; color: #fff;
+               text-shadow: 0 0 18px var(--red); }
+  .ladder { max-width: 560px; margin: 16px auto 0; text-align: left; }
+  .ladder div { display: flex; gap: 10px; align-items: center; padding: 7px 12px; border-radius: 10px; font-size: .92rem; color: var(--dim); }
+  .ladder div.you { background: rgba(255, 32, 32, .22); color: #fff; font-weight: 800; border: 1px solid var(--red); }
+  .ladder b { min-width: 70px; display: inline-block; color: var(--yellow); }
+  .warn { text-align: center; color: var(--yellow); font-weight: 800; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.9rem,7vw,3.6rem)">Super Hard Quiz</h1>
+  <p class="sub">12 brutal questions. Climb from Newie all the way to Queen of Hawkins. 👑</p>
+  <p class="warn">⚠️ Spoilers for every season, including the ending.</p>
+
+  <section class="quizbox" id="quizbox"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers. 🔦
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+/* ---------- the hard questions ---------- */
+const Q = [
+  { q: "What is Dustin's pet Demodog's full name?", a: ["Dart", "D'Artagnan", "Dustin Junior", "Demo"], r: 1,
+    why: "D'Artagnan, from The Three Musketeers, because Dustin fed him a Three Musketeers bar. Dart for short." },
+  { q: "What was Hopper's daughter's name?", a: ["Sara", "Sarah Jane", "Diane", "Joyce"], r: 0,
+    why: "Sara. She died of cancer years before the show starts." },
+  { q: "What is the name of Eddie Munson's band?", a: ["Hellfire", "Demogorgon", "Corroded Coffin", "Dungeon Masters"], r: 2,
+    why: "Corroded Coffin, who play at The Hideout." },
+  { q: "Which number was Vecna at Hawkins Lab?", a: ["One", "Two", "Eight", "Eleven"], r: 0,
+    why: "Henry Creel was subject One, the very first." },
+  { q: "What number is Kali, the girl Eleven finds in season 2?", a: ["Five", "Eight", "Nine", "Two"], r: 1,
+    why: "Eight. She can make people see things that aren't there." },
+  { q: "Where does Dustin's girlfriend Suzie live?", a: ["Indiana", "California", "Utah", "Nevada"], r: 2,
+    why: "Utah. Dustin built Cerebro to reach her radio." },
+  { q: "What is Barb's full name?", a: ["Barbara Holland", "Barbara Wheeler", "Barbara Hart", "Barbara Henderson"], r: 0,
+    why: "Barbara Holland, Nancy's best friend." },
+  { q: "What's the name of Will's fort in the woods?", a: ["Fort Byers", "Castle Byers", "Mirkwood", "Will's Keep"], r: 1,
+    why: "Castle Byers, built out of sticks and a sheet." },
+  { q: "Where does Steve work in season 4?", a: ["Scoops Ahoy", "Melvald's", "Family Video", "Surfer Boy Pizza"], r: 2,
+    why: "Family Video, with Robin, after the mall burned down." },
+  { q: "What date did Will Byers disappear?", a: ["October 31, 1983", "November 6, 1983", "July 4, 1985", "March 21, 1986"], r: 1,
+    why: "November 6, 1983. Season 5 marks the four-year anniversary of that night." },
+  { q: "What county is Hawkins in?", a: ["Roane County", "Hawkins County", "Lenora County", "Sullivan County"], r: 0,
+    why: "The fictional Roane County, Indiana." },
+  { q: "Who was Eleven's 'Papa' at the lab?", a: ["Dr. Owens", "Dr. Brenner", "Murray Bauman", "Dr. Alexei"], r: 1,
+    why: "Dr. Martin Brenner, the scientist who raised and tested her." },
+  { q: "What stuffed animal does Alexei win at the fair?", a: ["A giant panda", "Woody Woodpecker", "A pink elephant", "Scooby-Doo"], r: 1,
+    why: "A huge Woody Woodpecker, which he carries everywhere." },
+  { q: "What was Billy Hargrove's summer job in season 3?", a: ["Lifeguard", "Ice cream scooper", "Mechanic", "Video store clerk"], r: 0,
+    why: "Lifeguard at the Hawkins community pool." },
+  { q: "Where do Eleven and the Byers family move in season 4?", a: ["Lenora Hills, California", "Bloomington, Indiana", "Salt Lake City, Utah", "Reno, Nevada"], r: 0,
+    why: "Lenora Hills, California, where Eleven starts at a new school." },
+  { q: "Which trailer park does Eddie live in?", a: ["Forest Hills", "Roane Hills", "Hawkins Park", "Cherry Lane"], r: 0,
+    why: "Forest Hills Trailer Park, where Chrissy died." },
+  { q: "What's the name of the project that gives Eleven her powers back?", a: ["Project MKUltra", "The NINA Project", "Project Indigo", "Operation Starcourt"], r: 1,
+    why: "The NINA Project, the tank in the Nevada desert." },
+  { q: "What's the name of Nancy's newspaper in season 4?", a: ["The Hawkins Post", "The Weekly Streak", "The Hawkins Herald", "The Indiana Times"], r: 0,
+    why: "The Hawkins Post, where she's a reporter." },
+  { q: "What does Dustin name his giant radio?", a: ["Cerebro", "Bathtub", "The Tower", "Radio Free Hawkins"], r: 0,
+    why: "Cerebro, named after the X-Men machine." },
+  { q: "What is the title of the very last episode?", a: ["The Piggyback", "The Bridge", "The Rightside Up", "Escape From Camazotz"], r: 2,
+    why: "The Rightside Up, released on New Year's Eve 2025." },
+  { q: "Who is Robin's crush in season 3?", a: ["Nancy Wheeler", "Tammy Thompson", "Chrissy Cunningham", "Heather Holloway"], r: 1,
+    why: "Tammy Thompson, the girl who sang at the talent show." },
+  { q: "Which teacher helps the kids with science all the time?", a: ["Mr. Clarke", "Ms. Kelley", "Mr. Wheeler", "Mr. Munson"], r: 0,
+    why: "Mr. Clarke, who explains the Upside Down with a plate and a flea." },
+];
+
+/* ---------- the ranks ---------- */
+const RANKS = [
+  { min: 0,   emoji: "🧇", name: "Newie",                 text: "You just moved to Hawkins. Keep the curtains closed and keep watching!" },
+  { min: 15,  emoji: "🚲", name: "Bike Kid",              text: "You know the streets, but the real secrets are still out there." },
+  { min: 30,  emoji: "📻", name: "Walkie Operator",       text: "You're on channel 4 and listening. Over!" },
+  { min: 45,  emoji: "🎲", name: "Party Member",          text: "The party would let you sit at the table. Rule one: friends don't lie." },
+  { min: 60,  emoji: "🎸", name: "Hellfire Club Member",  text: "Eddie would hand you a character sheet right now." },
+  { min: 70,  emoji: "🐉", name: "Dungeon Master",        text: "You run the campaign. People listen when you talk about Hawkins." },
+  { min: 80,  emoji: "🔎", name: "Hawkins Detective",     text: "Nancy would take you along on the investigation." },
+  { min: 90,  emoji: "🌀", name: "Upside Down Expert",    text: "You've basically been there. Watch your neck." },
+  { min: 95,  emoji: "⚡", name: "Hawkins Legend",        text: "Almost nobody gets this far. Eleven-level knowledge." },
+  { min: 100, emoji: "👑", name: "Queen of Hawkins",      text: "A perfect score. Nobody knows Hawkins better than you. (King of Hawkins if you'd rather!)" },
+];
+const rankFor = pct => RANKS.filter(r => pct >= r.min).pop();
+
+/* ---------- run the quiz ---------- */
+const box = document.getElementById("quizbox");
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+const COUNT = 12;
+let qs = [], idx = 0, correct = 0;
+
+function start() {
+  qs = shuffle(Q).slice(0, COUNT); idx = 0; correct = 0; render();
+}
+function render() {
+  if (idx >= qs.length) return finish();
+  const q = qs[idx];
+  box.innerHTML = `
+    <div class="progress"><div style="width:${idx / qs.length * 100}%"></div></div>
+    <p style="color:var(--dim);font-weight:800">Question ${idx + 1} of ${qs.length} · ${correct} right so far</p>
+    <p class="qtext">${q.q}</p>
+    <div class="answers">${q.a.map((t, i) => `<button data-i="${i}">${t}</button>`).join("")}</div>
+    <p class="feedback" id="fb"></p>`;
+  box.querySelectorAll(".answers button").forEach(b => { b.onclick = () => choose(b, q); });
+}
+function choose(btn, q) {
+  box.querySelectorAll(".answers button").forEach(b => b.disabled = true);
+  const ok = +btn.dataset.i === q.r;
+  btn.classList.add(ok ? "right" : "wrong");
+  if (!ok) box.querySelector(`.answers button[data-i="${q.r}"]`).classList.add("right");
+  if (ok) { correct++; tune([660, 880]); } else beep(170, .3, "sawtooth", .08);
+  document.getElementById("fb").textContent = (ok ? "✅ Correct! " : "❌ Nope. ") + q.why;
+  setTimeout(() => { idx++; render(); }, 2100);
+}
+function finish() {
+  const pct = Math.round(correct / qs.length * 100), rank = rankFor(pct);
+  let best = pct;
+  try {
+    best = Math.max(pct, +(localStorage.getItem("stHardBest") || 0));
+    localStorage.setItem("stHardBest", best);
+  } catch (e) {}
+  tune(pct >= 90 ? [523, 659, 784, 1047, 1319] : pct >= 60 ? [523, 659, 784] : [392, 330, 262]);
+  box.innerHTML = `
+    <div class="result">
+      <div class="big">${rank.emoji}</div>
+      <h3>${rank.name}</h3>
+      <p class="scoreline">You got <b>${correct} of ${qs.length}</b> right. That's <b>${pct}%</b>.<br>${rank.text}<br>
+        Your best ever: ${bestRankLine(best)}</p>
+      <div class="ladder">
+        ${RANKS.map(r => `<div class="${r === rank ? "you" : ""}"><b>${r.min}%+</b> ${r.emoji} ${r.name}</div>`).reverse().join("")}
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button onclick="start()">🔁 Try again</button>
+        <a class="btn ghost" href="quiz.html" style="background:rgba(255,255,255,.1)">🔮 Easier quizzes</a>
+      </div>
+    </div>`;
+}
+function bestRankLine(best) { const r = rankFor(best); return `${best}% · ${r.emoji} ${r.name}`; }
+start();
+</script>
+</body>
+</html>
