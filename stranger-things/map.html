@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map of Hawkins · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗺️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .mapwrap { position: relative; max-width: 1000px; margin: 18px auto 0; border-radius: 18px; overflow: hidden;
+             border: 2px solid #8a6a46; box-shadow: 0 16px 44px rgba(0, 0, 0, .6); }
+  .mapwrap svg { display: block; width: 100%; height: auto; }
+  .pin { position: absolute; transform: translate(-50%, -100%); cursor: pointer; text-align: center; z-index: 2;
+         transition: transform .15s, filter .15s; }
+  .pin:hover, .pin.on { transform: translate(-50%, -112%) scale(1.12); filter: drop-shadow(0 0 10px #fff); }
+  .pin .dot { width: 38px; height: 38px; border-radius: 50% 50% 50% 4px; transform: rotate(45deg); display: flex;
+              align-items: center; justify-content: center; background: linear-gradient(135deg, #ff4040, #a60e2f);
+              box-shadow: 0 4px 10px rgba(0, 0, 0, .55); border: 2px solid #ffd9d9; }
+  .pin .dot span { transform: rotate(-45deg); font-size: 1.1rem; }
+  .pin.on .dot { background: linear-gradient(135deg, #ffd54a, #ff9f3b); }
+  .pin b { display: block; font-size: .68rem; margin-top: 3px; color: #fff; text-shadow: 0 1px 4px #000, 0 0 8px #000;
+           white-space: nowrap; }
+  @media (max-width: 720px) { .pin .dot { width: 28px; height: 28px; } .pin .dot span { font-size: .85rem; } .pin b { display: none; } }
+
+  .panel { margin-top: 18px; border-radius: 18px; padding: 20px 22px; min-height: 180px;
+           background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+           border: 1px solid rgba(255, 90, 90, .3); }
+  .panel h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.3rem, 4vw, 2rem); color: #fff;
+              text-shadow: 0 0 12px rgba(255, 32, 32, .8); }
+  .panel .where { color: var(--blue); font-weight: 800; font-size: .9rem; margin-bottom: 8px; }
+  .panel ul { margin: 10px 0 0 18px; color: var(--dim); }
+  .panel li { margin-bottom: 5px; }
+  .seasons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .seasons span { font-size: .72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px;
+                  background: rgba(79, 210, 255, .16); border: 1px solid rgba(79, 210, 255, .45); color: var(--blue); }
+  body.flipped .mapwrap { filter: hue-rotate(200deg) saturate(.6) brightness(.72) contrast(1.15); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="games.html">Mini Games</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.8rem,7vw,3.6rem)">Map of Hawkins</h1>
+  <p class="sub">Tap any pin to find out what happened there. 📍</p>
+  <div class="row" style="margin-top:12px">
+    <button id="randomPlace">🎲 Take me somewhere</button>
+    <button id="flip" class="ghost">🙃 Flip the map upside down</button>
+  </div>
+
+  <div class="mapwrap" id="maprap">
+    <svg viewBox="0 0 1000 680" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2a3a22"/><stop offset=".5" stop-color="#1f2e1c"/><stop offset="1" stop-color="#172417"/>
+        </linearGradient>
+        <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#2b5f7a"/><stop offset="1" stop-color="#19405a"/>
+        </linearGradient>
+        <filter id="mblur"><feGaussianBlur stdDeviation="8"/></filter>
+      </defs>
+      <rect width="1000" height="680" fill="url(#ground)"/>
+
+      <!-- forest -->
+      <g fill="#162416">
+        <rect x="0" y="0" width="330" height="300"/><rect x="620" y="330" width="380" height="350"/>
+        <rect x="0" y="430" width="240" height="250"/>
+      </g>
+      <g fill="#0f1b10" id="trees"></g>
+
+      <!-- lake and quarry -->
+      <path d="M700 90 C790 60 900 90 930 150 C950 200 880 250 800 240 C720 230 660 170 700 90 Z" fill="url(#water)"/>
+      <text x="815" y="165" text-anchor="middle" fill="#bfe8ff" font-size="19" font-family="Nunito,sans-serif" opacity=".8">Lover's Lake</text>
+      <ellipse cx="150" cy="560" rx="90" ry="58" fill="#3a3a44"/><ellipse cx="150" cy="566" rx="64" ry="38" fill="url(#water)"/>
+      <text x="150" y="505" text-anchor="middle" fill="#cfd8e8" font-size="17" font-family="Nunito,sans-serif" opacity=".8">The Quarry</text>
+
+      <!-- roads -->
+      <g stroke="#4a4438" stroke-width="22" fill="none" stroke-linecap="round">
+        <path d="M0 330 H1000"/><path d="M470 0 V680"/><path d="M180 330 C230 420 330 450 470 470"/>
+        <path d="M470 180 C560 200 650 250 700 330"/><path d="M620 470 C700 500 760 540 800 600"/>
+      </g>
+      <g stroke="#6b6450" stroke-width="3" stroke-dasharray="16 16" fill="none">
+        <path d="M0 330 H1000"/><path d="M470 0 V680"/>
+      </g>
+      <text x="250" y="316" fill="#d8d0b8" font-size="16" font-family="Nunito,sans-serif" opacity=".65">Cornwallis Rd</text>
+      <text x="486" y="120" fill="#d8d0b8" font-size="16" font-family="Nunito,sans-serif" opacity=".65">Mirkwood</text>
+
+      <!-- town blocks -->
+      <g fill="#30302c" stroke="#45443c" stroke-width="2">
+        <rect x="330" y="350" width="90" height="60" rx="4"/><rect x="330" y="430" width="70" height="50" rx="4"/>
+        <rect x="520" y="350" width="80" height="55" rx="4"/><rect x="520" y="420" width="60" height="45" rx="4"/>
+        <rect x="360" y="230" width="80" height="55" rx="4"/><rect x="520" y="230" width="70" height="50" rx="4"/>
+        <rect x="240" y="150" width="70" height="50" rx="4"/>
+      </g>
+      <g fill="#ffcf6a" opacity=".55" id="townlights"></g>
+      <text x="420" y="640" text-anchor="middle" fill="#e8dcc0" font-size="30" font-family="Noto Serif Display,Georgia,serif"
+            opacity=".5" letter-spacing="7">HAWKINS, INDIANA</text>
+    </svg>
+
+    <div id="pins"></div>
+  </div>
+
+  <section class="panel" id="panel">
+    <h3>Pick a place 📍</h3>
+    <p style="color:var(--dim)">Tap any red pin on the map and the file for that place opens here.</p>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script>
+"use strict";
+/* trees in the forest and lights in the town windows */
+document.getElementById("trees").innerHTML = Array.from({ length: 70 }, (_, i) => {
+  const zones = [[10, 10, 310, 280], [630, 340, 350, 320], [10, 440, 220, 220]];
+  const z = zones[i % 3], x = z[0] + ((i * 97) % z[2]), y = z[1] + ((i * 61) % z[3]);
+  return `<path d="M${x} ${y} l-11 22 h22 Z M${x} ${y + 10} l-14 26 h28 Z"/>`;
+}).join("");
+document.getElementById("townlights").innerHTML = Array.from({ length: 26 }, (_, i) =>
+  `<rect x="${336 + (i % 9) * 28}" y="${236 + Math.floor(i / 9) * 62}" width="7" height="7"/>`).join("");
+
+const PLACES = [
+  { x: 24, y: 23, e: "🏢", n: "Hawkins Lab", where: "Hawkins National Laboratory",
+    s: ["Season 1", "Season 2"], f: ["Where Eleven grew up as test subject 011 with Dr. Brenner.",
+    "Eleven reached out with her powers here in 1983 and tore open the very first gate.",
+    "The Mothergate in the basement was sealed shut by Eleven at the end of season 2."] },
+  { x: 47, y: 12, e: "🌲", n: "Mirkwood", where: "The road through the woods",
+    s: ["Season 1"], f: ["The kids named this road after the forest in The Hobbit.",
+    "Will was riding home along here when the Demogorgon chased him.", "Nancy and Jonathan hunted the monster in these woods."] },
+  { x: 36, y: 38, e: "🏫", n: "Middle School", where: "Hawkins Middle School",
+    s: ["Season 1", "Season 2"], f: ["Home of the AV club and Mr. Clarke, the best science teacher in Indiana.",
+    "The Snow Ball happened in the gym in December 1984.", "Eleven hid in the AV room and used the radio to find Will."] },
+  { x: 55, y: 36, e: "🏀", n: "Hawkins High", where: "Hawkins High School",
+    s: ["Season 4"], f: ["The Hellfire Club met in the drama room to play Dungeons & Dragons.",
+    "Jason Carver and the Tigers basketball team turned the town against Eddie.", "Chrissy was a cheerleader here."] },
+  { x: 62, y: 57, e: "🛍️", n: "Starcourt Mall", where: "Starcourt Mall",
+    s: ["Season 3"], f: ["Opened in 1985 and took all the business from the shops downtown.",
+    "A secret Russian base was built underneath it to reopen the gate.",
+    "The Mind Flayer attacked here and the mall burned down on July 4, 1985."] },
+  { x: 52, y: 62, e: "🍦", n: "Scoops Ahoy", where: "Inside Starcourt Mall",
+    s: ["Season 3"], f: ["The sailor-themed ice cream shop where Steve and Robin worked.",
+    "Robin cracked the Russian code she heard over the shop's radio.", "Erica got free ice cream for crawling through the air vents."] },
+  { x: 33, y: 55, e: "🕹️", n: "Palace Arcade", where: "The Palace Arcade",
+    s: ["Season 2"], f: ["Dustin's favorite place, home of Dragon's Lair.",
+    "A mystery player called MADMAX beat all of Dustin's high scores. It was Max.",
+    "Keith ran the counter and traded hints for information."] },
+  { x: 18, y: 46, e: "🏠", n: "Byers House", where: "The Byers family home",
+    s: ["Season 1", "Season 2"], f: ["Joyce painted the alphabet on the wall and hung Christmas lights so Will could answer.",
+    "The Demogorgon came through the wall in the living room.", "Will drew the vines of the Upside Down all over the house."] },
+  { x: 44, y: 46, e: "🏡", n: "Wheeler House", where: "Mike's house",
+    s: ["Every season"], f: ["The basement is the party's headquarters and D&D table.",
+    "Eleven hid in the blanket fort here when Mike first found her.", "Nancy and Holly live here too."] },
+  { x: 70, y: 22, e: "🏚️", n: "Creel House", where: "The old Creel house",
+    s: ["Season 4"], f: ["Victor Creel's family died here in 1959, and everyone called it cursed.",
+    "It's really where Henry Creel, who became Vecna, lived as a boy.",
+    "In the Upside Down version of this house, Vecna made his lair."] },
+  { x: 29, y: 66, e: "🚐", n: "Forest Hills", where: "Forest Hills Trailer Park",
+    s: ["Season 4"], f: ["Eddie Munson lives here with his uncle Wayne.",
+    "Chrissy was Vecna's first victim, inside Eddie's trailer.", "A gate opened right on the ceiling of that trailer."] },
+  { x: 81, y: 20, e: "🚤", n: "Lover's Lake", where: "Lover's Lake",
+    s: ["Season 4"], f: ["Chrissy's death opened a gate under the water here.",
+    "Steve swam down and got dragged through it by Demobats.", "Nancy, Robin and Eddie followed him into the Upside Down."] },
+  { x: 86, y: 44, e: "🪨", n: "Skull Rock", where: "Out in the woods",
+    s: ["Season 4"], f: ["A big rock shaped like a skull, used as a meeting spot.",
+    "Mike and Will had their big talk about the painting here.", "A classic Hawkins landmark for sneaking off to."] },
+  { x: 15, y: 82, e: "⛏️", n: "The Quarry", where: "Sattler Quarry",
+    s: ["Season 1"], f: ["This is where the fake body of Will was found, floating in the water.",
+    "The bullies made Mike ride his bike off the cliff here, and Eleven caught him.",
+    "A grim place with a lot of history in town."] },
+  { x: 40, y: 27, e: "🛒", n: "Melvald's", where: "Melvald's General Store",
+    s: ["Season 1", "Season 2"], f: ["Joyce works behind the counter here.",
+    "She bought every string of Christmas lights in the store to talk to Will.", "Right in the middle of downtown Hawkins."] },
+  { x: 57, y: 27, e: "📼", n: "Family Video", where: "Family Video",
+    s: ["Season 4"], f: ["Steve and Robin's job after the mall burned down.",
+    "The gang used the back room as their new headquarters.", "Keith from the arcade works here too, still trading favors."] },
+  { x: 26, y: 15, e: "🛖", n: "Hopper's Cabin", where: "Hopper's cabin in the woods",
+    s: ["Season 2", "Season 3"], f: ["Hopper's grandfather's old hunting cabin, hidden deep in the woods.",
+    "Eleven hid here for almost a year with rules taped to the wall.", "The front door had a secret knock."] },
+  { x: 64, y: 70, e: "🚔", n: "Police Station", where: "Hawkins Police Station",
+    s: ["Season 1"], f: ["Chief Hopper's office, where mornings are for coffee and contemplation.",
+    "Joyce came here first when Will went missing, and nobody believed her.", "Flo kept the whole place running."] },
+];
+
+/* drop the pins on the map */
+const pinBox = document.getElementById("pins");
+pinBox.innerHTML = PLACES.map((p, i) =>
+  `<div class="pin" data-i="${i}" style="left:${p.x}%;top:${p.y}%"><div class="dot"><span>${p.e}</span></div><b>${p.n}</b></div>`).join("");
+
+const panel = document.getElementById("panel");
+function show(i) {
+  const p = PLACES[i];
+  document.querySelectorAll(".pin").forEach(el => el.classList.toggle("on", +el.dataset.i === i));
+  panel.innerHTML = `
+    <div class="where">${p.e} ${p.where}</div>
+    <h3>${p.n}</h3>
+    <div class="seasons">${p.s.map(s => `<span>${s}</span>`).join("")}</div>
+    <ul>${p.f.map(f => `<li>${f}</li>`).join("")}</ul>`;
+  panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  beep(500 + i * 18, .12, "triangle", .07);
+}
+pinBox.addEventListener("click", e => {
+  const pin = e.target.closest(".pin");
+  if (pin) show(+pin.dataset.i);
+});
+document.getElementById("randomPlace").onclick = () => show(Math.floor(Math.random() * PLACES.length));
+document.getElementById("flip").onclick = e => {
+  document.body.classList.toggle("flipped");
+  const on = document.body.classList.contains("flipped");
+  e.currentTarget.textContent = on ? "🙂 Back to normal Hawkins" : "🙃 Flip the map upside down";
+  beep(on ? 180 : 700, .3, "triangle");
+};
+</script>
+<script src="/secret.js"></script>
+</body>
+</html>
