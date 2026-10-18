@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🕯️ The Last Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #f2e9d8; --dim: #bba98c; --gold: #ffd54a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif; line-height: 1.65;
+         background: radial-gradient(ellipse at 50% -5%, #2a2012, #140e08 55%, #070504); }
+  main { max-width: 800px; margin: 0 auto; padding: 26px 18px 60px; }
+  .flame { text-align: center; font-size: 3.4rem; animation: flick 2.2s infinite; }
+  @keyframes flick { 0%, 100% { opacity: 1; transform: scale(1); } 45% { opacity: .78; transform: scale(.95) rotate(-3deg); }
+                     70% { opacity: 1; transform: scale(1.04) rotate(2deg); } }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.9rem, 8vw, 3.4rem); text-align: center;
+       margin: 6px 0 2px; letter-spacing: 3px; color: #fff; text-shadow: 0 0 22px rgba(255, 213, 74, .6); }
+  .sub { text-align: center; color: var(--dim); margin-bottom: 20px; }
+  h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.25rem, 5vw, 1.9rem); margin: 28px 0 10px; }
+  .card { border-radius: 18px; padding: 18px 20px; margin-bottom: 14px;
+          background: linear-gradient(160deg, rgba(60, 46, 24, .55), rgba(18, 13, 7, .92));
+          border: 1px solid rgba(255, 213, 74, .3); }
+  .card h3 { margin: 0 0 6px; color: #fff; font-family: "Noto Serif Display", Georgia, serif; }
+  textarea, input { width: 100%; padding: 13px; border-radius: 12px; font: inherit; font-weight: 700; color: var(--ink);
+                    background: rgba(8, 5, 3, .85); border: 2px solid rgba(255, 213, 74, .35); resize: vertical; }
+  .btn, button { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+                 padding: 12px 20px; border-radius: 12px; border: 0; color: #2a1d05;
+                 background: linear-gradient(135deg, #ffd54a, #e09b16); }
+  .btn.ghost, button.ghost { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); color: var(--ink); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+  .linkout { margin-top: 12px; word-break: break-all; background: rgba(255, 213, 74, .1);
+             border: 1px dashed rgba(255, 213, 74, .5); border-radius: 12px; padding: 12px; display: none; font-size: .9rem; }
+  .linkout.show { display: block; }
+  ul { margin: 8px 0 0 18px; } li { margin-bottom: 6px; }
+  footer { text-align: center; color: rgba(187, 169, 140, .5); padding: 22px 12px 10px; font-size: .86rem; }
+</style>
+</head>
+<body>
+<main>
+  <div class="flame">🕯️</div>
+  <h1>THE LAST ROOM</h1>
+  <p class="sub">Three doors deep. There is nothing after this one.</p>
+
+  <div class="card" style="text-align:center">
+    <h3>🤫 You held on long enough</h3>
+    <p>Most people tap. You held. That's the whole trick, and it's the only way in here.</p>
+  </div>
+
+  <h2>💡 Send a message in the lights</h2>
+  <div class="card">
+    <p>Write anything. You'll get a link. Whoever opens it sees your words spelled out, one bulb at a time,
+      on Joyce's alphabet wall — and they never find out how you made it.</p>
+    <p style="color:var(--dim);font-size:.9rem">The message hides inside the link itself. It isn't saved anywhere,
+      not even here, so nobody can read it except the person you send it to.</p>
+    <textarea id="msg" rows="3" maxlength="90" placeholder="FRIENDS DONT LIE"></textarea>
+    <div class="row">
+      <button id="make">💡 Make my secret link</button>
+      <button class="ghost" id="preview">▶ Watch it first</button>
+    </div>
+    <div class="linkout" id="out"></div>
+  </div>
+
+  <h2>🗝️ What this room is for</h2>
+  <div class="card">
+    <ul>
+      <li>Nobody finds this room by accident. You have to be told, and then you have to hold.</li>
+      <li>The way in: in Room 11, <b>press and hold the big rainbow for three seconds</b>.</li>
+      <li>Straight link, if you'd rather: <b>norasgames.com/vault.html</b></li>
+      <li>Everyone you give either of those to can send light messages too. Choose carefully.</li>
+    </ul>
+  </div>
+
+  <div class="card" style="text-align:center;border-color:rgba(255,213,74,.5)">
+    <h3>📓 The last secret</h3>
+    <p>This whole website — every monster, every game, every hidden room — was built from nothing
+      by a kid who just said <i>"I want to make a Stranger Things website for fans."</i></p>
+    <p style="color:var(--gold);font-weight:800">That's you. Friends don't lie. 💛</p>
+  </div>
+
+  <div class="row">
+    <a class="btn ghost" href="room.html">🌈 Back to Room 11</a>
+    <a class="btn ghost" href="secret.html">🌀 The Upside Down</a>
+    <a class="btn ghost" href="index.html">🏠 Nora's Games</a>
+  </div>
+</main>
+
+<footer>
+  The Last Room · built by Nora
+  <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script>
+  try { localStorage.setItem("noraVault", "1"); localStorage.setItem("noraRoom", "1"); localStorage.setItem("noraSecret", "1"); } catch (e) {}
+
+  function encode(t) {
+    const b64 = btoa(unescape(encodeURIComponent(t)));
+    return encodeURIComponent(b64.replace(/\+/g, "-").replace(/\//g, "_"));
+  }
+  function linkFor(t) {
+    const base = location.href.replace(/[^/]*$/, "");
+    return base + "message.html#" + encode(t);
+  }
+  document.getElementById("make").onclick = async () => {
+    const t = document.getElementById("msg").value.trim();
+    if (!t) { document.getElementById("msg").focus(); return; }
+    const url = linkFor(t);
+    const out = document.getElementById("out");
+    out.classList.add("show");
+    out.innerHTML = `<b style="color:var(--gold)">Here's your secret link — send this to anyone:</b><br>
+      <span id="theurl">${url}</span>
+      <div class="row">
+        <button id="copy">📋 Copy it</button>
+        <a class="btn ghost" href="${url}" target="_blank" rel="noopener">▶ Open it</a>
+      </div>`;
+    document.getElementById("copy").onclick = async () => {
+      try { await navigator.clipboard.writeText(url); document.getElementById("copy").textContent = "✅ Copied!"; }
+      catch (e) {
+        const r = document.createRange(); r.selectNode(document.getElementById("theurl"));
+        getSelection().removeAllRanges(); getSelection().addRange(r);
+        document.getElementById("copy").textContent = "👆 Now press and hold to copy";
+      }
+    };
+  };
+  document.getElementById("preview").onclick = () => {
+    const t = document.getElementById("msg").value.trim();
+    if (!t) { document.getElementById("msg").focus(); return; }
+    location.href = linkFor(t);
+  };
+</script>
+<script src="eggs.js"></script>
+</body>
+</html>

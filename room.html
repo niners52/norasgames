@@ -44,9 +44,14 @@
 </head>
 <body>
 <main>
-  <div class="big">🌈</div>
+  <div class="big" id="bigbow" style="cursor:pointer;user-select:none;-webkit-user-select:none;
+       -webkit-tap-highlight-color:transparent;transition:transform .2s,filter .2s">🌈</div>
+  <div id="holdbar" style="height:6px;max-width:220px;margin:0 auto;border-radius:99px;background:rgba(255,255,255,.1);
+       overflow:hidden;opacity:0;transition:opacity .3s"><div id="holdfill" style="height:100%;width:0;
+       background:linear-gradient(90deg,#ff2020,#ffd54a,#6fff9c,#4fd2ff,#a66bff);transition:width .1s"></div></div>
   <h1>ROOM 11</h1>
   <p class="sub">The room behind the room. Almost nobody gets this far.</p>
+  <p class="sub" style="font-size:.9rem;opacity:.75"><em>Some things you can't tap. You have to hold on to them.</em></p>
 
   <div class="card" style="text-align:center">
     <h3>🌈 You just unlocked the seventh secret</h3>
@@ -108,9 +113,9 @@
   </div>
 
   <div class="row">
-    <a class="btn" href="/secret.html">🌀 Back to the Upside Down</a>
-    <a class="btn ghost" href="/">🏠 Back to Nora's Games</a>
-    <a class="btn ghost" href="/stranger-things/index.html">🔦 Hawkins</a>
+    <a class="btn" href="secret.html">🌀 Back to the Upside Down</a>
+    <a class="btn ghost" href="index.html">🏠 Back to Nora's Games</a>
+    <a class="btn ghost" href="stranger-things/index.html">🔦 Hawkins</a>
   </div>
 </main>
 
@@ -141,7 +146,54 @@
   document.getElementById("signname").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("sign").click(); });
   drawNames();
   document.getElementById("tryrainbow").onclick = () => { if (window.noraEggs) window.noraEggs.RAINBOW(); };
+
+  /* ---- the third door: press and hold the big rainbow for three seconds ---- */
+  (function lastDoor() {
+    const bow = document.getElementById("bigbow"), bar = document.getElementById("holdbar"), fill = document.getElementById("holdfill");
+    let t0 = 0, raf = 0, done = false;
+    const HOLD = 3000;
+    function tick() {
+      const p = Math.min(1, (Date.now() - t0) / HOLD);
+      fill.style.width = (p * 100) + "%";
+      bow.style.transform = "scale(" + (1 + p * .5) + ")";
+      bow.style.filter = "drop-shadow(0 0 " + (p * 34) + "px #fff)";
+      if (p >= 1 && !done) {
+        done = true;
+        document.documentElement.style.transition = "filter 1s";
+        document.documentElement.style.filter = "brightness(2.4) saturate(2)";
+        setTimeout(function () { location.href = "vault.html"; }, 900);
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    function start(e) {
+      e.preventDefault();
+      if (done) return;
+      t0 = Date.now(); bar.style.opacity = "1";
+      cancelAnimationFrame(raf); tick();
+    }
+    function stop() {
+      if (done) return;
+      cancelAnimationFrame(raf);
+      bar.style.opacity = "0"; fill.style.width = "0";
+      bow.style.transform = ""; bow.style.filter = "";
+    }
+    bow.addEventListener("pointerdown", start);
+    ["pointerup", "pointercancel", "pointerleave"].forEach(function (ev) { bow.addEventListener(ev, stop); });
+    bow.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+  })();
+
+  /* people who already found the last room get a way straight back */
+  try {
+    if (localStorage.getItem("noraVault") === "1") {
+      const r = document.querySelector(".row");
+      const a = document.createElement("a");
+      a.className = "btn"; a.href = "vault.html"; a.textContent = "🕯️ The Last Room";
+      a.style.background = "linear-gradient(135deg,#ffd54a,#e09b16)"; a.style.color = "#2a1d05";
+      r.insertBefore(a, r.firstChild);
+    }
+  } catch (e) {}
 </script>
-<script src="/eggs.js"></script>
+<script src="eggs.js"></script>
 </body>
 </html>

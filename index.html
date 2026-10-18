@@ -234,7 +234,7 @@
           msg.textContent = "🌀 The gate is opening…";
           document.documentElement.style.transition = "filter .8s";
           document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-          setTimeout(function () { location.href = "/secret.html"; }, 1200);
+          setTimeout(function () { location.href = "secret.html"; }, 1200);
           return;
         }
         tries++;
@@ -248,7 +248,7 @@
       inp.addEventListener("keydown", function (e) { if (e.key === "Enter") go(); });
     })();
   </script>
-<script src="/secret.js"></script>
-<script src="/eggs.js"></script>
+<script src="secret.js"></script>
+<script src="eggs.js"></script>
 </body>
 </html>

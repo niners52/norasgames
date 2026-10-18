@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>💡 A message for you</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #ffe9e9; --dim: #b9a7e0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif;
+         background: radial-gradient(ellipse at 50% -10%, #2a0f1c, #140712 55%, #070309);
+         display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.4rem, 5vw, 2.2rem); text-align: center;
+       color: #fff; text-shadow: 0 0 20px #ff2020; margin: 0 0 4px; }
+  .sub { color: var(--dim); text-align: center; margin-bottom: 22px; }
+  .wall { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; max-width: 760px;
+          background: rgba(255, 255, 255, .03); border-radius: 20px; padding: 20px 16px;
+          border: 1px solid rgba(255, 255, 255, .08); }
+  .bulbwrap { display: flex; flex-direction: column; align-items: center; width: 34px; }
+  .bulb { width: 18px; height: 25px; border-radius: 50% 50% 44% 44%; opacity: .16;
+          transition: opacity .1s, box-shadow .1s, transform .1s; }
+  .bulb.on { opacity: 1; transform: scale(1.2); }
+  .letter { font-size: .72rem; font-weight: 800; color: rgba(255, 233, 233, .5); margin-top: 4px; }
+  .reveal { margin-top: 24px; max-width: 700px; text-align: center; min-height: 3em;
+            font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.3rem, 5vw, 2.2rem);
+            letter-spacing: 3px; color: #ffd54a; text-shadow: 0 0 20px rgba(255, 213, 74, .5); }
+  .btn { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+         padding: 12px 20px; border-radius: 12px; border: 0; color: #fff; background: linear-gradient(135deg, #ff2020, #a60e2f); }
+  .btn.ghost { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .25); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 22px; }
+  footer { margin-top: 26px; color: rgba(185, 167, 224, .45); font-size: .85rem; text-align: center; }
+</style>
+</head>
+<body>
+  <h1 id="head">Somebody sent you a message</h1>
+  <p class="sub" id="sub">Watch the wall. 💡</p>
+  <div class="wall" id="wall"></div>
+  <div class="reveal" id="reveal"></div>
+  <div class="row">
+    <button class="btn" id="replay">🔁 Play it again</button>
+    <a class="btn ghost" href="index.html">🏠 Nora's Games</a>
+  </div>
+  <footer>Made with love by Nora · norasgames.com</footer>
+
+<script>
+"use strict";
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const COL = ["#ff2020", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff5fc8", "#ff8a3b"];
+const wall = document.getElementById("wall");
+wall.innerHTML = [...A].map((ch, i) =>
+  `<div class="bulbwrap"><div class="bulb" id="b${ch}" style="background:${COL[i % 6]};
+     box-shadow:0 0 0 ${COL[i % 6]}"></div><div class="letter">${ch}</div></div>`).join("");
+
+let ac = null;
+function note(f, d) {
+  try {
+    const a = ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = a.createOscillator(), g = a.createGain();
+    o.frequency.value = f; o.type = "triangle"; g.gain.value = .05;
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + d);
+  } catch (e) {}
+}
+
+/* the message travels inside the link, so nothing is ever stored anywhere */
+function decode() {
+  try {
+    const raw = (location.hash || "").slice(1);
+    if (!raw) return null;
+    const b64 = decodeURIComponent(raw).replace(/-/g, "+").replace(/_/g, "/");
+    return decodeURIComponent(escape(atob(b64)));
+  } catch (e) { return null; }
+}
+const msg = decode();
+const text = (msg || "I COULDNT FIND A MESSAGE IN THIS LINK").toUpperCase();
+if (!msg) {
+  document.getElementById("head").textContent = "Hmm — this link looks broken";
+  document.getElementById("sub").textContent = "Ask whoever sent it to send the whole thing again.";
+}
+
+let playing = false;
+async function play() {
+  if (playing) return;
+  playing = true;
+  document.getElementById("reveal").textContent = "";
+  let shown = "";
+  for (const ch of text) {
+    if (A.includes(ch)) {
+      const b = document.getElementById("b" + ch);
+      b.classList.add("on");
+      b.style.boxShadow = `0 0 18px ${b.style.background}, 0 0 38px ${b.style.background}`;
+      note(300 + A.indexOf(ch) * 22, .2);
+      await new Promise(r => setTimeout(r, 300));
+      b.classList.remove("on");
+      b.style.boxShadow = "none";
+      await new Promise(r => setTimeout(r, 140));
+    } else {
+      await new Promise(r => setTimeout(r, 380));
+    }
+    shown += ch;
+    document.getElementById("reveal").textContent = shown;
+  }
+  playing = false;
+}
+document.getElementById("replay").onclick = play;
+setTimeout(play, 700);
+</script>
+<script src="eggs.js"></script>
+</body>
+</html>

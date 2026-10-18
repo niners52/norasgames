@@ -8,6 +8,11 @@
    Nothing flickers until tap 8, so you only see it if you meant it.
    ===================================================================== */
 (function secretGate() {
+  /* where the site root is — works on the website AND when the files are opened straight off the computer */
+  const BASE = (function () {
+    const sc = document.currentScript || [].slice.call(document.scripts).filter(function (x) { return /secret\.js/.test(x.src); })[0];
+    return sc ? sc.src.replace(/[^/]*$/, "") : "/";
+  })();
   const WORD = "ELEVEN";
   const ARROWS = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight"];
   const TAP_TARGETS = ".secret-dot";   /* ONLY the little 11 in the footer */
@@ -32,7 +37,7 @@
     requestAnimationFrame(() => { d.style.opacity = "1"; d.style.transform = "translate(-50%,-50%) scale(1)"; });
     document.documentElement.style.transition = "filter .5s";
     document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    setTimeout(() => { location.href = "/secret.html"; }, 1100);
+    setTimeout(() => { location.href = BASE + "secret.html"; }, 1100);
   }
 
   /* 1. tapping the little 11 in the footer, eleven times */
