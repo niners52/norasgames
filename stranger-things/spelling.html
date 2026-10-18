@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spelling in the Lights · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔤</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wall2 { display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: center; max-width: 820px; margin: 16px auto 0; }
+  .k2 { text-align: center; width: clamp(28px, 5.2vw, 46px); cursor: pointer; }
+  .k2 .b2 { width: clamp(16px, 2.6vw, 24px); height: clamp(22px, 3.4vw, 32px); margin: 0 auto;
+            border-radius: 50% 50% 44% 44%; opacity: .2; transition: opacity .12s, box-shadow .12s, transform .12s; }
+  .k2.lit .b2 { opacity: 1; transform: scale(1.14); }
+  .k2 .c2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(.8rem, 2.2vw, 1.2rem);
+            color: rgba(255, 235, 235, .4); }
+  .k2.lit .c2 { color: #fff; }
+  .typed2 { text-align: center; font-family: "Noto Serif Display", Georgia, serif; letter-spacing: 10px;
+            font-size: clamp(1.4rem, 6vw, 2.6rem); min-height: 1.4em; color: var(--yellow); margin-top: 12px; }
+  .hudline { display: flex; gap: 16px; justify-content: center; font-weight: 800; color: var(--dim); }
+  .hudline b { color: var(--yellow); }
+  .setup { max-width: 640px; margin: 0 auto; border-radius: 18px; padding: 18px 20px;
+           background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+           border: 1px solid rgba(255, 90, 90, .3); }
+  textarea { width: 100%; min-height: 110px; padding: 12px; border-radius: 12px; font: inherit; font-weight: 700;
+             color: var(--text); background: rgba(10, 4, 16, .85); border: 2px solid rgba(255, 90, 90, .4); resize: vertical; }
+  .stars { text-align: center; font-size: 1.2rem; letter-spacing: 3px; min-height: 1.6em; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="story.html">Read-Along</a>
+    <a href="draw.html">How to Draw</a>
+    <a href="spelling.html">Spelling</a>
+    <a href="tables.html">Times Tables</a>
+    <a href="phone.html">The Phone</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Spelling in the Lights</h1>
+  <p class="sub">Put your real spelling words in. Will blinks them. You spell them back. 🔤</p>
+
+  <section id="screen4"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const COLS = ["#ff3b3b", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff5fc8", "#ff8a3b"];
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const load4 = () => { try { return JSON.parse(localStorage.getItem("stSpellWords") || "[]"); } catch (e) { return []; } };
+const save4 = w => { try { localStorage.setItem("stSpellWords", JSON.stringify(w)); } catch (e) {} };
+const scores = () => { try { return JSON.parse(localStorage.getItem("stSpellScore") || "{}"); } catch (e) { return {}; } };
+const saveScore = s => { try { localStorage.setItem("stSpellScore", JSON.stringify(s)); } catch (e) {} };
+
+function setup() {
+  const words = load4();
+  document.getElementById("screen4").innerHTML = `
+    <div class="setup">
+      <h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:0 0 6px">Your words</h3>
+      <p style="color:var(--dim);margin-bottom:10px">One word per line, or put commas between them. They're saved on this device,
+        so you only have to type them in once a week.</p>
+      <textarea id="words" placeholder="because&#10;friend&#10;thought&#10;beautiful">${words.join("\\n")}</textarea>
+      <div class="row" style="margin-top:12px">
+        <button id="start4">💡 Blink them at me</button>
+        <button class="ghost" id="useST">Use Hawkins words instead</button>
+      </div>
+      ${Object.keys(scores()).length ? `<p style="margin-top:12px;color:var(--dim)">Words you've got right so far:
+        ${Object.entries(scores()).filter(e => e[1] >= 2).map(e => `<b style="color:#6fff9c">${e[0]}</b>`).join(" · ") || "none yet"}</p>` : ""}
+    </div>`;
+  document.getElementById("useST").onclick = () => {
+    document.getElementById("words").value = ["eleven", "monster", "flashlight", "waffle", "bicycle",
+      "laboratory", "upside", "friends", "hawkins", "demogorgon"].join("\n");
+  };
+  document.getElementById("start4").onclick = () => {
+    const list = document.getElementById("words").value.split(/[\n,]+/)
+      .map(w => w.trim().toUpperCase().replace(/[^A-Z]/g, "")).filter(w => w.length > 1).slice(0, 20);
+    if (!list.length) { document.getElementById("words").focus(); return; }
+    save4(list); play(list);
+  };
+}
+
+async function play(list) {
+  let i = 0, right = 0, typed = "", sc = scores();
+  const order = list.map(v => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map(v => v[1]);
+
+  document.getElementById("screen4").innerHTML = `
+    <div class="hudline"><span>Word <b id="wn">1</b> of ${order.length}</span><span>✅ <b id="rc">0</b></span></div>
+    <div class="wall2" id="wall2">${[...A].map((ch, n) =>
+      `<div class="k2" data-ch="${ch}"><div class="b2" style="background:${COLS[n % 6]}"></div><div class="c2">${ch}</div></div>`).join("")}</div>
+    <div class="typed2" id="typed2"></div>
+    <div class="stars" id="stars"></div>
+    <div class="row" style="justify-content:center">
+      <button id="again4">💡 Blink it again</button>
+      <button class="ghost" id="back4">⌫ Rub out</button>
+      <button id="check4">✅ That's my answer</button>
+      <button class="ghost" id="quit4">Change my words</button>
+    </div>`;
+
+  const wall = document.getElementById("wall2");
+  const lamp = (ch, ms) => {
+    const el = wall.querySelector(`.k2[data-ch="${ch}"]`);
+    if (!el) return;
+    const col = el.querySelector(".b2").style.background;
+    el.classList.add("lit");
+    el.querySelector(".b2").style.boxShadow = `0 0 16px ${col}, 0 0 36px ${col}`;
+    setTimeout(() => { el.classList.remove("lit"); el.querySelector(".b2").style.boxShadow = ""; }, ms || 420);
+  };
+  async function blink(word) {
+    for (const ch of word) { lamp(ch, 460); beep(280 + A.indexOf(ch) * 14, .25, "sine", .05); await sleep(640); }
+  }
+  const showTyped = () => { document.getElementById("typed2").textContent = typed; };
+
+  wall.addEventListener("click", e => {
+    const k = e.target.closest(".k2"); if (!k) return;
+    typed += k.dataset.ch; showTyped(); lamp(k.dataset.ch, 220); beep(420, .07, "triangle", .04);
+  });
+  document.getElementById("back4").onclick = () => { typed = typed.slice(0, -1); showTyped(); };
+  document.getElementById("again4").onclick = () => blink(order[i]);
+  document.getElementById("quit4").onclick = setup;
+  document.getElementById("check4").onclick = async () => {
+    const word = order[i];
+    const ok = typed === word;
+    sc[word] = ok ? (sc[word] || 0) + 1 : 0;
+    saveScore(sc);
+    const stars = document.getElementById("stars");
+    if (ok) {
+      right++;
+      document.getElementById("rc").textContent = right;
+      stars.innerHTML = `<span style="color:#6fff9c">✅ ${word} — yes!</span>`;
+      tune([660, 880, 1100]);
+      for (const ch of word) { lamp(ch, 700); await sleep(90); }
+    } else {
+      stars.innerHTML = `<span style="color:#ff8a8a">❌ you wrote ${typed || "nothing"} — it was ${word}</span>`;
+      beep(170, .3, "sawtooth", .07);
+      await sleep(900);
+      await blink(word);
+    }
+    typed = ""; showTyped();
+    await sleep(1200);
+    i++;
+    if (i >= order.length) return finish(right, order.length);
+    document.getElementById("wn").textContent = i + 1;
+    stars.textContent = "";
+    await blink(order[i]);
+  };
+  await sleep(700);
+  await blink(order[0]);
+}
+
+function finish(right, total) {
+  const pc = Math.round(right / total * 100);
+  document.getElementById("screen4").innerHTML = `
+    <div class="setup" style="text-align:center">
+      <div style="font-size:3rem">${pc === 100 ? "🏆" : pc >= 70 ? "💡" : "📻"}</div>
+      <h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;font-size:1.6rem">
+        ${right} out of ${total}</h3>
+      <p style="color:var(--dim)">${pc === 100 ? "Every single one. Joyce would be proud."
+        : pc >= 70 ? "Nearly all of them. Do the tricky ones again tomorrow."
+        : "Keep going — the ones you miss come back round."}</p>
+      <div class="row" style="justify-content:center;margin-top:12px">
+        <button onclick="play(JSON.parse(localStorage.getItem('stSpellWords')||'[]'))">🔁 Again</button>
+        <button class="ghost" onclick="setup()">✏️ Change my words</button>
+      </div>
+    </div>`;
+  tune(pc >= 70 ? [523, 659, 784, 1047] : [392, 330, 262]);
+}
+setup();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Draw · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✏️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .pickrow { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+  .pickrow button { background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+  .pickrow button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .board { max-width: 760px; margin: 16px auto 0; display: grid; grid-template-columns: minmax(240px, 1fr) minmax(200px, 280px);
+           gap: 18px; align-items: start; }
+  @media (max-width: 700px) { .board { grid-template-columns: 1fr; } }
+  .paper2 { background: #fdfbf6; border-radius: 16px; padding: 10px; border: 3px solid #cfc6b4;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+  .paper2 svg { display: block; width: 100%; height: auto; }
+  .steps2 { border-radius: 16px; padding: 16px 18px;
+            background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+            border: 1px solid rgba(255, 90, 90, .3); }
+  .steps2 .n2 { font-size: .72rem; letter-spacing: 2px; color: var(--yellow); font-weight: 800; }
+  .steps2 h3 { font-family: "Noto Serif Display", Georgia, serif; color: #fff; margin: 4px 0 8px; font-size: 1.3rem; }
+  .steps2 p { color: var(--dim); }
+  .tip { margin-top: 10px; font-size: .88rem; color: #ffd9a8; background: rgba(255, 213, 74, .1);
+         border: 1px solid rgba(255, 213, 74, .3); border-radius: 12px; padding: 9px 12px; }
+  .all { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 18px; }
+  .all .one { background: #fdfbf6; border-radius: 12px; padding: 6px; border: 2px solid #cfc6b4; position: relative; }
+  .all .one span { position: absolute; top: 4px; left: 7px; font-weight: 800; color: #8a7a58; font-size: .8rem; }
+  .all .one svg { display: block; width: 100%; height: auto; }
+  @media print {
+    body > *:not(#printarea) { display: none !important; }
+    #printarea { display: block !important; }
+    .all { grid-template-columns: repeat(3, 1fr); }
+    @page { size: A4 portrait; margin: 12mm; }
+  }
+  #printarea { display: none; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="draw.html">How to Draw</a>
+    <a href="evidence.html">Sealed File</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">How to Draw</h1>
+  <p class="sub">Get a pencil and paper. Copy one step at a time — the grey bits are what you already drew. ✏️</p>
+
+  <div class="pickrow" id="pickrow"></div>
+
+  <div class="board">
+    <div class="paper2" id="paper"></div>
+    <div class="steps2" id="stepbox"></div>
+  </div>
+
+  <div class="row" style="justify-content:center;margin-top:14px">
+    <button id="back">◀ Back</button>
+    <button id="next">Next ▶</button>
+    <button class="ghost" id="printsteps">🖨️ Print all the steps</button>
+  </div>
+
+  <h2 class="section">📋 All the steps at once</h2>
+  <div class="all" id="all"></div>
+</main>
+
+<div id="printarea"></div>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+/* Each subject is a list of steps. Every step adds some strokes;
+   everything from earlier steps is drawn in grey underneath. */
+const G = "#b9b2a6", N = "#d81e1e";
+const SUBJECTS = {
+  demogorgon: {
+    name: "The Demogorgon", box: "0 0 300 420",
+    steps: [
+      { t: "Start with two guide shapes", p: "A circle near the top for the head, and a long oval underneath for the body. Press lightly — these get rubbed out later.",
+        tip: "Leave a gap between them for the neck.",
+        d: c => `<circle cx="150" cy="86" r="46" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="7 6"/>
+                 <ellipse cx="150" cy="226" rx="56" ry="78" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="7 6"/>` },
+      { t: "Draw the body properly", p: "Go round the oval but make the shoulders wider and the waist thinner. Join it to the head with a short neck.",
+        tip: "Wide at the top, narrow in the middle. Like a pear upside down.",
+        d: c => `<path d="M150 150 C196 160 212 198 206 240 C200 282 180 306 150 312 C120 306 100 282 94 240
+                 C88 198 104 160 150 150 Z" fill="none" stroke="${c}" stroke-width="3.4"/>
+                 <path d="M136 140 h28 v14 h-28 z" fill="none" stroke="${c}" stroke-width="3"/>` },
+      { t: "Add the legs", p: "Two thick legs that bend BACKWARDS at the knee, like a dog's back legs. Then flat feet at the bottom.",
+        tip: "Backwards knees are what makes it look wrong in a good way.",
+        d: c => `<path d="M134 300 C120 336 116 372 124 400" stroke="${c}" stroke-width="16" fill="none" stroke-linecap="round"/>
+                 <path d="M166 300 C180 336 184 372 176 400" stroke="${c}" stroke-width="15" fill="none" stroke-linecap="round"/>
+                 <path d="M108 398 h36 l5 14 h-46 z" fill="none" stroke="${c}" stroke-width="3"/>
+                 <path d="M156 398 h36 l4 14 h-45 z" fill="none" stroke="${c}" stroke-width="3"/>` },
+      { t: "Now the arms — far too long", p: "They come out of the shoulders and hang down past the knees. Curve them slightly outwards.",
+        tip: "If they look too long, they're nearly right.",
+        d: c => `<path d="M118 186 C86 214 70 262 68 308" stroke="${c}" stroke-width="12" fill="none" stroke-linecap="round"/>
+                 <path d="M182 186 C214 214 230 262 232 308" stroke="${c}" stroke-width="11" fill="none" stroke-linecap="round"/>` },
+      { t: "Claws", p: "Three long thin claws on the end of each arm, spread apart like a bird's foot.",
+        tip: "Make them different lengths. Nothing in nature is tidy.",
+        d: c => `<g stroke="${c}" stroke-width="3.4" stroke-linecap="round" fill="none">
+                 <path d="M64 310 l-14 26"/><path d="M68 314 l-2 30"/><path d="M74 310 l10 26"/>
+                 <path d="M236 310 l14 26"/><path d="M232 314 l2 30"/><path d="M226 310 l-10 26"/></g>` },
+      { t: "Open the head", p: "Rub out the head circle. Draw six long petals coming out of the middle, like a flower opening towards you.",
+        tip: "Draw the middle one first, then two either side, then the outside ones.",
+        d: c => `<g fill="none" stroke="${c}" stroke-width="3.4" stroke-linejoin="round">
+          ${[-2.5, -1.9, -1.3, -0.7, -0.1, 0.5].map(a => {
+            const L = 74, x = 150 + Math.cos(a) * L, y = 86 + Math.sin(a) * L;
+            const nx = -Math.sin(a) * 20, ny = Math.cos(a) * 20;
+            return `<path d="M150 86 C${(150 + nx + Math.cos(a) * 22).toFixed(0)} ${(86 + ny + Math.sin(a) * 22).toFixed(0)}
+              ${(x + nx * .5).toFixed(0)} ${(y + ny * .5).toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)}
+              C${(x - nx * .5).toFixed(0)} ${(y - ny * .5).toFixed(0)}
+              ${(150 - nx + Math.cos(a) * 22).toFixed(0)} ${(86 - ny + Math.sin(a) * 22).toFixed(0)} 150 86 Z"/>`;
+          }).join("")}</g>` },
+      { t: "Teeth and the hole", p: "Little triangles all along the inside edge of every petal, pointing inwards. Then a dark circle right in the middle.",
+        tip: "Teeth don't have to be neat. Uneven is scarier.",
+        d: c => `<circle cx="150" cy="86" r="18" fill="${c === G ? "#ddd" : "#222"}"/>
+          <g fill="${c}">${Array.from({ length: 22 }, (_, i) => {
+            const a = (i / 22) * Math.PI * 2, r = 24;
+            return `<path d="M${(150 + Math.cos(a) * r).toFixed(1)} ${(86 + Math.sin(a) * r).toFixed(1)}
+              l${(Math.cos(a) * 9).toFixed(1)} ${(Math.sin(a) * 9).toFixed(1)}
+              l${(-Math.sin(a) * 5).toFixed(1)} ${(Math.cos(a) * 5).toFixed(1)} Z"/>`;
+          }).join("")}</g>` },
+      { t: "Go over it in pen and fill it in", p: "Rub out the guide lines. Go over the outline in black pen, then colour the whole body in — it's a shadow with teeth.",
+        tip: "Leave a thin white line down one side so it doesn't turn into a blob.",
+        d: c => `<text x="150" y="400" text-anchor="middle" font-family="Nunito" font-weight="800"
+                 font-size="15" fill="${c}">now fill it all in black</text>` },
+    ],
+  },
+  demodog: {
+    name: "The Demodog", box: "0 0 320 240",
+    steps: [
+      { t: "Two ovals", p: "A big oval for the body and a smaller one on the left for the head, slightly lower.",
+        tip: "Overlap them a bit so it's one animal, not two eggs.",
+        d: c => `<ellipse cx="190" cy="130" rx="86" ry="54" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="7 6"/>
+                 <ellipse cx="88" cy="146" rx="34" ry="30" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="7 6"/>` },
+      { t: "Join them up", p: "Draw the real outline round both ovals so it becomes one long crouching body with a thick neck.",
+        tip: "Keep the back curved, like it's about to pounce.",
+        d: c => `<path d="M118 126 C150 100 232 100 268 128 C292 146 290 176 266 186 C226 200 150 198 118 176
+                 C96 162 98 140 118 126 Z" fill="none" stroke="${c}" stroke-width="3.4"/>` },
+      { t: "Legs and tail", p: "Four short legs underneath — the back ones bent. Then a long thin tail curling up off the back.",
+        tip: "Put the legs at different angles so it looks like it's moving.",
+        d: c => `<g stroke="${c}" stroke-width="9" fill="none" stroke-linecap="round">
+                 <path d="M140 188 l-6 32"/><path d="M178 196 l-2 30"/><path d="M216 194 l4 30"/><path d="M252 182 l12 28"/></g>
+                 <path d="M268 146 C300 134 312 112 306 92" stroke="${c}" stroke-width="7" fill="none" stroke-linecap="round"/>` },
+      { t: "Open the face", p: "Five petals out of the head, pointing left. Smaller than the Demogorgon's — this one is dog-sized.",
+        tip: "Fan them out like a hand of cards.",
+        d: c => `<g fill="none" stroke="${c}" stroke-width="3.2" stroke-linejoin="round">
+          ${[2.6, 3.0, 3.4, 3.8, 4.2].map(a => {
+            const L = 48, x = 88 + Math.cos(a) * L, y = 146 + Math.sin(a) * L;
+            const nx = -Math.sin(a) * 14, ny = Math.cos(a) * 14;
+            return `<path d="M88 146 C${(88 + nx + Math.cos(a) * 16).toFixed(0)} ${(146 + ny + Math.sin(a) * 16).toFixed(0)}
+              ${(x + nx * .5).toFixed(0)} ${(y + ny * .5).toFixed(0)} ${x.toFixed(0)} ${y.toFixed(0)}
+              C${(x - nx * .5).toFixed(0)} ${(y - ny * .5).toFixed(0)}
+              ${(88 - nx + Math.cos(a) * 16).toFixed(0)} ${(146 - ny + Math.sin(a) * 16).toFixed(0)} 88 146 Z"/>`;
+          }).join("")}</g>` },
+      { t: "Teeth, then fill it in", p: "Small triangles round the opening, a dark middle, and then colour the whole thing in.",
+        tip: "Add a few curved lines along the body for ribs.",
+        d: c => `<circle cx="88" cy="146" r="13" fill="${c === G ? "#ddd" : "#222"}"/>
+          <g fill="${c}">${Array.from({ length: 14 }, (_, i) => {
+            const a = (i / 14) * Math.PI * 2, r = 17;
+            return `<path d="M${(88 + Math.cos(a) * r).toFixed(1)} ${(146 + Math.sin(a) * r).toFixed(1)}
+              l${(Math.cos(a) * 7).toFixed(1)} ${(Math.sin(a) * 7).toFixed(1)}
+              l${(-Math.sin(a) * 4).toFixed(1)} ${(Math.cos(a) * 4).toFixed(1)} Z"/>`;
+          }).join("")}</g>
+          <g stroke="${c}" stroke-width="2" fill="none" opacity=".8">
+            <path d="M170 116 C180 136 180 164 170 182"/><path d="M206 112 C216 134 216 166 206 186"/></g>` },
+    ],
+  },
+  gate: {
+    name: "The Gate", box: "0 0 300 300",
+    steps: [
+      { t: "A circle", p: "Draw a big circle in the middle of the paper. Not perfect — wobbly is better.",
+        tip: "Go round twice without lifting the pencil.",
+        d: c => `<circle cx="150" cy="150" r="76" fill="none" stroke="${c}" stroke-width="3.4"/>` },
+      { t: "Tear it open", p: "Go round the circle again, but this time make it jagged, like torn paper or cracked ice.",
+        tip: "Sharp points, different sizes.",
+        d: c => `<path d="${Array.from({ length: 20 }, (_, i) => {
+          const a = (i / 20) * Math.PI * 2, r = i % 2 ? 92 : 70;
+          return `${i ? "L" : "M"}${(150 + Math.cos(a) * r).toFixed(1)} ${(150 + Math.sin(a) * r).toFixed(1)}`;
+        }).join(" ")} Z" fill="none" stroke="${c}" stroke-width="3.4"/>` },
+      { t: "Cracks running out", p: "Lines shooting off in every direction, getting thinner as they go. Add little branches off them.",
+        tip: "Think of a cracked phone screen.",
+        d: c => `<g stroke="${c}" stroke-width="2.6" fill="none" stroke-linecap="round">
+          ${Array.from({ length: 12 }, (_, i) => {
+            const a = (i / 12) * Math.PI * 2;
+            const x1 = 150 + Math.cos(a) * 88, y1 = 150 + Math.sin(a) * 88;
+            const x2 = 150 + Math.cos(a) * 140, y2 = 150 + Math.sin(a) * 140;
+            return `<path d="M${x1.toFixed(0)} ${y1.toFixed(0)} L${x2.toFixed(0)} ${y2.toFixed(0)}"/>
+              <path d="M${((x1 + x2) / 2).toFixed(0)} ${((y1 + y2) / 2).toFixed(0)}
+                l${(Math.cos(a + 1) * 18).toFixed(0)} ${(Math.sin(a + 1) * 18).toFixed(0)}"/>`;
+          }).join("")}</g>` },
+      { t: "Fill the middle in black", p: "The inside of the gate is completely dark. Colour it in heavily, and leave a thin pale ring round the edge.",
+        tip: "Press hard. It should be the darkest thing on the page.",
+        d: c => `<circle cx="150" cy="150" r="58" fill="${c === G ? "#ddd" : "#222"}"/>
+                 <circle cx="150" cy="150" r="66" fill="none" stroke="${c}" stroke-width="2" opacity=".6"/>` },
+    ],
+  },
+};
+
+let subject = "demogorgon", step = 0;
+const pickrow = document.getElementById("pickrow");
+pickrow.innerHTML = Object.entries(SUBJECTS).map(([k, v]) => `<button data-k="${k}">${v.name}</button>`).join("");
+
+function drawTo(n, size) {
+  const S = SUBJECTS[subject];
+  let inner = "";
+  for (let i = 0; i <= n && i < S.steps.length; i++) inner += S.steps[i].d(i === n ? N : G);
+  return `<svg viewBox="${S.box}" xmlns="http://www.w3.org/2000/svg" ${size ? `style="width:100%"` : ""}>
+    <rect x="0" y="0" width="100%" height="100%" fill="#fdfbf6"/>${inner}</svg>`;
+}
+function render3() {
+  const S = SUBJECTS[subject], st = S.steps[step];
+  document.getElementById("paper").innerHTML = drawTo(step, true);
+  document.getElementById("stepbox").innerHTML = `
+    <div class="n2">STEP ${step + 1} OF ${S.steps.length}</div>
+    <h3>${st.t}</h3><p>${st.p}</p>
+    <div class="tip">✏️ ${st.tip}</div>`;
+  document.getElementById("all").innerHTML = S.steps.map((_, i) =>
+    `<div class="one"><span>${i + 1}</span>${drawTo(i, true)}</div>`).join("");
+  document.querySelectorAll("#pickrow button").forEach(b => b.classList.toggle("on", b.dataset.k === subject));
+  document.getElementById("back").disabled = step === 0;
+  document.getElementById("next").disabled = step === S.steps.length - 1;
+}
+pickrow.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  subject = b.dataset.k; step = 0; render3(); beep(560, .07, "triangle");
+});
+document.getElementById("next").onclick = () => { step = Math.min(SUBJECTS[subject].steps.length - 1, step + 1); render3(); beep(660, .06, "triangle"); };
+document.getElementById("back").onclick = () => { step = Math.max(0, step - 1); render3(); beep(440, .06, "triangle"); };
+document.getElementById("printsteps").onclick = () => {
+  const S = SUBJECTS[subject];
+  document.getElementById("printarea").innerHTML = `
+    <h2 style="font-family:'Noto Serif Display',Georgia,serif;text-align:center;color:#111">How to draw ${S.name}</h2>
+    <div class="all">${S.steps.map((st, i) =>
+      `<div class="one"><span>${i + 1}</span>${drawTo(i, true)}
+        <p style="font-size:9pt;color:#333;margin:4px 2px 0"><b>${st.t}.</b> ${st.p}</p></div>`).join("")}</div>`;
+  setTimeout(() => window.print(), 100);
+};
+render3();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

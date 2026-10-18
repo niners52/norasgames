@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Read-Along · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📖</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .lights { display: flex; flex-wrap: wrap; gap: 6px 10px; justify-content: center; max-width: 720px; margin: 10px auto 0; }
+  .lb { width: 13px; height: 18px; border-radius: 50% 50% 44% 44%; opacity: .18; transition: opacity .12s, box-shadow .12s; }
+  .book2 { max-width: 720px; margin: 18px auto 0; border-radius: 20px; padding: clamp(18px, 4vw, 32px);
+           background: linear-gradient(170deg, #1d1420, #130c18); border: 1px solid rgba(255, 90, 90, .28);
+           box-shadow: 0 16px 44px rgba(0, 0, 0, .6); }
+  .book2 p { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.05rem, 3.4vw, 1.35rem);
+             line-height: 1.95; color: #cbbcc8; transition: color .3s; margin: 0 0 14px; cursor: pointer; }
+  .book2 p.now { color: #fff; text-shadow: 0 0 22px rgba(255, 60, 60, .45); }
+  .book2 p.done { color: #8d7f8a; }
+  .controls2 { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .note3 { max-width: 620px; margin: 14px auto 0; text-align: center; color: var(--dim); font-size: .9rem; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="story.html">Read-Along</a>
+    <a href="draw.html">How to Draw</a>
+    <a href="phone.html">The Phone</a>
+    <a href="spelling.html">Spelling</a>
+    <a href="tables.html">Times Tables</a>
+    <a href="evidence.html">Sealed File</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">The Last Light</h1>
+  <p class="sub">A bedtime story about Hawkins. Press play and it reads itself to you. 📖</p>
+
+  <div class="lights" id="lights"></div>
+
+  <div class="controls2">
+    <button id="play">▶ Read it to me</button>
+    <button class="ghost" id="stop">⏹ Stop</button>
+    <button class="ghost" id="slower">🐢 Slower</button>
+  </div>
+  <p class="note3" id="voicenote"></p>
+
+  <section class="book2" id="book"></section>
+
+  <p class="note3">Tap any line to start reading from there. Best with the lights off and the volume low.</p>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+let WHO = "Nora";
+try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (h && h.name) WHO = h.name; } catch (e) {}
+
+const STORY = [
+  "The last light on the string had been out for three days, and nobody in the house had thought anything of it.",
+  "It was the one at the end. The one over the letter Z, where nothing important ever gets spelled.",
+  `On the fourth night, ${WHO} was almost asleep when it came back on.`,
+  "It didn't flicker. It didn't buzz. It simply glowed, the way a light does when somebody has decided to turn it on.",
+  "Then the one over the Y lit up. Then the X. One at a time, backwards along the wall, as if something was walking home the long way round.",
+  "By the time it reached the middle of the alphabet, the room was warm with colour, and the house was very, very quiet.",
+  "The lights stopped. One bulb stayed on, over a letter near the beginning, waiting.",
+  `And ${WHO} did the bravest thing anybody in Hawkins has ever done. She got out of bed, put her hand flat on the cold wall, and said: "I'm listening."`,
+  "The lights came on all at once — every colour, every letter, the whole wall blazing like a fairground.",
+  "And then, slowly, politely, they spelled out one word at a time: GO TO SLEEP. WE ARE WATCHING THE DOOR.",
+  "So she did. And in the morning, every single bulb was off again, except the last one on the string, over the Z, which stayed on for years.",
+  "Nobody ever worked out why. But nothing ever came through that door, not once, not ever.",
+];
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const COLS = ["#ff3b3b", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff5fc8", "#ff8a3b"];
+const lights = document.getElementById("lights");
+lights.innerHTML = [...A].map((ch, i) =>
+  `<div style="text-align:center;width:22px">
+     <div class="lb" id="lb${ch}" style="background:${COLS[i % 6]};margin:0 auto"></div>
+     <div style="font-size:.6rem;color:rgba(255,235,235,.35)">${ch}</div>
+   </div>`).join("");
+const lampOn = (ch, ms) => {
+  const el = document.getElementById("lb" + ch);
+  if (!el) return;
+  const c = el.style.background;
+  el.style.opacity = "1"; el.style.boxShadow = `0 0 12px ${c}, 0 0 26px ${c}`;
+  setTimeout(() => { el.style.opacity = ".18"; el.style.boxShadow = ""; }, ms || 420);
+};
+
+const book = document.getElementById("book");
+book.innerHTML = STORY.map((s, i) => `<p data-i="${i}">${s}</p>`).join("");
+
+/* the browser's own voice reads it, if it has one */
+const synth = window.speechSynthesis;
+let rate = .88, line = 0, reading = false, timer = null;
+document.getElementById("voicenote").textContent = synth
+  ? "" : "This device won't read out loud, so the lights will play along while you read it yourself.";
+
+function markup(i) {
+  book.querySelectorAll("p").forEach((p, n) => {
+    p.classList.toggle("now", n === i);
+    p.classList.toggle("done", n < i);
+  });
+  const el = book.querySelector(`p[data-i="${i}"]`);
+  if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+}
+function sparkleFor(text) {
+  /* blink the letters of the biggest word in the line */
+  const word = text.toUpperCase().replace(/[^A-Z ]/g, "").split(" ")
+    .sort((a, b) => b.length - a.length)[0] || "";
+  [...word].forEach((ch, i) => setTimeout(() => lampOn(ch, 380), i * 260));
+}
+function speak(i) {
+  if (i >= STORY.length) { reading = false; markup(-1); return; }
+  line = i;
+  markup(i);
+  sparkleFor(STORY[i]);
+  if (synth) {
+    const u = new SpeechSynthesisUtterance(STORY[i].replace(/—/g, ","));
+    u.rate = rate; u.pitch = .95;
+    u.onend = () => { if (reading) timer = setTimeout(() => speak(i + 1), 500); };
+    synth.speak(u);
+  } else {
+    timer = setTimeout(() => { if (reading) speak(i + 1); }, 1800 + STORY[i].length * 55);
+  }
+}
+document.getElementById("play").onclick = () => {
+  if (synth) synth.cancel();
+  reading = true; speak(line >= STORY.length ? 0 : line);
+};
+document.getElementById("stop").onclick = () => {
+  reading = false; clearTimeout(timer);
+  if (synth) synth.cancel();
+  markup(-1);
+};
+document.getElementById("slower").onclick = e => {
+  rate = rate > .7 ? .68 : .88;
+  e.currentTarget.textContent = rate < .8 ? "🐇 Normal speed" : "🐢 Slower";
+};
+book.addEventListener("click", e => {
+  const p = e.target.closest("p"); if (!p) return;
+  if (synth) synth.cancel();
+  clearTimeout(timer);
+  reading = true; speak(+p.dataset.i);
+});
+addEventListener("beforeunload", () => { if (synth) synth.cancel(); });
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
