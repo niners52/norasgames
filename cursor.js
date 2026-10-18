@@ -43,6 +43,16 @@
       <circle cx="23" cy="7" r="1.8" fill="${c}"/>`,
     star: c => `<path d="M25 3 L31 18 L47 19 L34 29 L39 45 L25 36 L11 45 L16 29 L3 19 L19 18 Z"
       fill="${c}" opacity=".9" stroke="#0a0710" stroke-width="1.4"/>`,
+    torch2: c => `<path d="M14 4 h20 v12 h-20 z" fill="#2a1f33" stroke="${c}" stroke-width="2.4"/>
+      <path d="M16 16 h16 l6 28 h-28 z" fill="#241a2e" stroke="${c}" stroke-width="2.4"/>
+      <path d="M10 44 h28 l8 6 h-44 z" fill="${c}" opacity=".5"/>
+      <circle cx="24" cy="30" r="5" fill="${c}"/>`,
+    vine: c => `<path d="M25 48 C14 38 16 26 25 18 C34 10 34 6 25 2" fill="none" stroke="${c}" stroke-width="4"
+        stroke-linecap="round"/>
+      <path d="M25 36 q-12 -4 -14 -14 q12 2 14 14 z M25 24 q12 -4 14 -14 q-12 2 -14 14 z" fill="${c}" opacity=".85"/>`,
+    eye: c => `<ellipse cx="25" cy="25" rx="22" ry="13" fill="#fff" stroke="#0a0710" stroke-width="2.4"/>
+      <circle cx="25" cy="25" r="10" fill="${c}"/><circle cx="25" cy="25" r="4.4" fill="#120208"/>
+      <circle cx="29" cy="21" r="2.4" fill="#fff"/>`,
   };
   const art = SHAPES[C.shape] || SHAPES.torch;
 

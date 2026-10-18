@@ -28,6 +28,17 @@
   const stage = () => STAGES.filter(s => age() >= s.at).pop();
   const save = () => { try { localStorage.setItem("noraPet", JSON.stringify(P)); } catch (e) {} };
 
+  const worn = () => { try { return (JSON.parse(localStorage.getItem("stShop") || '{"equipped":{}}').equipped || {}).pet || ""; } catch (e) { return ""; } };
+  const COSTUME = {
+    "pet-cap": `<g transform="translate(0 -26)"><path d="M-16 -2 q16 -16 32 0 z" fill="#c0392b" stroke="#2a1b3d" stroke-width="2.6"/>
+        <path d="M-16 -2 h40 q-4 6 -10 6 h-30 z" fill="#8e271c" stroke="#2a1b3d" stroke-width="2.4"/></g>`,
+    "pet-scarf": `<g transform="translate(0 2)"><path d="M-17 2 q17 10 34 0 l2 8 q-19 10 -38 0 z" fill="#d85a7a" stroke="#2a1b3d" stroke-width="2.4"/>
+        <path d="M12 8 l10 22 l-9 3 l-8 -22 z" fill="#d85a7a" stroke="#2a1b3d" stroke-width="2.4"/>
+        <path d="M-15 6 h32 M-14 14 h30" stroke="#fff" stroke-width="2" opacity=".55"/></g>`,
+    "pet-hellfire": `<g transform="translate(0 10)"><path d="M-19 -6 q19 -8 38 0 l-3 20 q-16 6 -32 0 z" fill="#241f2a" stroke="#2a1b3d" stroke-width="2.4"/>
+        <path d="M0 0 q6 6 4 12 q-2 6 -4 7 q-2 -1 -4 -7 q-2 -6 4 -12 z" fill="#ff3b2f"/></g>`,
+  };
+
   /* ---------- the little creature ---------- */
   function art(size, mood) {
     const c = P.color || "#9ad6a0";
@@ -54,6 +65,7 @@
         <circle r="15" fill="${c}" stroke="#2a1b3d" stroke-width="3"/>
         ${eye}${mouth}
       </g>
+      ${COSTUME[worn()] || ""}
     </svg>`;
   }
 

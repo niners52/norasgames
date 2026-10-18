@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Vending Machine · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪙</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .machine { max-width: 760px; margin: 0 auto; border-radius: 24px; padding: 18px;
+             background: linear-gradient(170deg, #b3121a, #7a0c14 55%, #4a0810);
+             border: 4px solid #2a0a0e; box-shadow: 0 20px 56px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .18); }
+  .top2 { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+          font-family: "Noto Serif Display", Georgia, serif; color: #ffe9c4; }
+  .top2 .name2 { font-size: clamp(1.1rem, 4vw, 1.7rem); letter-spacing: 2px; }
+  .purse { background: #2a0a0e; border-radius: 999px; padding: 8px 16px; font-weight: 800; color: #ffd54a;
+           border: 2px solid #ffd54a; font-family: Nunito, system-ui, sans-serif; }
+  .glass { margin-top: 14px; border-radius: 14px; padding: 14px; background: rgba(10, 6, 12, .82);
+           border: 3px solid #2a0a0e; box-shadow: inset 0 0 40px rgba(0, 0, 0, .8); }
+  .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+  .slot { border-radius: 12px; padding: 12px 10px; text-align: center; background: rgba(255, 255, 255, .05);
+          border: 1px solid rgba(255, 255, 255, .14); position: relative; }
+  .slot .code2 { position: absolute; top: 6px; left: 8px; font-size: .65rem; font-weight: 800; color: #ffd54a; letter-spacing: 1px; }
+  .slot .pic { font-size: 2.2rem; display: block; margin: 6px 0 2px; }
+  .slot b { display: block; font-size: .92rem; color: #fff; }
+  .slot p { font-size: .76rem; color: var(--dim); min-height: 2.4em; margin: 4px 0 8px; }
+  .slot .price { font-weight: 800; color: #ffd54a; }
+  .slot button { width: 100%; margin-top: 8px; font-size: .85rem; padding: 9px 0; }
+  .slot.owned { border-color: #6fff9c; }
+  .slot.owned .price { color: #6fff9c; }
+  .tray { margin-top: 14px; border-radius: 12px; min-height: 64px; padding: 12px; text-align: center;
+          background: rgba(0, 0, 0, .55); border: 3px solid #2a0a0e; color: #ffe9c4; font-weight: 700; }
+  .earned { max-width: 760px; margin: 18px auto 0; border-radius: 16px; padding: 16px 18px;
+            background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+            border: 1px solid rgba(255, 90, 90, .3); }
+  .earned table { width: 100%; border-collapse: collapse; }
+  .earned td { padding: 5px 0; border-bottom: 1px dashed rgba(255, 255, 255, .1); }
+  .earned td:last-child { text-align: right; color: var(--yellow); font-weight: 800; }
+  .capsule { animation: drop .6s; }
+  @keyframes drop { from { transform: translateY(-40px) scale(.6); opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="shop.html">Vending Machine</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="draw.html">How to Draw</a>
+    <a href="story.html">Read-Along</a>
+    <a href="spelling.html">Spelling</a>
+    <a href="tables.html">Times Tables</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">The Vending Machine</h1>
+  <p class="sub">Round the back of the Palace Arcade. It takes bulbs. 🪙</p>
+
+  <section class="machine">
+    <div class="top2">
+      <span class="name2">💡 HAWKINS VENDING CO.</span>
+      <span class="purse" id="purse">0 bulbs</span>
+    </div>
+    <div class="glass">
+      <div class="slots" id="slots"></div>
+    </div>
+    <div class="tray" id="tray">The tray is empty.</div>
+  </section>
+
+  <section class="earned">
+    <h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:0 0 8px">💡 Where your bulbs came from</h3>
+    <p style="color:var(--dim);margin-bottom:8px">Everything you've ever done on this site earns bulbs — even the things
+      you did before this machine existed. Play more and the number goes up on its own.</p>
+    <table id="earntable"></table>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script src="bulbs.js"></script>
+<script>
+"use strict";
+const STOCK = [
+  { id: "cur-torch2", code: "A1", e: "🔦", n: "Big Torch cursor", p: 25, slot: "cursor",
+    d: "A proper heavy torch, with a wider beam." },
+  { id: "cur-vine", code: "A2", e: "🌿", n: "Vine cursor", p: 35, slot: "cursor",
+    d: "A creeping vine that grows behind your finger." },
+  { id: "cur-eye", code: "A3", e: "👁️", n: "Eye cursor", p: 60, slot: "cursor",
+    d: "It blinks. Occasionally it looks at you." },
+  { id: "pet-cap", code: "B1", e: "🧢", n: "Pet cap", p: 20, slot: "pet",
+    d: "A tiny cap for your pet. It wears it on every page." },
+  { id: "pet-scarf", code: "B2", e: "🧣", n: "Pet scarf", p: 30, slot: "pet",
+    d: "Stripy, far too long, dragging on the floor." },
+  { id: "pet-hellfire", code: "B3", e: "🤘", n: "Pet Hellfire shirt", p: 45, slot: "pet",
+    d: "Eddie made it. It doesn't fit properly." },
+  { id: "wall-gold", code: "C1", e: "✨", n: "Gold light string", p: 40, slot: "wall",
+    d: "A gold colour set for the Wallpaper Maker." },
+  { id: "capsule", code: "C2", e: "🥚", n: "Mystery capsule", p: 15, slot: "",
+    d: "Something random. Mostly rubbish. Sometimes not." },
+];
+const CAPSULE = [
+  ["🪙", "Nothing but a washer.", 0],
+  ["🧇", "A slightly stale waffle. It gives you 5 bulbs back.", 5],
+  ["🎲", "A chewed d20. Lucky, apparently.", 0],
+  ["🔋", "Two dead batteries.", 0],
+  ["💡", "A spare bulb — 10 bulbs back.", 10],
+  ["📼", "An unlabelled tape. Nobody has a player.", 0],
+  ["🧲", "A fridge magnet shaped like Indiana.", 0],
+  ["🔑", "A small key. It doesn't open anything you own.", 0],
+  ["⭐", "A gold star. You've earned 25 bulbs back.", 25],
+];
+
+const purse = document.getElementById("purse");
+const tray = document.getElementById("tray");
+function paint3() {
+  purse.textContent = `${BULBS.left()} bulbs`;
+  document.getElementById("slots").innerHTML = STOCK.map(s => {
+    const own = s.id !== "capsule" && BULBS.has(s.id);
+    const canAfford = BULBS.left() >= s.p;
+    const isOn = s.slot && BULBS.equipped(s.slot) === s.id;
+    return `<div class="slot ${own ? "owned" : ""}">
+      <span class="code2">${s.code}</span>
+      <span class="pic">${s.e}</span>
+      <b>${s.n}</b>
+      <p>${s.d}</p>
+      <span class="price">${own ? "BOUGHT" : s.p + " bulbs"}</span>
+      ${own
+        ? `<button data-eq="${s.id}" class="${isOn ? "" : "ghost"}">${isOn ? "✅ Wearing it" : "Use it"}</button>`
+        : `<button data-buy="${s.id}" ${canAfford ? "" : "disabled"}>${canAfford ? "Buy" : "Not enough"}</button>`}
+    </div>`;
+  }).join("");
+  const rows = BULBS.earnings();
+  document.getElementById("earntable").innerHTML = rows.length
+    ? rows.map(r => `<tr><td>${r[0]}</td><td>+${r[1]}</td></tr>`).join("") +
+      `<tr><td><b>Earned altogether</b></td><td><b>${BULBS.total()}</b></td></tr>
+       <tr><td>Spent in here</td><td>−${BULBS.spent()}</td></tr>`
+    : `<tr><td colspan="2" style="color:var(--dim)">Nothing yet — go and play something.</td></tr>`;
+}
+document.getElementById("slots").addEventListener("click", e => {
+  const buy = e.target.closest("[data-buy]"), eq = e.target.closest("[data-eq]");
+  if (buy) {
+    const item = STOCK.find(s => s.id === buy.dataset.buy);
+    if (!BULBS.spend(item.p)) { tray.textContent = "Not enough bulbs. Go and win something."; beep(170, .3); return; }
+    if (item.id === "capsule") return capsule();
+    BULBS.give(item.id);
+    if (item.slot) BULBS.equip(item.slot, item.id);
+    tray.innerHTML = `<div class="capsule"><span style="font-size:2rem">${item.e}</span><br>
+      <b>${item.n}</b> — it clunks into the tray.${item.slot === "pet" ? " Your pet is wearing it now."
+        : item.slot === "cursor" ? " It's unlocked in the Cursor Lab." : ""}</div>`;
+    tune([523, 659, 784]);
+    paint3();
+    return;
+  }
+  if (eq) {
+    const item = STOCK.find(s => s.id === eq.dataset.eq);
+    BULBS.equip(item.slot, BULBS.equipped(item.slot) === item.id ? "" : item.id);
+    beep(620, .08, "triangle");
+    paint3();
+  }
+});
+function capsule() {
+  const r = CAPSULE[Math.floor(Math.random() * CAPSULE.length)];
+  if (r[2]) { try { localStorage.setItem("stBulbsSpent", String(Math.max(0, BULBS.spent() - r[2]))); } catch (e) {} }
+  tray.innerHTML = `<div class="capsule"><span style="font-size:2.2rem">${r[0]}</span><br>${r[1]}</div>`;
+  tune(r[2] >= 25 ? [659, 880, 1100] : r[2] ? [620, 780] : [330, 262]);
+  paint3();
+}
+paint3();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
