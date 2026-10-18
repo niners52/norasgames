@@ -12,6 +12,9 @@
      LIGHTS      a string of Christmas lights spells a message
      FLIP        the world turns upside down until you tap
      RAINBOW     Kali's illusion — only unlocked inside Room 11
+     TRANSMISSION  unlocked by finding all five radio stations
+
+   And one thing nobody is told: FLIP at a strange hour opens a door.
    Clues live on the secret page. Nothing here breaks the page —
    every effect cleans itself up when it's done.
    ===================================================================== */
@@ -207,9 +210,40 @@
   }
 
   /* ================= FLIP — the world turns over ================= */
+  /* the strange hours: 1:11, 2:22, 3:33, 4:44, 5:55 and 11:11 */
+  function strangeHour() {
+    const d = new Date(), h = d.getHours() % 12 || 12, m = d.getMinutes();
+    if (h === 11 && m === 11) return true;
+    return h >= 1 && h <= 5 && m === h * 11;
+  }
+  function ghostDoor() {
+    if (document.getElementById("egg-door")) return;
+    /* the page is upside down right now, so this hangs off <html> instead of <body>
+       — otherwise the flip drags it off the screen */
+    const L = document.createElement("div");
+    L.id = "egg-door";
+    L.style.cssText = "position:fixed;inset:0;z-index:9800;overflow:hidden;pointer-events:auto";
+    document.documentElement.appendChild(L);
+    L.innerHTML = '<div style="position:absolute;inset:0;background:rgba(2,8,6,.72)"></div>' +
+      '<div id="egg-doorbtn" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);' +
+      'text-align:center;cursor:pointer;color:#7dffb0;font-family:Nunito,system-ui,sans-serif;font-weight:800">' +
+      '<div style="font-size:4.4rem;animation:eggpulse 1.3s ease-in-out infinite">📻</div>' +
+      '<div style="font-size:1.1rem;letter-spacing:3px;margin-top:6px">SOMETHING IS TRANSMITTING</div>' +
+      '<div style="opacity:.75;font-weight:700;margin-top:4px">tap to listen</div></div>';
+    melody([196, 247, 294, 392], 220, "sine");
+    L.querySelector("#egg-doorbtn").addEventListener("click", function () {
+      const sc = [].slice.call(document.scripts).filter(function (x) { return /eggs\.js/.test(x.src); })[0];
+      const base = sc ? sc.src.replace(/[^/]*$/, "") : "";
+      location.href = base + "broadcast.html";
+    });
+    setTimeout(function () { L.style.transition = "opacity 1s"; L.style.opacity = "0"; }, 18000);
+    setTimeout(function () { L.remove(); }, 19200);
+  }
+
   function flip() {
     if (document.body.classList.contains("egg-flipped")) return;
     document.body.classList.add("egg-flipped");
+    if (strangeHour()) setTimeout(ghostDoor, 1400);
     melody([392, 330, 262, 196], 160, "sine");
     toast("🙃 Tap anywhere to come back", 5000);
     const back = () => {
@@ -248,9 +282,35 @@
     setTimeout(() => L.remove(), 4500);
   }
 
+  /* ======== TRANSMISSION — only for people who found all five stations ======== */
+  function transmission() {
+    const L = layer(9450);
+    L.innerHTML = '<div style="position:absolute;inset:0;background:' +
+      'repeating-linear-gradient(0deg, rgba(125,255,176,.16) 0 1px, transparent 1px 3px);' +
+      'animation:eggpulse .9s ease-in-out 4"></div>' +
+      '<div id="egg-tx" style="position:absolute;left:0;right:0;top:0;padding:16px;text-align:center;' +
+      'font-family:ui-monospace,Courier New,monospace;font-size:clamp(1rem,4vw,1.8rem);letter-spacing:6px;' +
+      'color:#7dffb0;text-shadow:0 0 18px #7dffb0;background:linear-gradient(180deg,rgba(3,12,8,.95),rgba(3,12,8,0))"></div>';
+    const line = "YOU ARE NOT ALONE HERE";
+    const el = L.querySelector("#egg-tx");
+    let i = 0;
+    const type = setInterval(function () {
+      el.textContent = line.slice(0, ++i);
+      if (line[i - 1] !== " ") note(520 + Math.random() * 300, .03, "square", .035);
+      if (i >= line.length) clearInterval(type);
+    }, 95);
+    melody([392, 440, 494, 523, 587], 180, "sine");
+    toast("📻 …still here.", 3600);
+    setTimeout(function () { L.style.transition = "opacity 1.1s"; L.style.opacity = "0"; }, 3800);
+    setTimeout(function () { L.remove(); }, 5000);
+  }
+
   /* ---------- the emoji strip (for iPads and anyone without a keyboard) ---------- */
   const STRIP = [["🧇", "EGGO"], ["🕰️", "VECNA"], ["🎸", "HELLFIRE"], ["🏃", "RUN"], ["💡", "LIGHTS"], ["🙃", "FLIP"]];
-  try { if (localStorage.getItem("noraRoom") === "1") STRIP.push(["🌈", "RAINBOW"]); } catch (e) {}
+  try {
+    if (localStorage.getItem("noraRoom") === "1") STRIP.push(["🌈", "RAINBOW"]);
+    if (localStorage.getItem("noraBroadcast") === "1") STRIP.push(["📻", "TRANSMISSION"]);
+  } catch (e) {}
   function buildStrip() {
     if (document.getElementById("egg-strip")) return;
     const foot = document.querySelector("footer");
@@ -287,7 +347,7 @@
   }
 
   /* ---------- listen for the words ---------- */
-  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow };
+  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow, TRANSMISSION: transmission };
   const LONGEST = Math.max(...Object.keys(CODES).map(k => k.length));
   let buf = "";
   addEventListener("keydown", e => {

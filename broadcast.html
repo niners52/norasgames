@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📻 The Broadcast</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #d8f3e0; --dim: #7fa891; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif; line-height: 1.6;
+         background: radial-gradient(ellipse at 50% -10%, #0d2a22, #061411 55%, #030807); }
+  body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: .18;
+                background: repeating-linear-gradient(0deg, rgba(255,255,255,.14) 0 1px, transparent 1px 3px);
+                animation: roll 7s linear infinite; }
+  @keyframes roll { to { transform: translateY(3px); } }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 18px 60px; position: relative; z-index: 1; }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.8rem, 8vw, 3.2rem); text-align: center;
+       letter-spacing: 3px; margin: 6px 0 2px; color: #fff; text-shadow: 0 0 22px rgba(120, 255, 190, .55); }
+  .sub { text-align: center; color: var(--dim); margin-bottom: 18px; }
+  .radio2 { border-radius: 22px; padding: 20px; background: linear-gradient(170deg, #253026, #121a16 45%, #0a100d);
+            border: 2px solid #35503f; box-shadow: 0 18px 46px rgba(0,0,0,.7), inset 0 2px 0 rgba(255,255,255,.08); }
+  .screen2 { border-radius: 14px; padding: 14px; background: #07150f; border: 2px solid #04100a;
+             box-shadow: inset 0 0 28px rgba(0,0,0,.85); font-family: ui-monospace, "Courier New", monospace; min-height: 112px; }
+  .freq { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(2rem, 9vw, 3.2rem); text-align: center;
+          color: #7dffb0; text-shadow: 0 0 20px rgba(125, 255, 176, .7); }
+  .meter { height: 10px; border-radius: 99px; background: rgba(255,255,255,.1); overflow: hidden; margin: 10px 0 4px; }
+  .meter div { height: 100%; width: 0; background: linear-gradient(90deg, #2c6b4a, #7dffb0); transition: width .12s; }
+  .meterlabel { text-align: center; font-size: .8rem; letter-spacing: 2px; color: var(--dim); }
+  input[type=range] { width: 100%; margin-top: 16px; height: 42px; -webkit-appearance: none; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track { height: 14px; border-radius: 99px;
+    background: linear-gradient(90deg, #11241b, #1d3a2b); border: 1px solid #35503f; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 30px; height: 38px; margin-top: -13px;
+    border-radius: 8px; background: linear-gradient(180deg, #d6ffe8, #4f8c6b); border: 2px solid #0a140f;
+    box-shadow: 0 0 16px rgba(125, 255, 176, .6); cursor: pointer; }
+  input[type=range]::-moz-range-track { height: 14px; border-radius: 99px; background: #1d3a2b; border: 1px solid #35503f; }
+  input[type=range]::-moz-range-thumb { width: 28px; height: 36px; border-radius: 8px; background: #d6ffe8; border: 2px solid #0a140f; }
+  .ticks { display: flex; justify-content: space-between; font-size: .72rem; color: var(--dim); letter-spacing: 1px; }
+  .found { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 9px; margin-top: 16px; }
+  .found div { border-radius: 12px; padding: 10px; text-align: center; font-weight: 800; font-size: .86rem;
+               background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); color: var(--dim); }
+  .found div.on { background: rgba(125, 255, 176, .16); border-color: #7dffb0; color: #d8ffe8; }
+  .msg2 { margin-top: 18px; text-align: center; font-family: "Noto Serif Display", Georgia, serif;
+          font-size: clamp(1.2rem, 5vw, 2rem); letter-spacing: 4px; color: #7dffb0; min-height: 1.4em; }
+  .card { border-radius: 18px; padding: 18px 20px; margin-top: 16px;
+          background: linear-gradient(160deg, rgba(20, 48, 38, .7), rgba(8, 16, 13, .92)); border: 1px solid rgba(125, 255, 176, .3); }
+  .btn { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+         padding: 12px 20px; border-radius: 12px; border: 0; color: #04130c; background: linear-gradient(135deg, #7dffb0, #2f9c67); }
+  .btn.ghost { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: var(--ink); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+  footer { text-align: center; color: rgba(127, 168, 145, .5); padding: 22px 12px 10px; font-size: .86rem; }
+</style>
+</head>
+<body>
+<main>
+  <div style="text-align:center;font-size:3rem">📻</div>
+  <h1>THE BROADCAST</h1>
+  <p class="sub">Something has been transmitting this whole time. Turn the dial and find it.</p>
+
+  <div class="radio2">
+    <div class="screen2">
+      <div class="freq" id="freq">88.0</div>
+      <div class="meter"><div id="sig"></div></div>
+      <p class="meterlabel" id="label">· · · S T A T I C · · ·</p>
+      <p id="saying" style="text-align:center;color:#d8ffe8;min-height:2.4em;margin-top:6px"></p>
+    </div>
+    <input type="range" id="dial" min="880" max="1080" value="880" step="1">
+    <div class="ticks"><span>88</span><span>93</span><span>98</span><span>103</span><span>108</span></div>
+    <div class="found" id="found"></div>
+    <div class="msg2" id="msg2"></div>
+  </div>
+
+  <div class="card" id="afterall" style="display:none"></div>
+
+  <div class="row">
+    <a class="btn ghost" href="vault.html">🕯️ The Last Room</a>
+    <a class="btn ghost" href="room.html">🌈 Room 11</a>
+    <a class="btn ghost" href="index.html">🏠 Nora's Games</a>
+  </div>
+</main>
+
+<footer>
+  Station unknown · broadcasting since 1983
+  <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script>
+"use strict";
+try { localStorage.setItem("noraTuned", "1"); } catch (e) {}
+
+/* who's listening? the Hellfire card knows your name */
+let myName = "";
+try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (h && h.name) myName = h.name.slice(0, 16); } catch (e) {}
+
+const STATIONS = [
+  { f: 881,  word: "YOU",   label: "A CHILD COUNTING",
+    say: "…eleven. ten. nine. eight… it keeps starting again at eleven.", song: [330, 311, 294, 277, 262] },
+  { f: 927,  word: "ARE",   label: "THE OLD SONG",
+    say: "Four notes, over and over. You know this one. Everybody knows this one.", song: [262, 330, 392, 523, 392, 330] },
+  { f: 973,  word: "NOT",   label: "SOMETHING TAPPING",
+    say: "Tap. Tap-tap. Tap. It's not random — it's somebody knocking on the other side of a wall.", song: [700, 700, 0, 700, 0, 0, 700] },
+  { f: 1011, word: "ALONE", label: "A VOICE THAT KNOWS YOU",
+    say: (myName ? "It says your name. It says “" + myName + "”, clear as anything, and then it waits." :
+                   "It says a name. It isn't yours — but it is somebody's, and the voice is certain."),
+    song: [392, 440, 494, 440] },
+  { f: 1065, word: "HERE",  label: "A GIRL, VERY FAR AWAY",
+    say: "“…still here,” she says. “Been here the whole time. Took you long enough.”", song: [523, 659, 784, 1047] },
+];
+const TOL = 7;   /* how close you have to be */
+
+let ac = null;
+const AC = () => (ac = ac || new (window.AudioContext || window.webkitAudioContext)());
+function note(f, d, type, vol) {
+  if (!f) return;
+  try { const a = AC(), o = a.createOscillator(), g = a.createGain();
+    o.type = type || "sine"; o.frequency.value = f; g.gain.value = vol == null ? .06 : vol;
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + d);
+  } catch (e) {}
+}
+const play = (list, gap) => list.forEach((f, i) => setTimeout(() => note(f, .3, "triangle"), i * (gap || 170)));
+function hiss(strength) {
+  if (strength <= 0) return;
+  note(600 + Math.random() * 1800, .035, "square", .02 * strength);
+}
+
+let found = {};
+try { found = JSON.parse(localStorage.getItem("noraStations") || "{}"); } catch (e) {}
+const dial = document.getElementById("dial");
+let lockTimer = null, lockedOn = null;
+
+function drawFound() {
+  document.getElementById("found").innerHTML = STATIONS.map(s =>
+    `<div class="${found[s.f] ? "on" : ""}">${found[s.f] ? (s.f / 10).toFixed(1) + " · " + s.word : "— — —"}</div>`).join("");
+  const all = STATIONS.every(s => found[s.f]);
+  document.getElementById("msg2").textContent = STATIONS.map(s => found[s.f] ? s.word : "·····").join(" ");
+  if (all) finish();
+}
+function finish() {
+  try { localStorage.setItem("noraBroadcast", "1"); } catch (e) {}
+  const box = document.getElementById("afterall");
+  if (box.style.display === "block") return;
+  box.style.display = "block";
+  box.innerHTML = `
+    <h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:0 0 6px">📡 All five stations</h3>
+    <p style="font-size:1.3rem;letter-spacing:4px;color:#7dffb0;text-align:center">YOU ARE NOT ALONE HERE</p>
+    <p>That's the whole message. It's been going out on five frequencies since 1983 and you are the first person
+       on this website to hear all of it.</p>
+    <p style="color:#d8ffe8"><b>📻 has been added to the row of emojis at the bottom of every page.</b>
+       Tap it three times anywhere on the site and the transmission comes through.</p>
+    <p style="color:var(--dim);font-size:.9rem">Only people who find this room ever get that emoji. Not even
+       the ones who made it into Room 11.</p>`;
+  play([523, 659, 784, 1047, 1319], 150);
+}
+function tune() {
+  const v = +dial.value;
+  document.getElementById("freq").textContent = (v / 10).toFixed(1);
+  let best = null, dist = 999;
+  for (const s of STATIONS) { const d = Math.abs(s.f - v); if (d < dist) { dist = d; best = s; } }
+  const strength = Math.max(0, 1 - dist / 28);
+  document.getElementById("sig").style.width = (strength * 100) + "%";
+  hiss(1 - strength);
+
+  if (dist <= TOL) {
+    document.getElementById("label").textContent = "· · · S I G N A L · · ·";
+    if (lockedOn !== best.f) {
+      lockedOn = best.f;
+      clearTimeout(lockTimer);
+      document.getElementById("saying").textContent = "…something is coming through…";
+      lockTimer = setTimeout(() => {
+        document.getElementById("label").textContent = best.label;
+        document.getElementById("saying").textContent = best.say;
+        play(best.song, best.f === 973 ? 140 : 200);
+        if (!found[best.f]) {
+          found[best.f] = 1;
+          try { localStorage.setItem("noraStations", JSON.stringify(found)); } catch (e) {}
+          drawFound();
+        }
+      }, 900);
+    }
+  } else {
+    lockedOn = null; clearTimeout(lockTimer);
+    document.getElementById("label").textContent = dist < 18 ? "· · · ALMOST · · ·" : "· · · S T A T I C · · ·";
+    document.getElementById("saying").textContent = "";
+  }
+}
+dial.addEventListener("input", tune);
+dial.addEventListener("change", tune);
+drawFound();
+tune();
+</script>
+<script src="eggs.js"></script>
+</body>
+</html>

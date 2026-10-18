@@ -87,6 +87,8 @@ const S = {
   endings: json("stCampaign", "[]").length,
   card: (() => { try { return localStorage.getItem("stHellfire") ? 1 : 0; } catch (e) { return 0; } })(),
   room: (() => { try { return localStorage.getItem("noraRoom") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
+  vault: (() => { try { return localStorage.getItem("noraVault") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
+  radio: (() => { try { return localStorage.getItem("noraBroadcast") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
   secret: (() => { try { return localStorage.getItem("noraSecret") === "1"; } catch (e) { return false; } })(),
 };
 
@@ -118,6 +120,8 @@ const BADGES = [
   { i: "📖", n: "Every Last Ending", d: "Find all 8 endings of the campaign.", v: S.endings, need: 8 },
   { i: "🔑", n: "Found the Gate", d: "Find the secret page.", v: S.secret ? 1 : 0, need: 1, hide: true },
   { i: "🌈", n: "Room 11", d: "Find the room behind the room.", v: S.room, need: 1, hide: true },
+  { i: "🕯️", n: "The Last Room", d: "Three doors deep.", v: S.vault, need: 1, hide: true },
+  { i: "📻", n: "Still Here", d: "Hear all five stations.", v: S.radio, need: 1, hide: true },
 ];
 
 const RANKS = [[0, "🧇", "Newie"], [3, "🚲", "Bike Kid"], [6, "📻", "Walkie Operator"], [9, "🎲", "Party Member"],
