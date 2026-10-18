@@ -240,10 +240,26 @@ document.querySelectorAll(".opts").forEach(b => b.addEventListener("click", e =>
 document.getElementById("mname").addEventListener("input", e => { M.name = e.target.value; render(); });
 document.getElementById("reroll").onclick = () => { roll(); render(); };
 document.getElementById("download").onclick = () => {
-  const a = document.createElement("a");
-  a.download = ((M.name || "hellfire") + "-hellfire-card").toLowerCase().replace(/[^a-z0-9-]/g, "-") + ".png";
-  a.href = document.getElementById("card").toDataURL("image/png");
-  a.click(); tune([659, 880, 1100]);
+  /* iPads can't do a normal download, so show the picture and let you press and hold it */
+  const url = document.getElementById("card").toDataURL("image/png");
+  const file = ((M.name || "hellfire") + "-hellfire-card").toLowerCase().replace(/[^a-z0-9-]/g, "-") + ".png";
+  tune([659, 880, 1100]);
+  const box = document.createElement("div");
+  box.style.cssText = `position:fixed;inset:0;z-index:99999;background:rgba(6,2,10,.94);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center`;
+  box.innerHTML = `
+    <p style="font-weight:800;color:#ffd54a;max-width:420px">
+      📱 On an iPad or phone: <b>press and hold</b> the card below, then choose <b>“Add to Photos”</b> or <b>“Save Image”</b>.
+    </p>
+    <img src="${url}" alt="Your Hellfire Club card" style="max-width:min(92vw,640px);height:auto;border-radius:12px;
+      border:2px solid rgba(255,90,90,.5);box-shadow:0 14px 40px rgba(0,0,0,.7)">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <a class="btn" id="dl2" href="${url}" download="${file}">💻 Download (computer)</a>
+      <button class="ghost" id="closedl">Done</button>
+    </div>`;
+  document.body.appendChild(box);
+  box.querySelector("#closedl").onclick = () => box.remove();
+  box.addEventListener("click", e => { if (e.target === box) box.remove(); });
 };
 render();
 /* fonts may land after first paint — redraw once they do */
