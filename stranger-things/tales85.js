@@ -41,7 +41,8 @@
     const b = document.createElement("button");
     b.id = "t85btn";
     b.type = "button";
-    b.textContent = on() ? "🔦 Back to Stranger Things" : "📺 Change to Tales from '85";
+    b.textContent = on() ? "🔦 Stranger Things" : "📺 Tales from '85";
+    b.title = on() ? "Switch back to the real Stranger Things look" : "Switch the whole site to the cartoon one";
     b.addEventListener("click", () => {
       try { localStorage.setItem(KEY, on() ? "real" : "85"); } catch (e) {}
       document.documentElement.style.transition = "filter .45s";

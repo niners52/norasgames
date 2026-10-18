@@ -53,6 +53,15 @@ body.t85 header.bar {
   box-shadow: 0 4px 0 rgba(42, 27, 61, .18);
 }
 body.t85 .brand { color: #2a1b3d; text-shadow: none; }
+body.t85 nav.links {
+  background: linear-gradient(180deg, #ffffff, #f2f8ff);
+  border-bottom: 4px solid #2a1b3d;
+  box-shadow: 0 14px 30px rgba(42, 27, 61, .25);
+}
+body.t85 #menubtn {
+  background: #fff; color: #2a1b3d; border: 2px solid #2a1b3d;
+  border-radius: 999px; box-shadow: 0 3px 0 rgba(42, 27, 61, .25);
+}
 body.t85 nav.links a {
   background: #fff;
   color: #2a1b3d;
@@ -129,6 +138,8 @@ body.t85 .secret-dot { color: #5c6f8e; }
 /* the upside-down toggle has nothing to do here */
 body.t85.upside { filter: none; }
 
-@media (max-width: 720px) {
-  #t85btn { margin-left: 0; width: 100%; }
+@media (max-width: 760px) {
+  #t85btn { margin-left: 0; font-size: .74rem; padding: 8px 11px; }
+  #menubtn { font-size: .84rem; padding: 9px 13px; }
+  #menubtn .where { display: none; }
 }

@@ -52,7 +52,30 @@ document.addEventListener("click", e => {
 /* ---------- show which page you're on ---------- */
 (function markPage() {
   const here = location.pathname.split("/").pop() || "index.html";
+  let hereName = "";
   document.querySelectorAll("nav.links a").forEach(a => {
-    if (a.getAttribute("href") === here) a.classList.add("here");
+    if (a.getAttribute("href") === here) { a.classList.add("here"); hereName = a.textContent; }
   });
+
+  /* ---- the arrow that pops the menu out ---- */
+  const nav = document.querySelector("nav.links");
+  const bar = document.querySelector("header.bar");
+  if (nav && bar && !document.getElementById("menubtn")) {
+    const b = document.createElement("button");
+    b.id = "menubtn";
+    b.type = "button";
+    b.setAttribute("aria-expanded", "false");
+    b.innerHTML = `<span class="arrow">▼</span> Menu${hereName ? ` <span class="where">· ${hereName}</span>` : ""}`;
+    bar.insertBefore(b, nav);
+    const setOpen = o => {
+      nav.classList.toggle("open", o);
+      b.setAttribute("aria-expanded", o ? "true" : "false");
+      if (typeof beep === "function") beep(o ? 620 : 420, .06, "triangle", .04);
+    };
+    b.addEventListener("click", e => { e.stopPropagation(); setOpen(!nav.classList.contains("open")); });
+    document.addEventListener("click", e => {
+      if (nav.classList.contains("open") && !nav.contains(e.target) && e.target !== b) setOpen(false);
+    });
+    addEventListener("keydown", e => { if (e.key === "Escape") setOpen(false); });
+  }
 })();
