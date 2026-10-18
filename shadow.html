@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>👁️ It turned around</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #e8e4f2; --dim: #8e86a6; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif; line-height: 1.75;
+         background: #040309; overflow-x: hidden; }
+  main { max-width: 680px; margin: 0 auto; padding: 40px 20px 70px; position: relative; z-index: 2; }
+  .figure { text-align: center; margin-bottom: 10px; }
+  .figure svg { filter: drop-shadow(0 0 40px rgba(255, 32, 32, .35)); }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.6rem, 7vw, 2.8rem); text-align: center;
+       letter-spacing: 2px; margin: 4px 0 2px; color: #fff; text-shadow: 0 0 26px rgba(255, 32, 32, .5); }
+  .sub { text-align: center; color: var(--dim); margin-bottom: 26px; }
+  .speech { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.05rem, 4vw, 1.35rem);
+            min-height: 5em; white-space: pre-wrap; }
+  .speech .cursor { display: inline-block; width: .55ch; background: #ff2020; animation: blink .9s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .knows { margin-top: 24px; display: grid; gap: 9px; }
+  .knows div { opacity: 0; transform: translateY(8px); transition: opacity .6s, transform .6s;
+               border-left: 3px solid rgba(255, 32, 32, .5); padding: 6px 0 6px 14px; color: #cfc7e0; }
+  .knows div.in { opacity: 1; transform: none; }
+  .end { margin-top: 30px; border-radius: 18px; padding: 20px; display: none;
+         background: linear-gradient(160deg, rgba(40, 10, 16, .8), rgba(10, 4, 8, .95));
+         border: 1px solid rgba(255, 32, 32, .4); }
+  .end.show { display: block; animation: fade 1s; }
+  @keyframes fade { from { opacity: 0; } }
+  .btn { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+         padding: 12px 20px; border-radius: 12px; border: 0; color: #fff; background: linear-gradient(135deg, #ff2020, #6d0a1e); }
+  .btn.ghost { background: rgba(255, 255, 255, .09); border: 1px solid rgba(255, 255, 255, .2); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+  footer { text-align: center; color: rgba(142, 134, 166, .45); padding: 20px 12px 10px; font-size: .85rem; }
+  #dust { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  .mote { position: absolute; border-radius: 50%; background: rgba(255, 180, 180, .35); }
+</style>
+</head>
+<body>
+<div id="dust"></div>
+<main>
+  <div class="figure" id="figure"></div>
+  <h1>IT TURNED AROUND</h1>
+  <p class="sub">You caught it. Nobody catches it.</p>
+
+  <p class="speech" id="speech"></p>
+  <div class="knows" id="knows"></div>
+
+  <div class="end" id="end"></div>
+
+  <div class="row">
+    <a class="btn ghost" href="vault.html">🕯️ The Last Room</a>
+    <a class="btn ghost" href="room.html">🌈 Room 11</a>
+    <a class="btn ghost" href="index.html">🏠 Nora's Games</a>
+  </div>
+</main>
+
+<footer>
+  It isn't following you any more. It's just here.
+  <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script>
+"use strict";
+try { localStorage.setItem("noraShadow", "1"); } catch (e) {}
+
+/* ---- it turns around ---- */
+document.getElementById("figure").innerHTML = `
+  <svg viewBox="0 0 160 240" height="230" xmlns="http://www.w3.org/2000/svg">
+    <defs><radialGradient id="sg" cx=".5" cy=".3" r=".7">
+      <stop offset="0" stop-color="#ff2020" stop-opacity=".3"/><stop offset="1" stop-color="#ff2020" stop-opacity="0"/>
+    </radialGradient></defs>
+    <ellipse cx="80" cy="120" rx="78" ry="110" fill="url(#sg)"/>
+    <ellipse cx="80" cy="232" rx="48" ry="8" fill="#000" opacity=".6"/>
+    <path d="M80 48 C108 48 120 76 116 104 C112 132 104 148 104 184 L104 224 L92 224 L88 184 L72 184 L68 224 L56 224
+             L56 184 C56 148 48 132 44 104 C40 76 52 48 80 48 Z" fill="#05040a"/>
+    <ellipse cx="80" cy="32" rx="26" ry="30" fill="#05040a"/>
+    <path d="M52 88 L20 148 M108 88 L140 148" stroke="#05040a" stroke-width="14" stroke-linecap="round"/>
+    <g id="eyes" style="opacity:0;transition:opacity 2.4s ease 1.2s">
+      <circle cx="70" cy="30" r="5" fill="#ff2020" style="filter:drop-shadow(0 0 12px #ff2020)"/>
+      <circle cx="90" cy="30" r="5" fill="#ff2020" style="filter:drop-shadow(0 0 12px #ff2020)"/>
+      <path d="M68 46 C74 50 86 50 92 46" stroke="#ff5a5a" stroke-width="2.4" fill="none" opacity=".8"/>
+    </g>
+  </svg>`;
+requestAnimationFrame(() => { document.getElementById("eyes").style.opacity = "1"; });
+
+/* ---- dust ---- */
+const dust = document.getElementById("dust");
+for (let i = 0; i < 40; i++) {
+  const m = document.createElement("div");
+  m.className = "mote";
+  const s = 1 + Math.random() * 3;
+  m.style.cssText = `width:${s}px;height:${s}px;left:${Math.random() * 100}vw;top:${Math.random() * 100}vh;
+    opacity:${.15 + Math.random() * .35}`;
+  dust.appendChild(m);
+  const drift = () => {
+    m.style.transition = "transform 14s linear, opacity 14s linear";
+    m.style.transform = `translate(${Math.random() * 120 - 60}px, ${-60 - Math.random() * 120}px)`;
+  };
+  setTimeout(drift, Math.random() * 2000);
+  setInterval(() => { m.style.transition = "none"; m.style.transform = "none"; setTimeout(drift, 60); }, 14600);
+}
+
+/* ---- what it watched you do ---- */
+const num = k => { try { return +(localStorage.getItem(k) || 0); } catch (e) { return 0; } };
+const js = (k, d) => { try { return JSON.parse(localStorage.getItem(k) || d); } catch (e) { return JSON.parse(d); } };
+const lines = [];
+let hero = null;
+try { hero = JSON.parse(localStorage.getItem("stHellfire") || "null"); } catch (e) {}
+
+if (hero && hero.name) lines.push(`I watched you write your name on a card. <b>${hero.name}</b>. I kept it.`);
+const mons = js("stMonsters", "[]");
+if (mons.length) lines.push(`You built ${mons.length} creature${mons.length === 1 ? "" : "s"} and gave ${mons.length === 1 ? "it a name" : "them names"}. <b>${mons.slice(0, 3).map(m => m.name || "Unnamed").join(", ")}</b>${mons.length > 3 ? ", and more" : ""}. I was in the room for all of it.`);
+const ends = js("stCampaign", "[]");
+if (ends.length) lines.push(`You went into the Vale ${ends.length === 1 ? "once" : ends.length + " times"} and came out ${ends.length === 1 ? "a different way" : "a different way each time"}. <b>${ends.join(" · ")}</b>`);
+const seen = Object.keys(js("stSeen", "{}")).length;
+if (seen) lines.push(`You ticked off <b>${seen}</b> episode${seen === 1 ? "" : "s"}. I counted every one.`);
+if (num("stHardBest")) lines.push(`Your best on the hard quiz was <b>${num("stHardBest")}%</b>. I was behind you when you got it.`);
+if (num("stChaseBest")) lines.push(`You rode <b>${num("stChaseBest")} metres</b> down Mirkwood without looking back. Good. Never look back.`);
+if (num("stMazeBest") > 1) lines.push(`You found your way out of the maze <b>${num("stMazeBest") - 1}</b> time${num("stMazeBest") - 1 === 1 ? "" : "s"}. I knew the way. I didn't help.`);
+if (num("stCodeBest")) lines.push(`You broke <b>${num("stCodeBest")}</b> of their codes. They never knew either.`);
+if (num("stQuotesBest")) lines.push(`You knew <b>${num("stQuotesBest")} out of 10</b> voices by heart.`);
+const log = js("noraRoomLog", "[]");
+if (log.length) lines.push(`Somebody signed the log in Room 11: <b>${log.map(l => l.name).slice(-4).join(", ")}</b>. I read it after you left.`);
+const shots = Object.keys(js("noraShots", "{}")).length;
+if (shots) lines.push(`And you developed <b>${shots}</b> photograph${shots === 1 ? "" : "s"}. That's how I got your picture.`);
+if (!lines.length) lines.push("I haven't watched you do very much yet. That's alright. There's time.");
+
+/* ---- it talks ---- */
+const SPEECH = "You've been looking at me this whole time.\\n\\nFirst page. Every page after that. I'm the bit at the bottom you never read, and the tree that's one pixel darker than the others, and the thing in the photo.\\n\\nI'm not here to scare you. I just wanted to say what I saw.";
+const el = document.getElementById("speech");
+let i = 0;
+let ac = null;
+function tick(f, d) {
+  try { const a = ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = "sine"; o.frequency.value = f; g.gain.value = .025;
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + d);
+  } catch (e) {}
+}
+function type() {
+  if (i >= SPEECH.length) { el.innerHTML = SPEECH.replace(/\\n/g, "<br>"); return knows(); }
+  el.innerHTML = SPEECH.slice(0, ++i).replace(/\\n/g, "<br>") + '<span class="cursor">&nbsp;</span>';
+  if (i % 4 === 0) tick(180 + Math.random() * 60, .02);
+  setTimeout(type, SPEECH[i - 1] === "." ? 420 : 32);
+}
+function knows() {
+  const box = document.getElementById("knows");
+  box.innerHTML = lines.map(l => `<div>${l}</div>`).join("");
+  const kids = [...box.children];
+  kids.forEach((k, n) => setTimeout(() => { k.classList.add("in"); tick(120 + n * 18, .3); }, 500 + n * 900));
+  setTimeout(finish, 700 + kids.length * 900);
+}
+function finish() {
+  const e = document.getElementById("end");
+  e.classList.add("show");
+  e.innerHTML = `
+    <h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:0 0 8px">👁️ Alright. Your turn.</h3>
+    <p>Four doors, and then me. There is nothing after this, and I should know — I've been everywhere on this
+      website since the first page went up.</p>
+    <p><b style="color:#fff">👁️ has been added to the emoji row at the bottom of every page.</b>
+      Tap it three times anywhere and I'll come out on purpose, so you can show somebody.
+      I'll stay longer when you call me than when I come on my own.</p>
+    <p style="color:var(--dim)">I'm not going to hide from you any more. Only from everybody else.</p>`;
+  tick(70, 2);
+}
+setTimeout(type, 1400);
+</script>
+<script src="eggs.js"></script>
+</body>
+</html>

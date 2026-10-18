@@ -13,6 +13,7 @@
      FLIP        the world turns upside down until you tap
      RAINBOW     Kali's illusion — only unlocked inside Room 11
      FLASH       the camera flash — unlocked by developing every photo
+     SHADOW      calls the thing that follows you — only after you catch it
    Clues live on the secret page. Nothing here breaks the page —
    every effect cleans itself up when it's done.
    ===================================================================== */
@@ -269,11 +270,69 @@
     setTimeout(function () { L.remove(); }, 2000);
   }
 
+  /* ======== THE THING THAT FOLLOWS YOU ========
+     It starts turning up only after you develop the photograph of yourself.
+     It appears on a page now and then, for about four seconds, in a corner.
+     Catch it once and it stops hiding. ======== */
+  function shadowArt(h) {
+    return '<svg viewBox="0 0 80 120" height="' + h + '" xmlns="http://www.w3.org/2000/svg">' +
+      '<ellipse cx="40" cy="116" rx="26" ry="6" fill="#000" opacity=".55"/>' +
+      '<path d="M40 24 C54 24 60 38 58 52 C56 66 52 74 52 92 L52 112 L46 112 L44 92 L36 92 L34 112 L28 112 L28 92 ' +
+      'C28 74 24 66 22 52 C20 38 26 24 40 24 Z" fill="#05040a"/>' +
+      '<ellipse cx="40" cy="16" rx="13" ry="15" fill="#05040a"/>' +
+      '<path d="M26 44 L10 74 M54 44 L70 74" stroke="#05040a" stroke-width="7" stroke-linecap="round"/>' +
+      '<circle cx="36" cy="16" r="2.4" fill="#ff2020" opacity=".85" style="filter:drop-shadow(0 0 6px #ff2020)"/>' +
+      '</svg>';
+  }
+  function base() {
+    const sc = [].slice.call(document.scripts).filter(function (x) { return /eggs\.js/.test(x.src); })[0];
+    return sc ? sc.src.replace(/[^/]*$/, "") : "";
+  }
+  function appear(forced) {
+    if (document.getElementById("egg-shadow")) return;
+    const L = document.createElement("div");
+    L.id = "egg-shadow";
+    const left = Math.random() < .5;
+    L.style.cssText = "position:fixed;bottom:0;z-index:9700;cursor:pointer;opacity:0;" +
+      "-webkit-tap-highlight-color:transparent;transition:opacity 1.1s ease, transform 4.4s linear;" +
+      (left ? "left:2vw;" : "right:2vw;") + "transform:translateY(26px)";
+    L.innerHTML = shadowArt(forced ? 160 : 108);
+    document.documentElement.appendChild(L);
+    requestAnimationFrame(function () {
+      L.style.opacity = forced ? ".95" : ".72";
+      L.style.transform = "translateY(0) translateX(" + (left ? 1 : -1) * (forced ? 30 : 14) + "px)";
+    });
+    note(58, 1.6, "sine", .05);
+    L.addEventListener("click", function () {
+      try { localStorage.setItem("noraShadow", "1"); } catch (e) {}
+      L.style.transition = "transform .5s, opacity .5s";
+      L.style.transform = "scale(3)"; L.style.opacity = "0";
+      const black = document.createElement("div");
+      black.style.cssText = "position:fixed;inset:0;z-index:9999;background:#000;opacity:0;transition:opacity .9s";
+      document.documentElement.appendChild(black);
+      requestAnimationFrame(function () { black.style.opacity = "1"; });
+      setTimeout(function () { location.href = base() + "shadow.html"; }, 1000);
+    });
+    const stay = forced ? 7000 : 4400;
+    setTimeout(function () { L.style.opacity = "0"; }, stay);
+    setTimeout(function () { L.remove(); }, stay + 1300);
+  }
+  function maybeFollow() {
+    try {
+      if (localStorage.getItem("noraDarkroomAll") !== "1") return;   /* it only follows you once it has your picture */
+      if (localStorage.getItem("noraShadow") === "1") return;        /* you already caught it */
+    } catch (e) { return; }
+    if (Math.random() > .55) return;                                  /* and not every page, either */
+    setTimeout(appear, 6000 + Math.random() * 16000);
+  }
+  function summon() { appear(true); toast("👁️ …it came when you called.", 3600); }
+
   /* ---------- the emoji strip (for iPads and anyone without a keyboard) ---------- */
   const STRIP = [["🧇", "EGGO"], ["🕰️", "VECNA"], ["🎸", "HELLFIRE"], ["🏃", "RUN"], ["💡", "LIGHTS"], ["🙃", "FLIP"]];
   try {
     if (localStorage.getItem("noraRoom") === "1") STRIP.push(["🌈", "RAINBOW"]);
     if (localStorage.getItem("noraDarkroomAll") === "1") STRIP.push(["📷", "FLASH"]);
+    if (localStorage.getItem("noraShadow") === "1") STRIP.push(["👁️", "SHADOW"]);
   } catch (e) {}
   function buildStrip() {
     if (document.getElementById("egg-strip")) return;
@@ -311,7 +370,7 @@
   }
 
   /* ---------- listen for the words ---------- */
-  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow, FLASH: flash };
+  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow, FLASH: flash, SHADOW: summon };
   const LONGEST = Math.max(...Object.keys(CODES).map(k => k.length));
   let buf = "";
   addEventListener("keydown", e => {
@@ -322,6 +381,7 @@
     for (const code in CODES) if (buf.endsWith(code)) { buf = ""; CODES[code](); return; }
   });
   if (document.readyState === "loading") addEventListener("DOMContentLoaded", buildStrip); else buildStrip();
+  maybeFollow();
 
   /* so other pages can fire one on purpose (the secret page does) */
   window.noraEggs = CODES;
