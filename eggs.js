@@ -12,6 +12,7 @@
      LIGHTS      a string of Christmas lights spells a message
      FLIP        the world turns upside down until you tap
      RAINBOW     Kali's illusion — only unlocked inside Room 11
+     FLASH       the camera flash — unlocked by developing every photo
    Clues live on the secret page. Nothing here breaks the page —
    every effect cleans itself up when it's done.
    ===================================================================== */
@@ -248,10 +249,31 @@
     setTimeout(() => L.remove(), 4500);
   }
 
+  /* ======== FLASH — only for people who developed every photo in the darkroom ======== */
+  function flash() {
+    const L = layer(9460);
+    L.innerHTML = '<div id="egg-flash" style="position:absolute;inset:0;background:#fff;opacity:0"></div>';
+    const f = L.querySelector("#egg-flash");
+    note(1800, .05, "square", .05);
+    f.animate([{ opacity: 0 }, { opacity: 1, offset: .06 }, { opacity: .05, offset: .3 }, { opacity: 0 }],
+      { duration: 900, easing: "ease-out" });
+    /* for half a second you see what the room really looks like */
+    const b = document.body, old = b.style.cssText;
+    setTimeout(function () {
+      b.style.transition = "filter .15s";
+      b.style.filter = "invert(1) hue-rotate(180deg) contrast(1.3) saturate(.4)";
+    }, 120);
+    setTimeout(function () { b.style.cssText = old; }, 760);
+    setTimeout(function () { note(70, 1.4, "sine", .09); }, 300);
+    toast("📷 …did you see it?", 3000);
+    setTimeout(function () { L.remove(); }, 2000);
+  }
+
   /* ---------- the emoji strip (for iPads and anyone without a keyboard) ---------- */
   const STRIP = [["🧇", "EGGO"], ["🕰️", "VECNA"], ["🎸", "HELLFIRE"], ["🏃", "RUN"], ["💡", "LIGHTS"], ["🙃", "FLIP"]];
   try {
     if (localStorage.getItem("noraRoom") === "1") STRIP.push(["🌈", "RAINBOW"]);
+    if (localStorage.getItem("noraDarkroomAll") === "1") STRIP.push(["📷", "FLASH"]);
   } catch (e) {}
   function buildStrip() {
     if (document.getElementById("egg-strip")) return;
@@ -289,7 +311,7 @@
   }
 
   /* ---------- listen for the words ---------- */
-  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow };
+  const CODES = { EGGO: eggo, VECNA: vecna, HELLFIRE: hellfire, RUN: run, LIGHTS: lights, FLIP: flip, RAINBOW: rainbow, FLASH: flash };
   const LONGEST = Math.max(...Object.keys(CODES).map(k => k.length));
   let buf = "";
   addEventListener("keydown", e => {

@@ -34,6 +34,22 @@
   .seasons { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .seasons span { font-size: .72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px;
                   background: rgba(79, 210, 255, .16); border: 1px solid rgba(79, 210, 255, .45); color: var(--blue); }
+  /* something in the trees that didn't come out properly */
+  #smudge { position: absolute; left: 16.5%; top: 31%; width: 26px; height: 30px; transform: translate(-50%, -50%);
+            border-radius: 48% 48% 42% 42%; cursor: pointer; z-index: 3; opacity: .17;
+            background: radial-gradient(ellipse at 50% 35%, #2b2231, #0c0a10 70%, transparent);
+            transition: opacity .2s, transform .2s, filter .2s; -webkit-tap-highlight-color: transparent; }
+  #smudge.warm { opacity: .45; transform: translate(-50%, -50%) scale(1.25); filter: drop-shadow(0 0 10px #ff2020); }
+  #devroom { position: fixed; inset: 0; z-index: 999; display: none; align-items: center; justify-content: center;
+             flex-direction: column; gap: 14px; background: rgba(28, 2, 4, .95); padding: 20px; text-align: center; }
+  #devroom.show { display: flex; }
+  #devroom .polaroid { background: #e8e2d4; padding: 12px 12px 42px; border-radius: 4px; max-width: min(88vw, 340px);
+                       box-shadow: 0 18px 50px rgba(0, 0, 0, .8); position: relative; }
+  #devroom .polaroid svg { display: block; width: 100%; height: auto; border-radius: 2px; }
+  #devroom .polaroid .cap { position: absolute; left: 0; right: 0; bottom: 10px; color: #3b3228;
+                            font-family: "Noto Serif Display", Georgia, serif; font-size: .92rem; }
+  #devroom .dev { position: absolute; inset: 12px 12px 42px; background: #1c1612; transition: opacity 3s linear; }
+  #devroom p { color: #ffb3b3; font-weight: 800; max-width: 420px; }
   body.flipped .mapwrap { filter: hue-rotate(200deg) saturate(.6) brightness(.72) contrast(1.15); }
 </style>
 </head>
@@ -122,6 +138,7 @@
     </svg>
 
     <div id="pins"></div>
+    <div id="smudge" title=""></div>
   </div>
 
   <section class="panel" id="panel">
@@ -231,6 +248,71 @@ pinBox.addEventListener("click", e => {
   if (pin) show(+pin.dataset.i);
 });
 document.getElementById("randomPlace").onclick = () => show(Math.floor(Math.random() * PLACES.length));
+/* ---- the photograph nobody notices ---- */
+(function hiddenPhoto() {
+  const sm = document.getElementById("smudge");
+  let taps = 0, t = null;
+  sm.addEventListener("click", () => {
+    taps++;
+    clearTimeout(t);
+    t = setTimeout(() => { taps = 0; sm.classList.remove("warm"); }, 2500);
+    beep(170 + taps * 40, .07, "sine", .05);
+    if (taps >= 2) sm.classList.add("warm");
+    if (taps < 3) return;
+    taps = 0; sm.classList.remove("warm");
+    develop();
+  });
+
+  function develop() {
+    const box = document.createElement("div");
+    box.id = "devroom";
+    box.className = "show";
+    box.innerHTML = `
+      <p>Something didn't come out properly in this part of the woods…</p>
+      <div class="polaroid">
+        <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <defs><radialGradient id="pg" cx=".5" cy=".4" r=".7">
+            <stop offset="0" stop-color="#3b3350"/><stop offset="1" stop-color="#0b0810"/></radialGradient></defs>
+          <rect width="300" height="300" fill="url(#pg)"/>
+          <g fill="#090710">
+            ${Array.from({ length: 11 }, (_, i) => {
+              const x = 10 + i * 28, h = 140 + ((i * 53) % 70);
+              return `<path d="M${x} 300 L${x} ${300 - h} L${x - 17} ${300 - h + 26} L${x} ${300 - h - 20}
+                      L${x + 17} ${300 - h + 26} L${x} ${300 - h} Z"/>`;
+            }).join("")}
+          </g>
+          <ellipse cx="150" cy="292" rx="120" ry="16" fill="#140c18" opacity=".8"/>
+          <g opacity=".96">
+            <ellipse cx="166" cy="196" rx="16" ry="34" fill="#05040a"/>
+            <circle cx="166" cy="152" r="15" fill="#05040a"/>
+            <path d="M152 206 L146 258 M180 206 L186 258" stroke="#05040a" stroke-width="8" stroke-linecap="round"/>
+            <path d="M166 152 m-15 0 a15 15 0 0 1 30 0" fill="none" stroke="#ff2020" stroke-width="1.6" opacity=".8"/>
+            <circle cx="166" cy="150" r="4" fill="#ff2020" style="filter:drop-shadow(0 0 7px #ff2020)"/>
+          </g>
+          <rect width="300" height="300" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="10"/>
+        </svg>
+        <div class="dev" id="devcover"></div>
+        <div class="cap" id="devcap"></div>
+      </div>
+      <p id="devmsg" style="opacity:0;transition:opacity .6s">…it's standing in the trees, and it's looking at the camera.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <a class="btn" id="godark" href="../darkroom.html" style="display:none">🚪 Where was this taken?</a>
+        <button class="ghost" id="closedev">Close</button>
+      </div>`;
+    document.body.appendChild(box);
+    tune([196, 175, 147]);
+    requestAnimationFrame(() => { document.getElementById("devcover").style.opacity = "0"; });
+    setTimeout(() => {
+      document.getElementById("devcap").textContent = "MIRKWOOD — 6 NOV 1983";
+      document.getElementById("devmsg").style.opacity = "1";
+      document.getElementById("godark").style.display = "inline-block";
+      try { localStorage.setItem("noraPhoto", "1"); } catch (e) {}
+      beep(90, 1.2, "sine", .1);
+    }, 3200);
+    document.getElementById("closedev").onclick = () => box.remove();
+  }
+})();
+
 document.getElementById("flip").onclick = e => {
   document.body.classList.toggle("flipped");
   const on = document.body.classList.contains("flipped");

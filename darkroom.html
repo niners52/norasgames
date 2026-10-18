@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>📷 The Darkroom</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #ffd9d9; --dim: #c08a8a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; color: var(--ink); font-family: Nunito, system-ui, sans-serif; line-height: 1.6;
+         background: radial-gradient(ellipse at 50% -10%, #3a0a0c, #1a0507 55%, #0a0203); }
+  body::after { content: ""; position: fixed; inset: 0; pointer-events: none;
+                background: radial-gradient(ellipse at 50% 0%, rgba(255, 40, 40, .18), transparent 60%); }
+  main { max-width: 900px; margin: 0 auto; padding: 24px 18px 60px; position: relative; z-index: 1; }
+  .bulb { text-align: center; font-size: 2.6rem; animation: glow 3.4s ease-in-out infinite; }
+  @keyframes glow { 0%, 100% { filter: drop-shadow(0 0 16px #ff2020); } 50% { filter: drop-shadow(0 0 34px #ff2020); } }
+  h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.8rem, 8vw, 3.2rem); text-align: center;
+       letter-spacing: 2px; margin: 2px 0; color: #fff; text-shadow: 0 0 22px rgba(255, 32, 32, .7); }
+  .sub { text-align: center; color: var(--dim); margin-bottom: 8px; }
+  .line { position: relative; margin: 26px 0 10px; padding-top: 14px; border-top: 2px dashed rgba(255, 180, 180, .3); }
+  .shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 18px; }
+  .shot { background: #e8e2d4; padding: 10px 10px 34px; border-radius: 4px; position: relative; cursor: pointer;
+          box-shadow: 0 14px 34px rgba(0, 0, 0, .7); transform: rotate(var(--tilt)); transition: transform .2s; }
+  .shot:hover { transform: rotate(0deg) translateY(-5px); }
+  .shot svg { display: block; width: 100%; height: auto; border-radius: 2px; background: #0b0810; }
+  .shot .cover { position: absolute; inset: 10px 10px 34px; background: #171210; transition: opacity 2.6s linear; }
+  .shot.done .cover { opacity: 0; }
+  .shot .cap { position: absolute; left: 0; right: 0; bottom: 8px; text-align: center; color: #3b3228;
+               font-family: "Noto Serif Display", Georgia, serif; font-size: .82rem; }
+  .shot .peg { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 1.1rem; }
+  .note { border-radius: 16px; padding: 16px 18px; margin-top: 22px;
+          background: rgba(255, 60, 60, .1); border: 1px solid rgba(255, 60, 60, .35); }
+  .btn { display: inline-block; cursor: pointer; font: inherit; font-weight: 800; text-decoration: none;
+         padding: 12px 20px; border-radius: 12px; border: 0; color: #fff; background: linear-gradient(135deg, #ff2020, #a60e2f); }
+  .btn.ghost { background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 18px; }
+  footer { text-align: center; color: rgba(192, 138, 138, .5); padding: 22px 12px 10px; font-size: .86rem; }
+  .count { text-align: center; font-weight: 800; color: var(--dim); margin-top: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="bulb">🔴</div>
+  <h1>THE DARKROOM</h1>
+  <p class="sub">Keep the light off. Tap a photo to drop it in the tray and watch it come up.</p>
+
+  <div class="line">
+    <div class="shots" id="shots"></div>
+  </div>
+  <p class="count" id="count"></p>
+
+  <div class="note" id="note" style="display:none"></div>
+
+  <div class="row">
+    <a class="btn ghost" href="stranger-things/map.html">🗺️ Back to the map</a>
+    <a class="btn ghost" href="index.html">🏠 Nora's Games</a>
+  </div>
+</main>
+
+<footer>
+  Property of J. Byers · do not open the door
+  <span class="secret-dot" style="opacity:.25;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script>
+"use strict";
+try { localStorage.setItem("noraDarkroom", "1"); } catch (e) {}
+
+let ac = null;
+function note(f, d, type, vol) {
+  try { const a = ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || "sine"; o.frequency.value = f; g.gain.value = vol == null ? .06 : vol;
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + d);
+  } catch (e) {}
+}
+const melody = (l, gap) => l.forEach((f, i) => setTimeout(() => note(f, .3, "triangle"), i * (gap || 150)));
+
+const SH = [
+  { cap: "MIRKWOOD — 6 NOV 1983", say: "The bike is on its side and nobody is near it.",
+    art: `<rect width="300" height="300" fill="#0d0a14"/>
+      <g fill="#080610">${Array.from({length:9},(_,i)=>{const x=14+i*34,h=150+((i*61)%80);
+        return `<path d="M${x} 300 L${x} ${300-h} L${x-18} ${300-h+28} L${x} ${300-h-22} L${x+18} ${300-h+28} Z"/>`;}).join("")}</g>
+      <g stroke="#6b6072" stroke-width="4" fill="none">
+        <circle cx="118" cy="244" r="26"/><circle cx="186" cy="250" r="26"/>
+        <path d="M118 244 L150 212 L186 250 M150 212 L162 234"/></g>
+      <ellipse cx="150" cy="286" rx="120" ry="14" fill="#06040a" opacity=".8"/>` },
+  { cap: "THE BYERS HOUSE — LATE", say: "Every bulb in the house is on, and they're not plugged into anything.",
+    art: `<rect width="300" height="300" fill="#140d10"/>
+      <rect x="40" y="110" width="220" height="150" fill="#0c0709"/>
+      <path d="M26 112 L150 40 L274 112 Z" fill="#090507"/>
+      <rect x="126" y="186" width="48" height="74" fill="#1a1013"/>
+      ${Array.from({length:14},(_,i)=>{const x=46+i*15,y=132+Math.sin(i)*8,c=["#ff2020","#ffd54a","#4fd2ff","#6fff9c"][i%4];
+        return `<circle cx="${x}" cy="${y}" r="5" fill="${c}" style="filter:drop-shadow(0 0 8px ${c})"/>`;}).join("")}
+      <path d="M46 132 Q150 148 254 132" stroke="#2a2024" stroke-width="2" fill="none"/>` },
+  { cap: "SCHOOL GYM — SNOW BALL", say: "Everybody is dancing. One person is looking straight at the camera.",
+    art: `<rect width="300" height="300" fill="#101427"/>
+      ${Array.from({length:26},(_,i)=>`<circle cx="${(i*79)%300}" cy="${20+((i*53)%90)}" r="2.6" fill="#cfe4ff" opacity=".7"/>`).join("")}
+      <circle cx="150" cy="54" r="22" fill="#9fb9e8"/><circle cx="150" cy="54" r="22" fill="url(#none)"/>
+      <g fill="#070a16">
+        <ellipse cx="86" cy="214" rx="20" ry="40"/><circle cx="86" cy="166" r="15"/>
+        <ellipse cx="214" cy="214" rx="20" ry="40"/><circle cx="214" cy="166" r="15"/>
+        <ellipse cx="150" cy="222" rx="22" ry="44"/><circle cx="150" cy="170" r="17"/></g>
+      <circle cx="144" cy="168" r="3" fill="#ffd54a"/><circle cx="156" cy="168" r="3" fill="#ffd54a"/>
+      <ellipse cx="150" cy="282" rx="130" ry="16" fill="#070a16" opacity=".7"/>` },
+  { cap: "STARCOURT — 4 JULY 1985", say: "The lights are beautiful. Look at the window on the left.",
+    art: `<rect width="300" height="300" fill="#140820"/>
+      <rect x="20" y="140" width="260" height="130" fill="#0d0516"/>
+      ${Array.from({length:18},(_,i)=>`<rect x="${30+(i%6)*42}" y="${158+Math.floor(i/6)*36}" width="26" height="20"
+        fill="${["#ff5fc8","#4fd2ff","#ffd54a"][i%3]}" opacity=".75"/>`).join("")}
+      <text x="150" y="122" text-anchor="middle" font-family="Georgia" font-size="30" fill="#ff5fc8"
+        style="filter:drop-shadow(0 0 12px #ff5fc8)">STARCOURT</text>
+      <rect x="30" y="158" width="26" height="20" fill="#ff2020" style="filter:drop-shadow(0 0 10px #ff2020)"/>
+      <circle cx="43" cy="168" r="4" fill="#0a0208"/>` },
+  { cap: "THE QUARRY — DO NOT PRINT", say: "Jonathan wrote DO NOT PRINT on the back of this one.",
+    art: `<rect width="300" height="300" fill="#0b1014"/>
+      <path d="M0 190 L70 120 L140 172 L210 104 L300 176 L300 300 L0 300 Z" fill="#070b0e"/>
+      <rect y="196" width="300" height="104" fill="#0a1a24" opacity=".9"/>
+      ${Array.from({length:10},(_,i)=>`<path d="M${i*34} ${214+(i%3)*18} h26" stroke="#15323f" stroke-width="3"/>`).join("")}
+      <g><ellipse cx="214" cy="226" rx="9" ry="20" fill="#05080a"/><circle cx="214" cy="200" r="9" fill="#05080a"/>
+        <circle cx="214" cy="198" r="3" fill="#ff2020" style="filter:drop-shadow(0 0 8px #ff2020)"/></g>` },
+  { cap: "— — — — —", say: "This one wasn't in the camera. It's a photograph of whoever is holding it.",
+    art: `<rect width="300" height="300" fill="#0a0810"/>
+      <rect x="40" y="38" width="220" height="224" rx="14" fill="#15101c" stroke="#2b2235" stroke-width="3"/>
+      <rect x="58" y="56" width="184" height="152" rx="8" fill="#060410"/>
+      <ellipse cx="150" cy="132" rx="46" ry="56" fill="#0c0916"/>
+      <circle cx="150" cy="128" r="34" fill="none" stroke="#ff2020" stroke-width="2" opacity=".7"/>
+      <circle cx="150" cy="128" r="13" fill="#ff2020" style="filter:drop-shadow(0 0 16px #ff2020)"/>
+      <circle cx="150" cy="128" r="5" fill="#120208"/>
+      <text x="150" y="240" text-anchor="middle" font-family="Georgia" font-size="19" fill="#ff8a8a">that's you</text>` },
+];
+
+let done = {};
+try { done = JSON.parse(localStorage.getItem("noraShots") || "{}"); } catch (e) {}
+
+const box = document.getElementById("shots");
+box.innerHTML = SH.map((s, i) => `
+  <div class="shot ${done[i] ? "done" : ""}" data-i="${i}" style="--tilt:${(i % 2 ? 1 : -1) * (1 + i % 3)}deg">
+    <span class="peg">🧷</span>
+    <svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">${s.art}</svg>
+    <div class="cover"></div>
+    <div class="cap">${done[i] ? s.cap : "undeveloped"}</div>
+  </div>`).join("");
+
+function tally() {
+  const n = Object.keys(done).length;
+  document.getElementById("count").textContent = `${n} of ${SH.length} developed`;
+  if (n >= SH.length) {
+    try { localStorage.setItem("noraDarkroomAll", "1"); } catch (e) {}
+    const note2 = document.getElementById("note");
+    note2.style.display = "block";
+    note2.innerHTML = `<h3 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:0 0 6px">📷 Every photo developed</h3>
+      <p>Five pictures of Hawkins, and one that was never taken. Jonathan would say the last one proves the camera
+        was pointing the wrong way the whole time.</p>
+      <p><b style="color:#fff">📷 has been added to the emoji row at the bottom of every page.</b>
+        Tap it three times anywhere and the flash goes off — and for half a second you see what the room really looks like.</p>`;
+    melody([523, 659, 784, 1047], 150);
+  }
+}
+box.addEventListener("click", e => {
+  const sh = e.target.closest(".shot");
+  if (!sh || sh.classList.contains("done")) return;
+  const i = +sh.dataset.i;
+  sh.classList.add("done");
+  note(140, .5, "sine", .07);
+  setTimeout(() => {
+    sh.querySelector(".cap").textContent = SH[i].cap;
+    const p = document.createElement("p");
+    p.style.cssText = "color:#ffb3b3;text-align:center;font-weight:700;margin-top:8px";
+    p.textContent = SH[i].say;
+    sh.after(p);
+    note(90, 1, "sine", .08);
+    done[i] = 1;
+    try { localStorage.setItem("noraShots", JSON.stringify(done)); } catch (e) {}
+    tally();
+  }, 2700);
+});
+tally();
+</script>
+<script src="eggs.js"></script>
+</body>
+</html>

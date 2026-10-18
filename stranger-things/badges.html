@@ -88,6 +88,8 @@ const S = {
   card: (() => { try { return localStorage.getItem("stHellfire") ? 1 : 0; } catch (e) { return 0; } })(),
   room: (() => { try { return localStorage.getItem("noraRoom") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
   vault: (() => { try { return localStorage.getItem("noraVault") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
+  photo: (() => { try { return localStorage.getItem("noraDarkroom") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
+  shots: Object.keys(json("noraShots", "{}")).length,
   secret: (() => { try { return localStorage.getItem("noraSecret") === "1"; } catch (e) { return false; } })(),
 };
 
@@ -120,6 +122,8 @@ const BADGES = [
   { i: "🔑", n: "Found the Gate", d: "Find the secret page.", v: S.secret ? 1 : 0, need: 1, hide: true },
   { i: "🌈", n: "Room 11", d: "Find the room behind the room.", v: S.room, need: 1, hide: true },
   { i: "🕯️", n: "The Last Room", d: "Three doors deep.", v: S.vault, need: 1, hide: true },
+  { i: "📷", n: "It Never Came Out Right", d: "Find the darkroom.", v: S.photo, need: 1, hide: true },
+  { i: "🔴", n: "Every Last Photo", d: "Develop all six photographs.", v: S.shots, need: 6, hide: true },
 ];
 
 const RANKS = [[0, "🧇", "Newie"], [3, "🚲", "Bike Kid"], [6, "📻", "Walkie Operator"], [9, "🎲", "Party Member"],
