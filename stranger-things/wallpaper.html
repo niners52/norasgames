@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wallpaper Maker · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📱</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .wrap2 { display: grid; grid-template-columns: minmax(220px, 300px) minmax(260px, 1fr); gap: 20px; margin-top: 18px; }
+  @media (max-width: 760px) { .wrap2 { grid-template-columns: 1fr; } }
+  #wpcanvas { display: block; width: 100%; height: auto; border-radius: 16px;
+              border: 2px solid rgba(255, 90, 90, .4); box-shadow: 0 16px 44px rgba(0, 0, 0, .7); }
+  .panel4 { border-radius: 18px; padding: 16px 18px;
+            background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+            border: 1px solid rgba(255, 90, 90, .3); }
+  .panel4 h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: 1.2px; color: var(--dim); margin: 14px 0 6px; }
+  .opts button { font-size: .85rem; padding: 9px 13px; background: rgba(255, 255, 255, .08);
+                 border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+  .opts { display: flex; gap: 7px; flex-wrap: wrap; }
+  .opts button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .nameline { width: 100%; font-family: "Noto Serif Display", Georgia, serif; font-weight: 800; font-size: 1.15rem;
+              text-align: center; padding: 11px; border-radius: 12px; border: 2px solid rgba(255, 90, 90, .4);
+              background: rgba(10, 4, 16, .8); color: var(--text); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="pet.html">Your Pet</a>
+    <a href="print.html">Print Shop</a>
+    <a href="wallpaper.html">Wallpaper</a>
+    <a href="cursor-lab.html">Cursor Lab</a>
+    <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="truths.html">Two Truths</a>
+    <a href="would-you-rather.html">Would You Rather</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+    <a href="../who.html">👤 Who's playing?</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Wallpaper Maker</h1>
+  <p class="sub">Your name spelled out in Joyce's lights — then put it on your iPad. 📱</p>
+
+  <div class="wrap2">
+    <div>
+      <div class="panel4">
+        <h4>Your name or message</h4>
+        <input class="nameline" id="wname" maxlength="16" placeholder="NORA" spellcheck="false">
+        <h4>Screen</h4><div class="opts" data-key="size"></div>
+        <h4>Light colours</h4><div class="opts" data-key="theme"></div>
+        <h4>Wall</h4><div class="opts" data-key="wall"></div>
+        <div class="row" style="margin-top:16px">
+          <button id="save3">📱 Save it to my pictures</button>
+        </div>
+        <p class="lead" style="margin-top:8px;font-size:.86rem">
+          On an iPad: press and hold the big picture, then <b>Add to Photos</b>. Then Settings → Wallpaper.</p>
+      </div>
+    </div>
+    <div><canvas id="wpcanvas" width="820" height="1180"></canvas></div>
+  </div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const SIZES = {
+  ipad: ["iPad", 1640, 2360], iphone: ["Phone", 1290, 2796],
+  wide: ["Computer", 2560, 1440], square: ["Square", 1400, 1400],
+};
+const THEMES = {
+  classic: ["Classic", ["#ff2b2b", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff8a3b"]],
+  red: ["All red", ["#ff2020", "#ff5a5a", "#ff3b3b", "#d81e1e", "#ff7070"]],
+  icy: ["Icy", ["#8fd3ff", "#bfe8ff", "#6fe8d0", "#cfeeff", "#7fb0ff"]],
+  candy: ["Candy", ["#ff5fc8", "#ffd54a", "#a66bff", "#6fff9c", "#ff8ab0"]],
+};
+const WALLS = { wood: ["Wallpaper"], plaster: ["Plaster"], dark: ["Just dark"] };
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let W = { name: "", size: "ipad", theme: "classic", wall: "wood" };
+try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (h && h.name) W.name = h.name.toUpperCase().slice(0, 16); } catch (e) {}
+
+const cv = document.getElementById("wpcanvas"), x = cv.getContext("2d");
+
+function draw() {
+  const [, w, h] = SIZES[W.size];
+  cv.width = Math.round(w / 2); cv.height = Math.round(h / 2);
+  const C = cv.width, R = cv.height;
+  const cols = THEMES[W.theme][1];
+  const name = (W.name || "NORA").toUpperCase().slice(0, 16);
+  const lit = new Set([...name].filter(ch => A.includes(ch)));
+
+  /* wall */
+  const g = x.createLinearGradient(0, 0, 0, R);
+  if (W.wall === "dark") { g.addColorStop(0, "#0b0710"); g.addColorStop(1, "#140812"); }
+  else if (W.wall === "plaster") { g.addColorStop(0, "#2a2024"); g.addColorStop(1, "#171016"); }
+  else { g.addColorStop(0, "#241820"); g.addColorStop(1, "#160d16"); }
+  x.fillStyle = g; x.fillRect(0, 0, C, R);
+
+  if (W.wall === "wood") {
+    x.strokeStyle = "rgba(255,255,255,.035)"; x.lineWidth = 2;
+    for (let i = 0; i < C; i += 46) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, R); x.stroke(); }
+    x.fillStyle = "rgba(255,160,160,.03)";
+    for (let i = 0; i < 260; i++) x.fillRect(Math.random() * C, Math.random() * R, 2, 2);
+  }
+  if (W.wall === "plaster") {
+    x.fillStyle = "rgba(0,0,0,.05)";
+    for (let i = 0; i < 1400; i++) x.fillRect(Math.random() * C, Math.random() * R, 2, 2);
+  }
+
+  /* layout: keep the top third clear for the clock */
+  const wide = C > R;
+  const rows = wide ? 2 : 3;
+  const per = Math.ceil(26 / rows);
+  const top = wide ? R * .36 : R * .42;
+  const gap = (R - top - R * .14) / rows;
+
+  for (let r = 0; r < rows; r++) {
+    const letters = A.slice(r * per, (r + 1) * per).split("");
+    const y = top + gap * r + gap * .5;
+    const pad = C * .09, span = C - pad * 2;
+    /* the wire */
+    x.strokeStyle = "rgba(255,255,255,.18)"; x.lineWidth = Math.max(2, C / 420);
+    x.beginPath();
+    x.moveTo(pad * .4, y - gap * .22);
+    x.quadraticCurveTo(C / 2, y + gap * .1, C - pad * .4, y - gap * .22);
+    x.stroke();
+
+    letters.forEach((ch, i) => {
+      const t = letters.length === 1 ? .5 : i / (letters.length - 1);
+      const bx = pad + span * t;
+      const by = y - gap * .22 + Math.sin(Math.PI * t) * gap * .16;
+      const on = lit.has(ch);
+      const col = cols[(A.indexOf(ch)) % cols.length];
+      const bulb = Math.max(9, C / 46);
+
+      /* socket */
+      x.fillStyle = "#2b2430";
+      x.fillRect(bx - bulb * .3, by - bulb * .2, bulb * .6, bulb * .55);
+
+      /* bulb */
+      x.save();
+      if (on) { x.shadowColor = col; x.shadowBlur = bulb * 3.4; }
+      x.fillStyle = on ? col : "rgba(255,255,255,.14)";
+      x.beginPath();
+      x.ellipse(bx, by + bulb * .75, bulb * .52, bulb * .8, 0, 0, 7);
+      x.fill();
+      x.restore();
+
+      if (on) {
+        const rg = x.createRadialGradient(bx, by + bulb, 0, bx, by + bulb, bulb * 4.4);
+        rg.addColorStop(0, col + "66"); rg.addColorStop(1, col + "00");
+        x.fillStyle = rg;
+        x.beginPath(); x.arc(bx, by + bulb, bulb * 4.4, 0, 7); x.fill();
+      }
+
+      /* the painted letter */
+      x.save();
+      x.translate(bx, by + bulb * 3.1);
+      x.rotate((((A.indexOf(ch) * 37) % 13) - 6) * Math.PI / 180);
+      x.font = `800 ${Math.round(C / 17)}px "Noto Serif Display", Georgia, serif`;
+      x.textAlign = "center";
+      x.fillStyle = on ? "rgba(255,245,245,.96)" : "rgba(255,235,235,.42)";
+      if (on) { x.shadowColor = col; x.shadowBlur = C / 30; }
+      x.fillText(ch, 0, 0);
+      x.restore();
+    });
+  }
+
+  /* the name, painted big and low */
+  x.save();
+  x.textAlign = "center";
+  x.font = `800 ${Math.round(C / (name.length > 8 ? 9 : 6.2))}px "Noto Serif Display", Georgia, serif`;
+  x.fillStyle = "#fff";
+  x.shadowColor = cols[0]; x.shadowBlur = C / 12;
+  x.fillText(name, C / 2, R - R * .055);
+  x.restore();
+
+  /* a soft vignette so icons stay readable */
+  const vg = x.createRadialGradient(C / 2, R * .3, C * .2, C / 2, R * .55, C * 1.1);
+  vg.addColorStop(0, "rgba(0,0,0,0)"); vg.addColorStop(1, "rgba(0,0,0,.45)");
+  x.fillStyle = vg; x.fillRect(0, 0, C, R);
+}
+
+/* ---------- controls ---------- */
+function opts(key, obj) {
+  const box = document.querySelector(`.opts[data-key="${key}"]`);
+  box.innerHTML = Object.entries(obj).map(([k, v]) => `<button data-v="${k}">${v[0]}</button>`).join("");
+  box.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    W[key] = b.dataset.v; paint(); beep(560 + Math.random() * 200, .07, "triangle");
+  });
+}
+opts("size", SIZES); opts("theme", THEMES); opts("wall", WALLS);
+function paint() {
+  document.querySelectorAll(".opts").forEach(box => {
+    const k = box.dataset.key;
+    box.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === W[k]));
+  });
+  draw();
+}
+document.getElementById("wname").value = W.name;
+document.getElementById("wname").addEventListener("input", e => { W.name = e.target.value; draw(); });
+document.getElementById("save3").onclick = () => {
+  const [label, w, h] = SIZES[W.size];
+  /* draw it again at full size for the saved copy */
+  const big = document.createElement("canvas");
+  big.width = w; big.height = h;
+  const keep = cv.width, keepH = cv.height;
+  const bctx = big.getContext("2d");
+  draw();
+  bctx.drawImage(cv, 0, 0, w, h);
+  const url = big.toDataURL("image/png");
+  tune([659, 880, 1100]);
+  const box = document.createElement("div");
+  box.style.cssText = `position:fixed;inset:0;z-index:99999;background:rgba(6,2,10,.95);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:18px;text-align:center;overflow:auto`;
+  box.innerHTML = `
+    <p style="font-weight:800;color:#ffd54a;max-width:420px">
+      📱 Press and hold the picture → <b>Add to Photos</b>. Then Settings → Wallpaper → pick it.</p>
+    <img src="${url}" alt="your wallpaper" style="max-height:62vh;max-width:92vw;border-radius:12px;
+      border:2px solid rgba(255,90,90,.5);box-shadow:0 14px 40px rgba(0,0,0,.7)">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+      <a class="btn" href="${url}" download="hawkins-${(W.name || "nora").toLowerCase().replace(/[^a-z0-9]/g, "")}-${label.toLowerCase()}.png">💻 Download</a>
+      <button class="ghost" id="closewp">Done</button>
+    </div>`;
+  document.body.appendChild(box);
+  box.querySelector("#closewp").onclick = () => box.remove();
+};
+paint();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+</script>
+<script src="pet.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

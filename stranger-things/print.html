@@ -54,6 +54,7 @@
     <a href="monster-maker.html">Monster Maker</a>
     <a href="pet.html">Your Pet</a>
     <a href="print.html">Print Shop</a>
+    <a href="wallpaper.html">Wallpaper</a>
     <a href="cursor-lab.html">Cursor Lab</a>
     <a href="dice.html">Dice</a>
     <a href="hellfire-card.html">Hellfire Card</a>
@@ -73,7 +74,7 @@
 
 <main>
   <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Print Shop</h1>
-  <p class="sub">Eleven things you can print out, all with your own stuff on them. 🖨️</p>
+  <p class="sub">Thirteen things you can print out, all with your own stuff on them. 🖨️</p>
 
   <div class="picker2" id="picker"></div>
 
@@ -97,6 +98,7 @@
 <script src="tales85.js"></script>
 <script src="art.js"></script>
 <script src="art85.js"></script>
+<script src="art-ink.js"></script>
 <script src="monster-art.js"></script>
 <script>
 "use strict";
@@ -170,7 +172,7 @@ const SHEETS = {
 
   colour: { e: "🖍️", n: "Colouring pages", tip: "The cartoon monsters with the colour taken out. Four pages in one — print and colour.",
     build: () => {
-      const picks = [["The Demogorgon", ART85.demogorgon()], ["The Demodog", ART85.demodog()],
+      const picks = [["The Demogorgon", INKART.demogorgon()], ["The Demodog", INKART.demodog()],
                      ["The Demobat", ART85.demobat()], ["The Gate", ART85.upsidedown()]];
       return `<h2 style="text-align:center;margin:0 0 3mm">Colour these in</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4mm">
@@ -294,6 +296,80 @@ const SHEETS = {
             <div style="width:6mm;height:6mm;border:2px dashed #9b8fa6;border-radius:50%;margin-top:3mm"></div>
           </div>`).join("")}
         </div>`;
+    } },
+
+  popup: { e: "🎉", n: "Pop-up card", tip: "Fold it in half, cut the two red lines, push the tab out — the monster jumps at whoever opens it.",
+    build: () => `
+      <div style="height:128mm;border:2px solid #ddd;border-radius:4px;padding:8mm;position:relative;overflow:hidden">
+        <div style="text-align:center;font-size:7.5pt;letter-spacing:2px;color:#9b8fa6">INSIDE OF THE CARD — write your message here</div>
+        <div style="height:46mm;background:repeating-linear-gradient(#fff 0 8mm, #e6e1ec 8mm 8.2mm);margin-top:4mm"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:30mm">
+          <div style="position:absolute;left:0;right:0;bottom:30mm;border-top:2px dashed #7a7a9a"></div>
+          <div style="position:absolute;left:8mm;bottom:31mm;font-size:7pt;color:#7a7a9a">▲ fold the whole page here, picture on the inside</div>
+          <svg viewBox="0 0 400 120" style="position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:120mm">
+            <line x1="130" y1="0" x2="130" y2="62" stroke="#d81e1e" stroke-width="4"/>
+            <line x1="270" y1="0" x2="270" y2="62" stroke="#d81e1e" stroke-width="4"/>
+            <line x1="130" y1="62" x2="270" y2="62" stroke="#7a7a9a" stroke-width="3" stroke-dasharray="9 7"/>
+            <text x="200" y="40" text-anchor="middle" font-size="15" font-family="Nunito" font-weight="800" fill="#d81e1e">✂ cut the two red lines</text>
+            <text x="200" y="80" text-anchor="middle" font-size="13" font-family="Nunito" fill="#7a7a9a">fold the dashed line, then push this box towards you</text>
+            <text x="200" y="104" text-anchor="middle" font-size="12" font-family="Nunito" fill="#7a7a9a">glue the monster on the front of the box</text>
+          </svg>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6mm;margin-top:5mm">
+        <div class="cut" style="width:84mm;padding:3mm;border-color:#7a1020;text-align:center">
+          <div style="font-weight:800;font-size:9pt">✂ cut this out and glue it on the tab</div>
+          <div style="width:72mm;margin:1mm auto">${INKART.demogorgon()}</div>
+        </div>
+        <div style="flex:1;font-size:10pt;line-height:1.75">
+          <b style="font-size:12pt">How to build it</b>
+          <ol style="margin:2mm 0 0 5mm">
+            <li>Fold the whole page in half along the long dashed line, with this side inside.</li>
+            <li>While it's folded, cut along the <b style="color:#d81e1e">two red lines</b> only.</li>
+            <li>Open the card a little and push that middle box the other way, so it sticks out towards you.</li>
+            <li>Cut out the monster and glue it onto the front of the box.</li>
+            <li>Write your message on the lines, and give it to somebody who deserves a fright.</li>
+          </ol>
+          <p style="margin-top:3mm;color:#6b5a70;font-size:9pt">From ${who()} · ${today}</p>
+        </div>
+      </div>` },
+
+  flip: { e: "🎞️", n: "Flip book", tip: "Twenty-four little pictures. Cut them out, stack them in order, staple the left edge and flip the corner.",
+    build: () => {
+      const N = 24;
+      const frame = i => {
+        const t = i / (N - 1);
+        const r = 6 + t * 46, glow = 0.25 + t * 0.75;
+        const cracks = Array.from({ length: 8 }, (_, k) => {
+          const a = (k / 8) * Math.PI * 2;
+          const L = r + 6 + t * 26;
+          return `<path d="M${(70 + Math.cos(a) * r * .8).toFixed(1)} ${(52 + Math.sin(a) * r * .8).toFixed(1)}
+            L${(70 + Math.cos(a) * L).toFixed(1)} ${(52 + Math.sin(a) * L).toFixed(1)}"
+            stroke="#111" stroke-width="${(1 + t * 1.6).toFixed(1)}" opacity="${(t * .9).toFixed(2)}"/>`;
+        }).join("");
+        return `<svg viewBox="0 0 140 104" style="width:100%">
+          <rect width="140" height="104" fill="#fff"/>
+          <ellipse cx="70" cy="52" rx="${(r * 1.25).toFixed(1)}" ry="${r.toFixed(1)}" fill="#111" opacity="${glow.toFixed(2)}"/>
+          <ellipse cx="70" cy="52" rx="${(r * .72).toFixed(1)}" ry="${(r * .55).toFixed(1)}" fill="#fff"/>
+          ${cracks}
+          ${t > .6 ? `<path d="M70 ${(52 - r * .4).toFixed(1)} q${(6 + t * 8).toFixed(1)} ${(r * .4).toFixed(1)}
+              0 ${(r * .8).toFixed(1)} q${(-6 - t * 8).toFixed(1)} ${(-r * .4).toFixed(1)} 0 ${(-r * .8).toFixed(1)} z"
+              fill="#111" opacity="${((t - .6) * 2.4).toFixed(2)}"/>` : ""}
+          <rect x="1" y="1" width="138" height="102" fill="none" stroke="#bbb"/>
+        </svg>`;
+      };
+      return `<h2 style="text-align:center;margin:0 0 1mm">Flip book — the gate opens</h2>
+        <p style="text-align:center;font-size:8.5pt;color:#6b5a70;margin:0 0 3mm">
+          ✂ Cut out all 24 · stack them with <b>1 on top</b> · staple the grey edge · flip the right-hand corner with your thumb</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm">
+          ${Array.from({ length: N }, (_, i) => `<div class="cut" style="padding:1.5mm;display:flex;gap:1.5mm;align-items:stretch;border-color:#aaa">
+            <div style="width:7mm;background:#eee;border-right:1px dashed #bbb;display:flex;align-items:center;
+                 justify-content:center;font-size:7pt;font-weight:800;color:#6b5a70">${i + 1}</div>
+            <div style="flex:1">${frame(i)}</div>
+          </div>`).join("")}
+        </div>
+        <p style="text-align:center;font-size:8pt;color:#6b5a70;margin-top:2mm">${who()}'s flip book · ${today}</p>`;
     } },
 
   passport: { e: "🛂", n: "Hawkins passport", tip: "Eight little pages. Cut them out, stack them, staple the left edge — then tick a stamp every time you visit somewhere.",
