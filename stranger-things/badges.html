@@ -40,6 +40,7 @@
     <a href="episodes.html">Episodes</a>
     <a href="monsters.html">Monster Files</a>
     <a href="monster-maker.html">Monster Maker</a>
+    <a href="cursor-lab.html">Cursor Lab</a>
     <a href="dice.html">Dice</a>
     <a href="hellfire-card.html">Hellfire Card</a>
     <a href="campaign.html">Campaign</a>
@@ -90,6 +91,7 @@ const S = {
   vault: (() => { try { return localStorage.getItem("noraVault") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
   photo: (() => { try { return localStorage.getItem("noraDarkroom") === "1" ? 1 : 0; } catch (e) { return 0; } })(),
   shots: Object.keys(json("noraShots", "{}")).length,
+  cursor: (() => { try { return localStorage.getItem("noraCursor") ? 1 : 0; } catch (e) { return 0; } })(),
   secret: (() => { try { return localStorage.getItem("noraSecret") === "1"; } catch (e) { return false; } })(),
 };
 
@@ -116,6 +118,7 @@ const BADGES = [
   { i: "📺", n: "Started Watching", d: "Tick off 8 episodes.", v: S.seen, need: 8 },
   { i: "🏅", n: "Seen It All", d: "Tick off all 42 episodes.", v: S.seen, need: 42 },
   { i: "🕰️", n: "Faster Than Vecna", d: "Beat the clock game in under 400 ms.", v: S.clock && S.clock < 400 ? 1 : 0, need: 1, raw: S.clock ? S.clock + " ms" : "not yet" },
+  { i: "🖱️", n: "Haunted Cursor", d: "Build your own cursor in the Cursor Lab.", v: S.cursor, need: 1 },
   { i: "🤘", n: "Card Carrying Member", d: "Make your Hellfire Club card.", v: S.card, need: 1 },
   { i: "🐉", n: "Survived the Vale", d: "Finish Eddie's campaign once.", v: S.endings, need: 1 },
   { i: "📖", n: "Every Last Ending", d: "Find all 8 endings of the campaign.", v: S.endings, need: 8 },
@@ -157,5 +160,6 @@ document.getElementById("wipe").onclick = () => {
 </script>
 <script src="../secret.js"></script>
 <script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
 </body>
 </html>
