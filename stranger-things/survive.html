@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Would You Survive? · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🩺</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .q4 { max-width: 700px; margin: 0 auto; border-radius: 20px; padding: clamp(18px, 4vw, 28px);
+        background: linear-gradient(160deg, rgba(32, 12, 40, .94), rgba(14, 6, 22, .96));
+        border: 1px solid rgba(255, 90, 90, .35); box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+  .q4 .ask { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.15rem, 4vw, 1.7rem);
+             color: #fff; line-height: 1.4; }
+  .q4 .why4 { color: var(--dim); font-size: .9rem; margin-top: 6px; }
+  .answers4 { display: grid; gap: 10px; margin-top: 18px; }
+  .answers4 button { text-align: left; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .2);
+                     box-shadow: none; padding: 14px 16px; font-size: .98rem; }
+  .answers4 button:hover { background: rgba(255, 32, 32, .2); border-color: var(--red); }
+  .bar4 { height: 10px; border-radius: 99px; background: rgba(255, 255, 255, .1); overflow: hidden; margin-bottom: 14px; }
+  .bar4 div { height: 100%; background: linear-gradient(90deg, #ff2020, #ffd54a); transition: width .3s; }
+  .odds { text-align: center; }
+  .odds .pc { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(3rem, 16vw, 6rem); line-height: 1;
+              color: #fff; text-shadow: 0 0 30px var(--red); }
+  .odds h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.3rem, 5vw, 2rem); color: var(--yellow); margin: 4px 0 10px; }
+  .reasons { display: grid; gap: 7px; margin-top: 16px; text-align: left; }
+  .reasons div { border-radius: 10px; padding: 9px 12px; font-size: .94rem;
+                 background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .12); }
+  .reasons .good { border-color: rgba(110, 255, 156, .45); }
+  .reasons .bad { border-color: rgba(255, 90, 90, .45); }
+  .reasons b { float: right; margin-left: 10px; }
+  .reasons .good b { color: #6fff9c; } .reasons .bad b { color: #ff8a8a; }
+  .verdict { border-radius: 16px; padding: 16px 18px; margin-top: 16px; text-align: left;
+             background: rgba(255, 213, 74, .1); border: 1px solid rgba(255, 213, 74, .35); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="survive.html">Would You Survive?</a>
+    <a href="shop.html">🪙 Vending Machine</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="draw.html">How to Draw</a>
+    <a href="story.html">Read-Along</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Would You Survive?</h1>
+  <p class="sub">Not a quiz about the show — a quiz about <em>you</em>. Answer honestly or it's useless. 🩺</p>
+
+  <section class="q4" id="q4"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+let NAME = "You";
+try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (h && h.name) NAME = h.name; } catch (e) {}
+
+/* every answer has points and the reason it gets them */
+const Q = [
+  { q: "Could you ride a bike down a dark road, fast, without wobbling?",
+    why: "Almost everyone in Hawkins escapes on a bike at some point.",
+    a: [["Yes, easily", 10, "You can ride fast in the dark", "good", { bike: 1 }],
+        ["Sort of", 5, "You can ride, but not quickly", "good"],
+        ["I'd fall off", -6, "You can't get away on a bike", "bad"],
+        ["I'd run instead", 2, "Running is slower than a bike, but it's something", "good"]] },
+
+  { q: "Do you own a torch, and do you know exactly where it is right now?",
+    why: "Everything down there is afraid of light. Nothing is afraid of a dead battery.",
+    a: [["Yes — and spare batteries", 14, "Torch AND spare batteries. Hopper would be impressed", "good", { torch: 1 }],
+        ["Yes, but no spares", 8, "You have a torch", "good", { torch: 1 }],
+        ["There's one somewhere", 2, "A torch you can't find is not a torch", "good"],
+        ["No torch", -10, "No light at all", "bad"]] },
+
+  { q: "Your friend goes missing in the woods. It's dark. What do you do?",
+    why: "The ones who survive do the brave thing — but not the stupid version of it.",
+    a: [["Tell a grown-up, then go with them", 16, "You got an adult AND you went. That's the correct answer", "good", { adult: 1, loyal: 1 }],
+        ["Go straight in on my own", -8, "Alone, at night, with no backup", "bad", { loyal: 1 }],
+        ["Get my friends first", 11, "You brought the party", "good", { party: 1, loyal: 1 }],
+        ["Stay home and call for help", 4, "Safe, but your friend is still out there", "good", { adult: 1 }]] },
+
+  { q: "Can you keep a secret? A real one, for months?",
+    why: "Everybody who blabs ends up with men in suits at their door.",
+    a: [["Yes, nobody gets anything out of me", 10, "You can keep your mouth shut", "good", { secret: 1 }],
+        ["Mostly", 5, "You can mostly keep a secret", "good"],
+        ["I'd tell one person", 3, "You'd tell one person. It's usually fine. Usually", "good"],
+        ["No chance", -7, "You'd tell the whole school by Tuesday", "bad"]] },
+
+  { q: "How are you at telling grown-ups the truth when it sounds mad?",
+    why: "Joyce was right the whole time and nobody listened. Be Joyce, and be believed.",
+    a: [["I'd keep saying it until they believed me", 12, "You'd keep saying it. That's how Will got found", "good", { adult: 1 }],
+        ["I'd tell them once", 6, "You'd tell them once", "good"],
+        ["I'd write it down for them", 8, "Evidence. Grown-ups like evidence", "good"],
+        ["I'd never tell them", -9, "Nobody knows where you are", "bad"]] },
+
+  { q: "Someone is chasing you. Do you run in a straight line, or round things?",
+    why: "The Demogorgon is faster than you in a straight line. It is not better at corners.",
+    a: [["Round corners and through gaps", 9, "Corners and gaps. Clever", "good"],
+        ["Straight and fast", -4, "In a straight line it catches you", "bad"],
+        ["Hide instead", 6, "Hiding works if you're quiet enough", "good", { quiet: 1 }],
+        ["Freeze", -8, "Freezing is the one thing that never works", "bad"]] },
+
+  { q: "Could you stay completely silent for five whole minutes if you had to?",
+    why: "It hunts by sound. Your mouth is the problem.",
+    a: [["Yes, easily", 10, "You can stay silent when it counts", "good", { quiet: 1 }],
+        ["Probably", 5, "You'd probably manage it", "good"],
+        ["I'd giggle", -6, "You'd giggle. It would hear you", "bad"],
+        ["I talk when I'm scared", -7, "You talk when you're frightened", "bad"]] },
+
+  { q: "Do you have one friend who'd definitely come with you?",
+    why: "Nobody in this story survives on their own. Not one person.",
+    a: [["Yes, without being asked", 15, "Somebody would come for you without being asked", "good", { party: 1 }],
+        ["Yes, if I asked", 10, "You have someone who'd come if asked", "good", { party: 1 }],
+        ["Maybe", 3, "You might be on your own", "good"],
+        ["No", -12, "You'd be alone. That's how this goes wrong", "bad"]] },
+
+  { q: "Can you read a map — a paper one, with no little blue dot?",
+    why: "There is no signal in the Upside Down. There is no signal in 1983 either.",
+    a: [["Yes", 9, "You can read a paper map", "good"],
+        ["Sort of", 4, "You'd work a map out eventually", "good"],
+        ["No idea", -5, "You'd get lost", "bad"]] },
+
+  { q: "Are you good at remembering things nobody else noticed?",
+    why: "Every single time, the kid who noticed the small weird thing is the one who solves it.",
+    a: [["Yes, I notice everything", 11, "You notice the small weird things", "good", { smart: 1 }],
+        ["Sometimes", 5, "You notice some things", "good"],
+        ["Not really", -3, "You'd miss the clue", "bad"]] },
+
+  { q: "Have you got music you love — the sort that makes you feel braver?",
+    why: "Max got out because of a song. This is a real rule here.",
+    a: [["Yes, and I know exactly which song", 12, "You have a song. That has literally saved someone", "good", { song: 1 }],
+        ["I like music, no one song", 5, "You like music", "good"],
+        ["Not bothered about music", -4, "Nothing to pull you back", "bad"]] },
+
+  { q: "Last one. Would you go back in for somebody else, knowing what's down there?",
+    why: "This is the question the whole show is actually about.",
+    a: [["Yes. Every time", 14, "You'd go back in for someone. Every time", "good", { loyal: 1 }],
+        ["Yes, but I'd be terrified", 13, "You'd go, terrified. That's braver, not less", "good", { loyal: 1 }],
+        ["I'd get help instead", 7, "You'd get help. Sensible", "good", { adult: 1 }],
+        ["No", -10, "You'd leave them. Hawkins doesn't work like that", "bad"]] },
+];
+
+const box = document.getElementById("q4");
+let i = 0, score = 40, reasons = [], tags = {};
+
+function render4() {
+  if (i >= Q.length) return result();
+  const q = Q[i];
+  box.innerHTML = `
+    <div class="bar4"><div style="width:${(i / Q.length) * 100}%"></div></div>
+    <div class="ask">${q.q}</div>
+    <p class="why4">${q.why}</p>
+    <div class="answers4">${q.a.map((a, n) => `<button data-n="${n}">${a[0]}</button>`).join("")}</div>`;
+  box.querySelectorAll("button").forEach(b => {
+    b.onclick = () => {
+      const a = q.a[+b.dataset.n];
+      score += a[1];
+      reasons.push({ text: a[2], pts: a[1], kind: a[3] });
+      Object.assign(tags, a[4] || {});
+      beep(a[1] >= 0 ? 620 : 300, .08, "triangle", .05);
+      i++; render4();
+    };
+  });
+}
+
+function result() {
+  const pc = Math.max(3, Math.min(97, Math.round(score)));
+  const saviour = tags.party ? "your best friend" : tags.adult ? "a grown-up who finally believed you"
+    : tags.song ? "whoever is playing your song" : "nobody, which is the problem";
+  const verdict =
+    pc >= 85 ? ["🏅", "You'd make it, and so would everyone with you",
+      "You'd be the one the others follow. Torch in one hand, somebody else's hand in the other."]
+    : pc >= 65 ? ["🚲", "You'd get out",
+      "Not gracefully. You'd lose a shoe and cry at some point. But you'd get out, and so would your friend."]
+    : pc >= 45 ? ["🔦", "It'd be close",
+      "You'd survive if one thing went your way — a battery, a friend turning up, a song on the radio."]
+    : pc >= 25 ? ["🧇", "You'd need rescuing",
+      "You wouldn't be eaten. You'd be lost, cold and found three days later by somebody braver."]
+    : ["📻", "Stay in the house",
+      "Lock the door, keep the lights on, and let the others handle it. There's no shame in it — somebody has to answer the phone."];
+  const good = reasons.filter(r => r.pts > 0).sort((a, b) => b.pts - a.pts).slice(0, 5);
+  const bad = reasons.filter(r => r.pts < 0).sort((a, b) => a.pts - b.pts).slice(0, 5);
+  const advice = bad.length
+    ? `The quickest way to improve your odds: ${bad[0].text.toLowerCase().replace("you'd ", "stop ").replace("you ", "")}.`
+    : "There's honestly nothing to fix. Take somebody with you anyway.";
+
+  try { localStorage.setItem("stSurvive", String(pc)); } catch (e) {}
+  tune(pc >= 65 ? [523, 659, 784, 1047] : pc >= 45 ? [440, 554] : [330, 262, 196]);
+
+  box.innerHTML = `
+    <div class="odds">
+      <div style="font-size:3rem">${verdict[0]}</div>
+      <div class="pc">${pc}%</div>
+      <h3>${verdict[1]}</h3>
+      <p style="color:var(--dim);max-width:460px;margin:0 auto">${verdict[2]}</p>
+      <div class="reasons">
+        ${good.map(r => `<div class="good">${r.text}<b>+${r.pts}</b></div>`).join("")}
+        ${bad.map(r => `<div class="bad">${r.text}<b>${r.pts}</b></div>`).join("")}
+      </div>
+      <div class="verdict">
+        <p>🧍 <b>Who comes and gets you:</b> ${saviour}.</p>
+        <p style="margin-top:6px">🔧 <b>${advice}</b></p>
+      </div>
+      <div class="row" style="justify-content:center;margin-top:16px">
+        <button onclick="location.reload()">🔁 Answer again</button>
+        <a class="btn ghost" href="night.html">🕯️ Test it tonight</a>
+      </div>
+      <p style="color:var(--dim);font-size:.85rem;margin-top:10px">
+        ${NAME === "You" ? "" : NAME + ", "}this only means anything if you answered honestly.</p>
+    </div>`;
+}
+render4();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
