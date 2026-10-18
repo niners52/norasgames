@@ -58,7 +58,7 @@
   document.head.appendChild(style);
   function mount() {
     document.body.appendChild(layer);
-    if (fine) document.documentElement.classList.add("nc-hide");
+    if (fine && !window.NORA_NO_CURSOR) document.documentElement.classList.add("nc-hide");
   }
   if (document.readyState === "loading") addEventListener("DOMContentLoaded", mount); else mount();
 
@@ -101,26 +101,30 @@
   }
   const trail = TRAILS[C.trail] || TRAILS.spores;
 
-  /* ---------- your cursor ---------- */
-  const me = svg(SIZE, "1");
-  me.style.transform = "translate(-200px,-200px)";
-  let last = 0, lx = 0, ly = 0;
-  function moveTo(x, y) {
-    me.style.transform = `translate(${x - SIZE * .22}px, ${y - SIZE * .18}px)`;
-    const d = Math.hypot(x - lx, y - ly);
-    if (d > (C.trail === "steps" ? 46 : 16)) { lx = x; ly = y; trail(x, y); }
+  /* ---------- your cursor ----------
+     The Cursor Lab draws its own preview one, so it asks this to sit out —
+     otherwise you'd see two cursors stacked on top of each other. */
+  const SOLO = !window.NORA_NO_CURSOR;
+  if (SOLO) {
+    const me = svg(SIZE, "1");
+    me.style.transform = "translate(-200px,-200px)";
+    let lx = 0, ly = 0;
+    const moveTo = (x, y) => {
+      me.style.transform = `translate(${x - SIZE * .22}px, ${y - SIZE * .18}px)`;
+      if (Math.hypot(x - lx, y - ly) > (C.trail === "steps" ? 46 : 16)) { lx = x; ly = y; trail(x, y); }
+    };
+    addEventListener("pointermove", e => {
+      if (!me.isConnected) layer.appendChild(me);
+      moveTo(e.clientX, e.clientY);
+      if (e.pointerType !== "mouse") me.style.opacity = "1";
+    }, { passive: true });
+    addEventListener("pointerdown", e => {
+      if (!me.isConnected) layer.appendChild(me);
+      moveTo(e.clientX, e.clientY);
+      for (let i = 0; i < 6; i++) trail(e.clientX, e.clientY);
+    }, { passive: true });
+    addEventListener("pointerup", e => { if (e.pointerType !== "mouse") setTimeout(() => { me.style.opacity = "0"; }, 500); }, { passive: true });
   }
-  addEventListener("pointermove", e => {
-    if (!me.isConnected) layer.appendChild(me);
-    moveTo(e.clientX, e.clientY);
-    if (e.pointerType !== "mouse") me.style.opacity = "1";
-  }, { passive: true });
-  addEventListener("pointerdown", e => {
-    if (!me.isConnected) layer.appendChild(me);
-    moveTo(e.clientX, e.clientY);
-    for (let i = 0; i < 6; i++) trail(e.clientX, e.clientY);
-  }, { passive: true });
-  addEventListener("pointerup", e => { if (e.pointerType !== "mouse") setTimeout(() => { me.style.opacity = "0"; }, 500); }, { passive: true });
 
   /* ---------- and the one that isn't yours ---------- */
   function phantom() {
@@ -145,7 +149,7 @@
       else { g.style.opacity = "0"; setTimeout(() => g.remove(), 600); }
     })(t0);
   }
-  if (C.ghost !== false && Math.random() < .3) setTimeout(phantom, 14000 + Math.random() * 30000);
+  if (SOLO && C.ghost !== false && Math.random() < .3) setTimeout(phantom, 14000 + Math.random() * 30000);
 
   /* so the lab can show you one on demand */
   window.noraPhantom = phantom;
