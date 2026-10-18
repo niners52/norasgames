@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sealed File · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🗂️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .cabinet { max-width: 620px; margin: 0 auto; border-radius: 20px; padding: clamp(18px, 4vw, 30px); text-align: center;
+             background: linear-gradient(170deg, #40464e, #22262c 55%, #15171c);
+             border: 2px solid #5a626c; box-shadow: 0 18px 50px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .1); }
+  .stamp { display: inline-block; border: 3px solid #b3121a; color: #b3121a; font-weight: 800; letter-spacing: 3px;
+           padding: 6px 14px; border-radius: 6px; transform: rotate(-6deg); font-size: .9rem; }
+  .screen3 { margin: 18px auto 0; max-width: 320px; border-radius: 12px; padding: 16px; background: #0d1410;
+             border: 2px solid #070b08; box-shadow: inset 0 0 26px rgba(0, 0, 0, .9);
+             font-family: ui-monospace, "Courier New", monospace; }
+  .digits { font-size: 2.6rem; letter-spacing: 14px; color: #7dff9b; text-shadow: 0 0 16px rgba(125, 255, 155, .6); min-height: 1.3em; }
+  .msg3 { min-height: 1.5em; font-weight: 800; color: #ffb3b3; margin-top: 10px; }
+  .keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 320px; margin: 16px auto 0; }
+  .keys button { font-size: 1.4rem; padding: 16px 0; background: linear-gradient(180deg, #555d67, #343a42);
+                 border: 1px solid #22262c; box-shadow: 0 4px 0 #1b1e23; }
+  .keys button:active { transform: translateY(3px); box-shadow: 0 1px 0 #1b1e23; }
+  .shake2 { animation: sh .4s; }
+  @keyframes sh { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+  .file2 { display: none; }
+  .file2.show { display: block; animation: fadein2 1s; }
+  @keyframes fadein2 { from { opacity: 0; transform: translateY(16px); } }
+  .doc { border-radius: 10px; padding: 18px 20px; margin-bottom: 12px; color: #241a12;
+         background: linear-gradient(170deg, #f3ead6, #e3d7bd); border: 2px solid #8a7a5a; }
+  .doc h3 { font-family: "Noto Serif Display", Georgia, serif; margin: 0 0 6px; }
+  .doc .redact { background: #241a12; color: #241a12; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="night.html">The Night</a>
+    <a href="town.html">Walk Around</a>
+    <a href="search.html">Search</a>
+    <a href="print.html">Print Shop</a>
+    <a href="evidence.html">Sealed File</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Sealed File</h1>
+  <p class="sub">This one isn't for everybody. You need what's printed on the paper. 🗂️</p>
+
+  <section class="cabinet" id="lock">
+    <div class="stamp">SEALED — LEVEL 4</div>
+    <p style="color:#cfd6dd;margin-top:14px">
+      Four numbers. They're hidden in <b>THE CASE FILE</b> — print it from the
+      <a href="print.html" style="color:#ffd54a">Print Shop</a>, then find the four little stamps
+      ① ② ③ ④ and read the number next to each one.
+    </p>
+    <div class="screen3">
+      <div class="digits" id="digits">_ _ _ _</div>
+    </div>
+    <p class="msg3" id="msg3"></p>
+    <div class="keys" id="keys"></div>
+  </section>
+
+  <section class="file2" id="file2"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const CODE = "1983";
+let entry = "";
+const digitsEl = document.getElementById("digits"), msg = document.getElementById("msg3");
+document.getElementById("keys").innerHTML =
+  [1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "✓"].map(k => `<button data-k="${k}">${k}</button>`).join("");
+
+function paint2() {
+  digitsEl.textContent = (entry + "____").slice(0, 4).split("").join(" ");
+}
+function wrong(text) {
+  const box = document.getElementById("lock");
+  box.classList.remove("shake2"); void box.offsetWidth; box.classList.add("shake2");
+  msg.style.color = "#ffb3b3";
+  msg.textContent = text;
+  entry = ""; paint2();
+  beep(150, .35, "sawtooth", .07);
+}
+function open2() {
+  msg.style.color = "#7dff9b";
+  msg.textContent = "ACCESS GRANTED";
+  tune([392, 523, 659, 784]);
+  try { localStorage.setItem("stFile", "1"); } catch (e) {}
+  setTimeout(() => {
+    document.getElementById("lock").style.display = "none";
+    const f = document.getElementById("file2");
+    f.classList.add("show");
+    f.innerHTML = `
+      <div class="doc">
+        <h3>FILE 1983 — THE PART THEY TOOK OUT</h3>
+        <p>You found the numbers, which means you have the papers, which means somebody trusted you with them.
+          Here is the rest of it — pages 5 to 10, the ones missing from the memo.</p>
+        <p><b>Page 5.</b> The power did not fail. It was pulled, from the other side, every night at the same hour.</p>
+        <p><b>Page 6.</b> The lights were not broken. They were being <i>used</i>. Whoever is down there worked out that
+          electricity goes both ways, and started spelling.</p>
+        <p><b>Page 7.</b> <span class="redact">████████</span> insisted the boy could hear us. He was right.</p>
+        <p><b>Page 8.</b> We were told to stop listening. Some of us didn't.</p>
+        <p><b>Page 9.</b> If you are reading this, the wall in your own room will work the same way.
+          You only need to be somewhere dark, and willing to wait.</p>
+        <p><b>Page 10.</b> <span class="redact">█████</span> — try it tonight.</p>
+      </div>
+      <div class="doc" style="background:linear-gradient(170deg,#1a0d14,#120910);color:#ffd9d9;border-color:#7a1020">
+        <h3 style="color:#fff">🕯️ Page 11 was a note, not a page</h3>
+        <p>It says: <i>"turn your light off and open this."</i></p>
+        <div class="row" style="justify-content:center;margin-top:12px">
+          <a class="btn" href="night.html">🕯️ THE NIGHT</a>
+          <a class="btn ghost" href="print.html">🗂️ Print more evidence</a>
+        </div>
+      </div>`;
+  }, 900);
+}
+document.getElementById("keys").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const k = b.dataset.k;
+  if (k === "⌫") { entry = entry.slice(0, -1); paint2(); msg.textContent = ""; beep(300, .06); return; }
+  if (k === "✓") {
+    if (entry.length < 4) return wrong("FOUR NUMBERS NEEDED");
+    return entry === CODE ? open2() : wrong("ACCESS DENIED");
+  }
+  if (entry.length >= 4) return;
+  entry += k; paint2(); beep(520 + +k * 30, .06, "square", .05);
+  if (entry.length === 4) { msg.style.color = "#cfd6dd"; msg.textContent = "press ✓"; }
+});
+addEventListener("keydown", e => {
+  if (/^[0-9]$/.test(e.key) && entry.length < 4) { entry += e.key; paint2(); beep(520, .06, "square", .05); }
+  if (e.key === "Backspace") { entry = entry.slice(0, -1); paint2(); }
+  if (e.key === "Enter") { entry.length === 4 ? (entry === CODE ? open2() : wrong("ACCESS DENIED")) : wrong("FOUR NUMBERS NEEDED"); }
+});
+paint2();
+try { if (localStorage.getItem("stFile") === "1") msg.textContent = "You've been in here before."; } catch (e) {}
+</script>
+<script src="pet.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

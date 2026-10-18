@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Night · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🕯️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #f3e7e7; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #06040a; color: var(--ink); font-family: Nunito, system-ui, sans-serif;
+         overflow: hidden; user-select: none; }
+
+  /* the room */
+  #room { position: fixed; inset: 0; background:
+      radial-gradient(ellipse at 50% 40%, #241a1e 0%, #120c12 45%, #06040a 100%); transition: filter .2s; }
+  #room::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+      background: repeating-linear-gradient(0deg, rgba(0,0,0,.25) 0 2px, transparent 2px 4px); }
+  .plank { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(255,255,255,.035); }
+
+  /* the wall of letters */
+  #wall { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  #wallbox { position: relative; width: min(1100px, 94vw); height: min(560px, 62vh); }
+  .lamp { position: absolute; transform: translate(-50%, -50%); text-align: center; cursor: pointer; }
+  .bulb2 { width: clamp(16px, 2.2vw, 26px); height: clamp(22px, 3vw, 34px); margin: 0 auto;
+           border-radius: 50% 50% 46% 46%; background: #241a22; opacity: .35;
+           transition: opacity .12s, box-shadow .12s, background .12s, transform .12s; }
+  .lamp.on .bulb2 { opacity: 1; transform: scale(1.12); }
+  .ch { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1rem, 2.6vw, 1.9rem);
+        color: rgba(255,235,235,.3); margin-top: 4px; transition: color .15s, text-shadow .15s; }
+  .lamp.on .ch { color: #fff; }
+  #wire { position: absolute; inset: 0; pointer-events: none; }
+
+  /* words at the bottom */
+  #say { position: fixed; left: 0; right: 0; bottom: 0; padding: 14px 16px 18px; text-align: center;
+         background: linear-gradient(180deg, rgba(6,4,10,0), rgba(6,4,10,.92) 40%); }
+  #whisper { min-height: 2.6em; font-family: "Noto Serif Display", Georgia, serif;
+             font-size: clamp(1rem, 3.4vw, 1.5rem); color: #ffd9d9; text-shadow: 0 0 18px rgba(255,60,60,.5); }
+  #typed { min-height: 1.6em; letter-spacing: 10px; font-weight: 800; color: var(--yellow, #ffd54a); font-size: 1.2rem; }
+  .btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+  button { cursor: pointer; font: inherit; font-weight: 800; border: 0; border-radius: 999px; padding: 11px 20px;
+           color: #fff; background: linear-gradient(135deg, #ff2020, #8d0d20); box-shadow: 0 6px 20px rgba(255,32,32,.25); }
+  button.ghost { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); }
+  button:disabled { opacity: .4; }
+
+  /* the opening and closing cards */
+  .card3 { position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
+           justify-content: center; text-align: center; gap: 14px; padding: 24px;
+           background: radial-gradient(ellipse at 50% 40%, #1a0a12, #06040a 70%); }
+  .card3.hide { display: none; }
+  .card3 h1 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(2rem, 9vw, 4.4rem);
+              letter-spacing: 4px; margin: 0; color: #fff; text-shadow: 0 0 28px #ff2020, 0 0 70px rgba(255,32,32,.6); }
+  .card3 p { max-width: 520px; color: #c9b9b9; line-height: 1.7; margin: 0; }
+  .card3 input { padding: 13px 16px; border-radius: 12px; font: inherit; font-weight: 800; text-align: center;
+                 background: rgba(8,4,12,.9); border: 2px solid rgba(255,60,60,.5); color: var(--ink); }
+  #flash { position: fixed; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 25; }
+  #shade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 20; transition: opacity .6s; }
+  #shape { position: fixed; top: 0; bottom: 0; width: 46vw; z-index: 22; pointer-events: none; opacity: 0;
+           background: radial-gradient(ellipse at 50% 50%, rgba(0,0,0,.96), rgba(0,0,0,0) 70%); }
+  #exit { position: fixed; top: 12px; right: 14px; z-index: 40; font-size: .8rem; padding: 8px 14px;
+          background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+</style>
+</head>
+<body>
+<div id="room"></div>
+<div id="wall"><div id="wallbox"><svg id="wire"></svg></div></div>
+<div id="shade"></div>
+<div id="shape"></div>
+<div id="flash"></div>
+
+<div id="say">
+  <div id="whisper"></div>
+  <div id="typed"></div>
+  <div class="btns" id="btns"></div>
+</div>
+
+<button id="exit" class="ghost">Turn the lights on</button>
+
+<div class="card3" id="intro">
+  <h1>THE NIGHT</h1>
+  <p><b>Turn your bedroom light off.</b> Turn the sound up. Put this down somewhere you can see it,
+     and don't touch anything until it asks you to.</p>
+  <p style="color:#8d7f7f;font-size:.9rem">It takes about eight minutes. Nothing jumps out at you —
+     but it is meant to be a bit frightening, and it's better in the dark.</p>
+  <input id="yourname" maxlength="14" placeholder="what should it call you?" spellcheck="false">
+  <div class="btns">
+    <button id="begin">I'm ready</button>
+    <a href="index.html" style="text-decoration:none"><button class="ghost">Not tonight</button></a>
+  </div>
+</div>
+
+<div class="card3 hide" id="outro"></div>
+
+<script src="../profiles.js"></script>
+<script>
+"use strict";
+const A = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const COLS = ["#ff3b3b", "#ffd54a", "#4fd2ff", "#6fff9c", "#ff5fc8", "#ff8a3b"];
+const wallbox = document.getElementById("wallbox");
+const wire = document.getElementById("wire");
+const whisper = document.getElementById("whisper");
+const typedEl = document.getElementById("typed");
+const btns = document.getElementById("btns");
+const lamps = {};
+let NAME = "";
+try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); if (h && h.name) NAME = h.name; } catch (e) {}
+document.getElementById("yourname").value = NAME;
+
+/* ---------- sound ---------- */
+let ac = null, hum = null, humGain = null, noise = null, noiseGain = null;
+function audio() {
+  if (ac) return ac;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  /* the hum of a house at night */
+  hum = ac.createOscillator(); humGain = ac.createGain();
+  hum.type = "sine"; hum.frequency.value = 54; humGain.gain.value = 0;
+  hum.connect(humGain); humGain.connect(ac.destination); hum.start();
+  /* static */
+  const len = ac.sampleRate * 2;
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * .5;
+  noise = ac.createBufferSource(); noise.buffer = buf; noise.loop = true;
+  noiseGain = ac.createGain(); noiseGain.gain.value = 0;
+  const lp = ac.createBiquadFilter(); lp.type = "bandpass"; lp.frequency.value = 1400; lp.Q.value = .7;
+  noise.connect(lp); lp.connect(noiseGain); noiseGain.connect(ac.destination); noise.start();
+  return ac;
+}
+const ramp = (g, v, t) => { try { g.gain.linearRampToValueAtTime(v, ac.currentTime + (t || .4)); } catch (e) {} };
+function tone(f, dur, type, vol, slide) {
+  try {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type || "sine"; o.frequency.value = f;
+    if (slide) o.frequency.exponentialRampToValueAtTime(slide, ac.currentTime + dur);
+    g.gain.value = vol == null ? .07 : vol;
+    g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + dur);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+  } catch (e) {}
+}
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- build the wall ---------- */
+function layout() {
+  const W = wallbox.clientWidth, H = wallbox.clientHeight;
+  const rows = [[0, 9], [9, 18], [18, 26]];
+  wire.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  let paths = "";
+  rows.forEach((r, ri) => {
+    const letters = A.slice(r[0], r[1]).split("");
+    const y = H * (.22 + ri * .3);
+    const padX = W * .06, span = W - padX * 2;
+    paths += `<path d="M${padX * .5} ${y - 26} Q${W / 2} ${y + 34} ${W - padX * .5} ${y - 26}"
+      stroke="rgba(255,255,255,.14)" stroke-width="2" fill="none"/>`;
+    letters.forEach((ch, i) => {
+      const t = letters.length === 1 ? .5 : i / (letters.length - 1);
+      const bx = padX + span * t;
+      const by = y - 26 + Math.sin(Math.PI * t) * 30;
+      let el = lamps[ch];
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "lamp";
+        el.dataset.ch = ch;
+        el.innerHTML = `<div class="bulb2"></div><div class="ch">${ch}</div>`;
+        wallbox.appendChild(el);
+        lamps[ch] = el;
+      }
+      el.style.left = bx + "px";
+      el.style.top = by + "px";
+      el.querySelector(".bulb2").style.background = COLS[A.indexOf(ch) % COLS.length];
+    });
+  });
+  wire.innerHTML = paths;
+}
+addEventListener("resize", layout);
+
+/* ---------- lights ---------- */
+function on(ch, ms) {
+  const el = lamps[ch];
+  if (!el) return;
+  const col = COLS[A.indexOf(ch) % COLS.length];
+  el.classList.add("on");
+  el.querySelector(".bulb2").style.boxShadow = `0 0 22px ${col}, 0 0 60px ${col}`;
+  el.querySelector(".ch").style.textShadow = `0 0 18px ${col}`;
+  if (ms) setTimeout(() => off(ch), ms);
+}
+function off(ch) {
+  const el = lamps[ch];
+  if (!el) return;
+  el.classList.remove("on");
+  el.querySelector(".bulb2").style.boxShadow = "";
+  el.querySelector(".ch").style.textShadow = "";
+}
+const allOff = () => A.split("").forEach(off);
+async function spell(msg, speed) {
+  for (const ch of msg.toUpperCase()) {
+    if (ch === " ") { await sleep((speed || 380) * 1.3); continue; }
+    if (!A.includes(ch)) continue;
+    on(ch);
+    tone(240 + A.indexOf(ch) * 16, .35, "sine", .05);
+    await sleep(speed || 380);
+    off(ch);
+    await sleep((speed || 380) * .35);
+  }
+}
+async function flicker(times, strength) {
+  for (let i = 0; i < times; i++) {
+    const ch = A[Math.floor(Math.random() * 26)];
+    on(ch, 90 + Math.random() * 160);
+    if (Math.random() < .5) tone(900 + Math.random() * 500, .04, "square", .02 * (strength || 1));
+    await sleep(70 + Math.random() * 180);
+  }
+}
+async function says(text, hold) {
+  whisper.textContent = "";
+  for (let i = 0; i < text.length; i++) {
+    whisper.textContent += text[i];
+    await sleep(26);
+  }
+  if (hold) await sleep(hold);
+}
+
+/* ---------- the player talks back ---------- */
+let typed = "", listening = false, resolveSay = null;
+function setButtons(list) {
+  btns.innerHTML = list.map(b => `<button ${b.ghost ? 'class="ghost"' : ""} data-a="${b.a}">${b.t}</button>`).join("");
+}
+btns.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.a === "send" && resolveSay) { const t = typed; typed = ""; typedEl.textContent = ""; listening = false; btns.innerHTML = ""; resolveSay(t); }
+  if (b.dataset.a === "clear") { typed = ""; typedEl.textContent = ""; }
+});
+wallbox.addEventListener("click", e => {
+  const l = e.target.closest(".lamp");
+  if (!l || !listening) return;
+  const ch = l.dataset.ch;
+  typed += ch;
+  typedEl.textContent = typed;
+  on(ch, 280);
+  tone(300 + A.indexOf(ch) * 18, .2, "triangle", .05);
+});
+function listen() {
+  listening = true;
+  typed = ""; typedEl.textContent = "";
+  setButtons([{ a: "send", t: "Say it" }, { a: "clear", t: "Rub it out", ghost: 1 }]);
+  return new Promise(r => { resolveSay = r; });
+}
+
+/* ---------- what it says back ---------- */
+function reply(said) {
+  const s = said.toUpperCase();
+  if (!s) return ["", "I CANT HEAR YOU"];
+  if (s.includes("WILL")) return ["It stops. Every bulb goes still.", "YES"];
+  if (s.includes("HELP")) return ["The hum rises.", "I CANT"];
+  if (s.includes("WHO")) return ["It takes a long time to answer.", "A FRIEND"];
+  if (s.includes("WHERE")) return ["", "RIGHT HERE"];
+  if (s.includes("HOME")) return ["", "NOT YET"];
+  if (s.includes("HI") || s.includes("HELLO")) return ["", "HELLO"];
+  if (s.includes("STOP") || s.includes("NO")) return ["The lights dim, as if it's sorry.", "OK"];
+  if (s.includes("ELEVEN") || s.includes("11")) return ["Every bulb lights at once for half a second.", "SHE IS COMING"];
+  if (s.includes("YES")) return ["", "GOOD"];
+  if (s.includes("LOVE") || s.includes("FRIEND")) return ["The wall goes warm yellow.", "FRIENDS DONT LIE"];
+  return ["", "SAY IT AGAIN"];
+}
+
+/* ---------- the night itself ---------- */
+async function run() {
+  layout();
+  audio();
+  ramp(humGain, .035, 3);
+
+  await says("It's quiet. Too quiet, really.", 2200);
+  await says("The lights have been doing this for three nights now.", 2600);
+  ramp(noiseGain, .012, 2);
+  await flicker(10, .6);
+  await says("There. Did you see that?", 2000);
+  await flicker(16, .9);
+
+  ramp(humGain, .06, 2);
+  await says("Something is using the lights to talk to you.", 2400);
+  await sleep(600);
+  await spell("HELLO", 420);
+  await sleep(700);
+
+  await says("Say something back. Tap the letters, then press Say it.");
+  let said = await listen();
+  let [note, answer] = reply(said);
+  await sleep(500);
+  if (note) await says(note, 1400);
+  await spell(answer, 360);
+
+  await sleep(900);
+  await says("Ask it something else.");
+  said = await listen();
+  [note, answer] = reply(said);
+  await sleep(500);
+  if (note) await says(note, 1400);
+  await spell(answer, 360);
+
+  /* it gets worse */
+  await sleep(800);
+  ramp(noiseGain, .035, 3);
+  ramp(humGain, .1, 3);
+  await says("The hum is getting louder. The room feels colder.", 2400);
+  await flicker(26, 1.4);
+  await spell("RUN", 260);
+  await sleep(500);
+
+  /* the lights go out one at a time */
+  await says("One by one, the bulbs start going out.", 1600);
+  const order = A.split("").sort(() => Math.random() - .5);
+  for (const ch of order) {
+    on(ch, 120);
+    tone(120, .12, "sine", .05);
+    await sleep(70);
+  }
+  allOff();
+  document.getElementById("shade").style.opacity = ".82";
+  await sleep(1200);
+
+  /* one bulb, moving */
+  await says("Except one.", 1400);
+  const walk = "MNOPQRSTUVWXYZ".split("");
+  for (const ch of walk) {
+    on(ch, 320);
+    tone(70, .3, "sine", .07);
+    await sleep(240);
+  }
+  await sleep(600);
+
+  /* something passes the window */
+  const shape = document.getElementById("shape");
+  shape.style.transition = "none";
+  shape.style.left = "-50vw"; shape.style.opacity = "1";
+  tone(48, 2.4, "sine", .12);
+  ramp(noiseGain, .07, .6);
+  await sleep(60);
+  shape.style.transition = "left 2.6s linear";
+  shape.style.left = "110vw";
+  await says("Something just walked past the window.", 2600);
+  shape.style.opacity = "0";
+  ramp(noiseGain, .015, 2);
+
+  /* the flash */
+  const flash = document.getElementById("flash");
+  flash.animate([{ opacity: 0 }, { opacity: .9, offset: .08 }, { opacity: 0 }], { duration: 700 });
+  tone(1200, .5, "square", .05, 90);
+  document.getElementById("shade").style.opacity = "0";
+  await sleep(900);
+
+  /* it comes back, kinder */
+  ramp(humGain, .03, 3);
+  ramp(noiseGain, 0, 3);
+  await says("And then — all at once — they come back on.", 2000);
+  for (const ch of A) { on(ch); await sleep(40); }
+  tone(523, .5, "sine", .05); tone(659, .6, "sine", .04);
+  await sleep(1400);
+  allOff();
+
+  await says("It has one more thing to say.", 1600);
+  const who = (document.getElementById("yourname").value.trim() || NAME || "FRIEND").toUpperCase().slice(0, 14);
+  await spell("GOODNIGHT", 320);
+  await sleep(500);
+  await spell(who, 340);
+  await sleep(900);
+  for (let i = 0; i < 3; i++) { for (const ch of who) on(ch, 420); await sleep(620); }
+
+  /* the end */
+  try { localStorage.setItem("stNight", "1"); } catch (e) {}
+  const out = document.getElementById("outro");
+  out.classList.remove("hide");
+  out.innerHTML = `
+    <h1>MORNING</h1>
+    <p>You made it through the night, ${who.charAt(0) + who.slice(1).toLowerCase()}.</p>
+    <p style="color:#8d7f7f">Whatever it was, it knew your name. It also said goodnight,
+      which is more than most things in Hawkins do.</p>
+    <div class="btns">
+      <button onclick="location.reload()">🕯️ Do it again</button>
+      <a href="index.html" style="text-decoration:none"><button class="ghost">Back to Hawkins</button></a>
+    </div>`;
+}
+
+document.getElementById("begin").onclick = () => {
+  NAME = document.getElementById("yourname").value.trim() || NAME;
+  document.getElementById("intro").classList.add("hide");
+  run();
+};
+document.getElementById("exit").onclick = () => {
+  try { if (ac) ac.close(); } catch (e) {}
+  location.href = "index.html";
+};
+layout();
+</script>
+</body>
+</html>
