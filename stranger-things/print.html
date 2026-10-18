@@ -50,6 +50,7 @@
     <a href="episodes.html">Episodes</a>
     <a href="monsters.html">Monster Files</a>
     <a href="monster-maker.html">Monster Maker</a>
+    <a href="pet.html">Your Pet</a>
     <a href="print.html">Print Shop</a>
     <a href="cursor-lab.html">Cursor Lab</a>
     <a href="dice.html">Dice</a>
@@ -59,6 +60,7 @@
     <a href="walkie.html">Walkie Talkie</a>
     <a href="quiz.html">Quizzes</a>
     <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="truths.html">Two Truths</a>
     <a href="would-you-rather.html">Would You Rather</a>
     <a href="quotes.html">Who Said It?</a>
     <a href="games.html">Mini Games</a>
@@ -68,7 +70,7 @@
 
 <main>
   <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Print Shop</h1>
-  <p class="sub">Nine things you can print out, all with your own stuff on them. 🖨️</p>
+  <p class="sub">Eleven things you can print out, all with your own stuff on them. 🖨️</p>
 
   <div class="picker2" id="picker"></div>
 
@@ -290,6 +292,93 @@ const SHEETS = {
         </div>`;
     } },
 
+  passport: { e: "🛂", n: "Hawkins passport", tip: "Eight little pages. Cut them out, stack them, staple the left edge — then tick a stamp every time you visit somewhere.",
+    build: () => {
+      const PLACES = [
+        ["🌲", "Mirkwood", "The road Will never finished riding down."],
+        ["🏚️", "The Byers House", "Lights on the wall and an axe by the door."],
+        ["🧪", "Hawkins Lab", "They say it's an energy company. It isn't."],
+        ["🪨", "The Quarry", "They dragged it for a body. It was the wrong one."],
+        ["🛍️", "Starcourt Mall", "Shiny on top. Russian underneath."],
+        ["🍨", "Scoops Ahoy", "Two scoops, one secret code."],
+        ["🏫", "Hawkins Middle", "The gym, the Snow Ball, the AV room."],
+        ["🎸", "The Hellfire Room", "Bring dice. Bring snacks."],
+        ["🏡", "Hopper's Cabin", "Rules on the wall. Knock properly."],
+        ["🕳️", "The Gate", "Don't. But you will."],
+        ["🏚️", "The Creel House", "Nobody has lived there since 1959."],
+        ["🎢", "The Palace Arcade", "MADMAX got the high score."],
+      ];
+      const page = (inner) => `<div class="cut" style="height:128mm;padding:4mm;display:flex;flex-direction:column;border-color:#7a1020">${inner}</div>`;
+      const stampBox = ([e, n, blurb]) => `
+        <div style="display:flex;gap:2mm;align-items:center;margin-bottom:2.5mm">
+          <div style="width:15mm;height:15mm;border:1.5px dashed #9b8fa6;border-radius:50%;flex:0 0 auto;
+               display:flex;align-items:center;justify-content:center;font-size:7pt;color:#bbb">stamp</div>
+          <div style="font-size:8pt;line-height:1.3"><b>${e} ${n}</b><br><span style="color:#6b5a70">${blurb}</span></div>
+        </div>`;
+      const pages = [
+        page(`<div style="text-align:center;margin-top:6mm">
+            <div style="font-size:8pt;letter-spacing:3px;font-weight:800">UNITED STATES OF AMERICA</div>
+            <div style="font-family:'Noto Serif Display',Georgia,serif;font-size:18pt;font-weight:800;margin-top:3mm">HAWKINS</div>
+            <div style="font-family:'Noto Serif Display',Georgia,serif;font-size:14pt;font-weight:800">PASSPORT</div>
+            <div style="font-size:30pt;margin:4mm 0">🛂</div>
+            <div style="font-size:8pt">INDIANA · POP. 30,000</div>
+          </div>
+          <div style="margin-top:auto;text-align:center;font-size:8pt">belongs to<br><b style="font-size:12pt">${who()}</b></div>`),
+        page(`<div style="font-weight:800;font-size:10pt;text-align:center;margin-bottom:2mm">HOLDER</div>
+          <div style="width:30mm;height:36mm;border:1.5px dashed #9b8fa6;margin:0 auto 3mm;display:flex;
+               align-items:center;justify-content:center;font-size:7pt;color:#bbb;text-align:center">draw<br>yourself</div>
+          <div style="font-size:8.5pt;line-height:2.2">
+            Name: ${who()}<br>Age: ______<br>Hair: ______<br>Best friend: __________<br>
+            Favourite Eggo: ________<br>Can you ride a bike? ____</div>`),
+        page(`<div style="font-weight:800;font-size:10pt;text-align:center">RULES</div>
+          <ol style="font-size:8.5pt;padding-left:5mm;line-height:1.7;margin-top:2mm">
+            <li>Friends don't lie.</li><li>Never go anywhere alone after dark.</li>
+            <li>Always carry a torch and spare batteries.</li><li>Tell somebody where you're going.</li>
+            <li>If the lights start flickering, leave.</li><li>Keep this passport on you.</li>
+          </ol>
+          <div style="margin-top:auto;font-size:8pt;text-align:center">Signed ____________________</div>`),
+        ...[0, 3, 6, 9].map(i => page(`<div style="font-weight:800;font-size:9.5pt;text-align:center;margin-bottom:2.5mm">VISITS</div>
+            ${PLACES.slice(i, i + 3).map(stampBox).join("")}`)),
+        page(`<div style="font-weight:800;font-size:10pt;text-align:center">NOTES</div>
+          <div style="flex:1;background:repeating-linear-gradient(#fff 0 6.4mm, #d8d2e0 6.4mm 6.6mm);margin-top:2mm"></div>
+          <div style="font-size:7.5pt;text-align:center;margin-top:2mm;color:#6b5a70">Issued ${today}</div>`),
+      ];
+      return `<h2 style="text-align:center;margin:0 0 2mm">Hawkins passport</h2>
+        <p style="text-align:center;font-size:8.5pt;margin:0 0 3mm;color:#6b5a70">
+          ✂ Cut out all eight · stack them in order · staple the left edge</p>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:3mm">${pages.join("")}</div>`;
+    } },
+
+  file: { e: "📋", n: "Blank case file", tip: "A proper form to fill in when you see something. Print a pile of them.",
+    build: () => `<div style="border:3px solid #111;padding:6mm;height:258mm;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:2mm">
+        <div><div style="font-size:8pt;letter-spacing:2.5px;font-weight:800">HAWKINS NATIONAL LABORATORY</div>
+          <div style="font-family:'Noto Serif Display',Georgia,serif;font-size:22pt;font-weight:800">CASE FILE</div></div>
+        <div style="text-align:right;font-size:9pt;line-height:1.9">FILE No. _________<br>DATE _____________</div>
+      </div>
+      <div style="font-size:10pt;line-height:2.3;margin-top:3mm">
+        Reported by: <b>${who()}</b> &nbsp;&nbsp; Time: __________ &nbsp;&nbsp; Weather: ____________<br>
+        Where exactly: ________________________________________________<br>
+        Who else saw it: ______________________________________________
+      </div>
+      <div style="font-weight:800;font-size:9.5pt;margin-top:3mm">WHAT IT LOOKED LIKE — draw it here</div>
+      <div style="flex:1;border:2px dashed #9b8fa6;margin-top:1.5mm"></div>
+      <div style="display:flex;gap:6mm;margin-top:3mm;font-size:9.5pt">
+        <div><b>HOW BIG?</b><br>
+          ☐ smaller than a cat<br>☐ dog sized<br>☐ person sized<br>☐ bigger than the house</div>
+        <div><b>DID IT SEE YOU?</b><br>☐ no &nbsp; ☐ maybe &nbsp; ☐ yes<br><br>
+          <b>DID IT MAKE A NOISE?</b><br>☐ no &nbsp; ☐ clicking &nbsp; ☐ screaming</div>
+        <div><b>DANGER LEVEL</b><br>
+          ① ② ③ ④ ⑤<br><br><b>LIGHTS FLICKERING?</b><br>☐ yes &nbsp; ☐ no</div>
+      </div>
+      <div style="font-weight:800;font-size:9.5pt;margin-top:3mm">WHAT HAPPENED NEXT</div>
+      <div style="height:34mm;background:repeating-linear-gradient(#fff 0 7mm, #d8d2e0 7mm 7.2mm);
+           border:1px solid #d8d2e0;margin-top:1.5mm"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:3mm;font-size:9pt">
+        <span>Signed _____________________</span><span>Believed? ☐ yes ☐ nobody ever does</span>
+      </div>
+    </div>` },
+
   cards: { e: "🃏", n: "Monster trading cards", tip: "Your saved creatures, six to a page. Cut them out and trade them.",
     build: () => {
       if (!MONS.length) return `<h2>No monsters yet</h2><p>Build some in the Monster Maker and press 💾 first.</p>`;
@@ -334,6 +423,7 @@ sel.addEventListener("change", render);
 document.getElementById("printbtn").onclick = () => { tune([660, 880]); setTimeout(() => window.print(), 120); };
 render();
 </script>
+<script src="pet.js"></script>
 <script src="../secret.js"></script>
 <script src="../eggs.js"></script>
 <script src="../cursor.js"></script>

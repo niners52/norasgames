@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two Truths and a Lie · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤥</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .box3 { max-width: 760px; margin: 0 auto; border-radius: 22px; padding: clamp(16px, 4vw, 28px);
+          background: linear-gradient(160deg, rgba(32, 12, 40, .94), rgba(14, 6, 22, .96));
+          border: 1px solid rgba(255, 90, 90, .35); box-shadow: 0 14px 40px rgba(0, 0, 0, .55); }
+  .hud3 { display: flex; justify-content: space-between; font-weight: 800; color: var(--dim); margin-bottom: 14px; }
+  .hud3 b { color: var(--yellow); }
+  .says { display: grid; gap: 11px; }
+  .say { text-align: left; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .2);
+         box-shadow: none; font-size: 1rem; padding: 16px 18px; line-height: 1.5; display: flex; gap: 12px; align-items: flex-start; }
+  .say:hover { background: rgba(255, 32, 32, .2); border-color: var(--red); }
+  .say .n { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.3rem; color: var(--yellow); line-height: 1; }
+  .say.lie { background: rgba(255, 50, 50, .3); border-color: var(--red); }
+  .say.true2 { background: rgba(60, 200, 110, .22); border-color: #4cd97b; }
+  .why { min-height: 2em; margin-top: 14px; font-weight: 700; }
+  .result3 { text-align: center; }
+  .result3 h3 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.5rem, 6vw, 2.4rem);
+                color: #fff; text-shadow: 0 0 18px var(--red); }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="pet.html">Your Pet</a>
+    <a href="print.html">Print Shop</a>
+    <a href="cursor-lab.html">Cursor Lab</a>
+    <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="truths.html">Two Truths</a>
+    <a href="would-you-rather.html">Would You Rather</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Two Truths and a Lie</h1>
+  <p class="sub">Three things about the show. Two really happened. Spot the one that didn't. 🤥</p>
+  <section class="box3" id="box3"></section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+/* Each round: two things that really happen in the show, and one made up.
+   The "why" explains the lie afterwards, so you learn something either way. */
+const ROUNDS = [
+  { t: ["Eleven's favourite food is Eggo waffles.", "Dustin has a cat called Mews."],
+    lie: "Mike keeps a pet snake called Gary in his basement.",
+    why: "No snake. Mike's basement has the D&D table, the blanket fort and, for a while, Eleven." },
+
+  { t: ["Dustin's girlfriend Suzie lives in Utah.", "Hopper had a daughter called Sara."],
+    lie: "Lucas has an identical twin brother.",
+    why: "Lucas has a little sister — Erica — and she is quite enough." },
+
+  { t: ["Joyce works at Melvald's General Store.", "Bob Newby worked at RadioShack."],
+    lie: "Steve's dad owns the Palace Arcade.",
+    why: "The arcade is Keith's domain. Steve ends up scooping ice cream at Starcourt instead." },
+
+  { t: ["Max's older brother is Billy Hargrove.", "Erica Sinclair is Lucas's little sister."],
+    lie: "Will and Jonathan Byers are twins.",
+    why: "Jonathan is the big brother — several years older, and the one with the camera." },
+
+  { t: ["The song that pulls Max away from Vecna is Running Up That Hill by Kate Bush.",
+        "Eddie plays Master of Puppets in the Upside Down."],
+    lie: "Dustin plays the drums in the school band.",
+    why: "Dustin's instrument is a radio the size of a fridge. No drums." },
+
+  { t: ["Vecna's real name is Henry Creel.", "Eleven is called Eleven because of the 011 tattooed on her arm."],
+    lie: "Eleven was the only child ever kept at Hawkins Lab.",
+    why: "There were others, numbered before her — including One, who became Vecna, and Eight, who is Kali." },
+
+  { t: ["Scoops Ahoy is the ice cream shop inside Starcourt Mall.", "Robin can speak four languages."],
+    lie: "Steve gets promoted to manager of the whole mall.",
+    why: "Steve never manages anything except the children. The mall burns down anyway." },
+
+  { t: ["Murray Bauman is a conspiracy journalist.", "Alexei loved cherry Slurpees."],
+    lie: "Hopper speaks fluent Russian.",
+    why: "Hopper speaks about four words of Russian, badly. Murray does the translating." },
+
+  { t: ["The Snow Ball happens in December 1984.", "Nancy works at the school paper, the Hawkins Tiger."],
+    lie: "The Byers family moves to Florida after season 2.",
+    why: "They move to California — Lenora Hills — which is where season 4 finds Will, Jonathan and Eleven." },
+
+  { t: ["The Demogorgon is named after a monster from Dungeons & Dragons.", "Hawkins is in Indiana."],
+    lie: "The Upside Down is another planet in space.",
+    why: "It's a copy of Hawkins itself, sitting underneath this one — same houses, same trees, no people." },
+
+  { t: ["Eleven closes the gate at the end of season 2.", "Billy saves Eleven from the Mind Flayer at Starcourt."],
+    lie: "Barb comes back in season 3 and is fine.",
+    why: "Barb never comes back. Nancy spends most of season 2 making sure the world knows what happened to her." },
+
+  { t: ["Eddie Munson runs the Hellfire Club.", "Will's drawing in season 4 shows the party as D&D heroes."],
+    lie: "Vecna is afraid of water.",
+    why: "Fire, loud music and Eleven. Water is not on the list." },
+];
+
+const shuffle = a => a.map(v => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map(v => v[1]);
+const box = document.getElementById("box3");
+let list = [], i = 0, right = 0, streak = 0, best = 0;
+try { best = +(localStorage.getItem("stTruthsBest") || 0); } catch (e) {}
+
+function start() { list = shuffle(ROUNDS).slice(0, 8); i = 0; right = 0; streak = 0; render(); }
+function render() {
+  if (i >= list.length) return finish();
+  const r = list[i];
+  const opts = shuffle([...r.t.map(t => ({ text: t, lie: false })), { text: r.lie, lie: true }]);
+  box.innerHTML = `
+    <div class="hud3"><span>Round ${i + 1} of ${list.length}</span><span>🔥 <b>${streak}</b></span><span>✅ <b>${right}</b></span></div>
+    <p style="font-weight:800;margin-bottom:12px">Which one is the lie?</p>
+    <div class="says">${opts.map((o, n) => `<button class="say" data-n="${n}"><span class="n">${n + 1}</span><span>${o.text}</span></button>`).join("")}</div>
+    <p class="why" id="why"></p>`;
+  box.querySelectorAll(".say").forEach(b => { b.onclick = () => choose(b, opts, r); });
+}
+function choose(btn, opts, r) {
+  box.querySelectorAll(".say").forEach((b, n) => {
+    b.disabled = true;
+    b.classList.add(opts[n].lie ? "lie" : "true2");
+  });
+  const ok = opts[+btn.dataset.n].lie;
+  if (ok) { right++; streak++; tune([660, 880]); } else { streak = 0; beep(170, .3, "sawtooth", .08); }
+  document.getElementById("why").innerHTML = (ok ? "✅ Got it. " : "❌ Not quite — the lie was the other one. ")
+    + `<span style="color:var(--dim)">${r.why}</span>`;
+  setTimeout(() => { i++; render(); }, 2600);
+}
+function finish() {
+  if (right > best) { best = right; try { localStorage.setItem("stTruthsBest", best); } catch (e) {} }
+  const r = right === 8 ? ["🕵️", "Nobody lies to you", "Eight out of eight. You've seen this show far too many times."]
+    : right >= 6 ? ["🔎", "Very hard to fool", "You caught nearly all of them."]
+    : right >= 4 ? ["📻", "Half fooled", "Decent. A few of those were sneaky."]
+    : ["🧇", "Easily fooled", "Go and rewatch some, then come back for revenge."];
+  tune(right >= 6 ? [523, 659, 784, 1047] : [392, 330, 262]);
+  box.innerHTML = `<div class="result3"><div style="font-size:3.4rem">${r[0]}</div><h3>${r[1]}</h3>
+    <p style="color:var(--dim)">You spotted <b>${right} of 8</b> lies. ${r[2]}<br>Your best ever: ${best}/8</p>
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button onclick="start()">🔁 Play again</button>
+      <a class="btn ghost" href="quiz-hard.html">👑 Try the hard quiz</a>
+    </div></div>`;
+}
+start();
+</script>
+<script src="pet.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

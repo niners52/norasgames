@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Pet · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥚</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .eggs { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-top: 18px; }
+  .egg { cursor: pointer; border-radius: 20px; padding: 16px 20px; text-align: center; border: 2px solid transparent;
+         background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94)); transition: .2s; }
+  .egg:hover { transform: translateY(-5px); }
+  .egg.on { border-color: var(--yellow); box-shadow: 0 0 28px rgba(255, 213, 74, .35); }
+  .egg svg { display: block; }
+  .egg b { display: block; margin-top: 8px; font-size: .88rem; }
+  .nameline { width: min(100%, 340px); font-family: "Noto Serif Display", Georgia, serif; font-weight: 800;
+              font-size: 1.2rem; text-align: center; padding: 12px; border-radius: 12px;
+              border: 2px solid rgba(255, 90, 90, .4); background: rgba(10, 4, 16, .8); color: var(--text); }
+  .status { max-width: 640px; margin: 20px auto 0; border-radius: 18px; padding: 18px 20px; text-align: center;
+            background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+            border: 1px solid rgba(255, 90, 90, .3); }
+  .rows2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-top: 12px; }
+  .rows2 div { background: rgba(255, 255, 255, .06); border-radius: 12px; padding: 10px; }
+  .rows2 b { display: block; font-size: 1.3rem; color: var(--yellow); font-family: "Noto Serif Display", Georgia, serif; }
+  .rows2 span { font-size: .7rem; letter-spacing: 1px; color: var(--dim); text-transform: uppercase; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="characters.html">Characters</a>
+    <a href="map.html">Map</a>
+    <a href="timeline.html">Timeline</a>
+    <a href="episodes.html">Episodes</a>
+    <a href="monsters.html">Monster Files</a>
+    <a href="monster-maker.html">Monster Maker</a>
+    <a href="pet.html">Your Pet</a>
+    <a href="print.html">Print Shop</a>
+    <a href="cursor-lab.html">Cursor Lab</a>
+    <a href="dice.html">Dice</a>
+    <a href="hellfire-card.html">Hellfire Card</a>
+    <a href="campaign.html">Campaign</a>
+    <a href="vecna.html">Vecna's List</a>
+    <a href="walkie.html">Walkie Talkie</a>
+    <a href="quiz.html">Quizzes</a>
+    <a href="quiz-hard.html">Hard Quiz</a>
+    <a href="truths.html">Two Truths</a>
+    <a href="would-you-rather.html">Would You Rather</a>
+    <a href="quotes.html">Who Said It?</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Your Pet</h1>
+  <p class="sub">Dustin found something in the bins again. Somebody has to look after it. 🥚</p>
+
+  <div id="screen2"></div>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const COLORS3 = [["#9ad6a0", "Swamp green"], ["#e98aa8", "Bubblegum"], ["#8fd3ff", "Ice blue"],
+                 ["#c69ae8", "Purple"], ["#ffd08a", "Butterscotch"]];
+let chosen = COLORS3[0][0];
+const DAY = 86400000;
+const get = () => { try { return JSON.parse(localStorage.getItem("noraPet") || "null"); } catch (e) { return null; } };
+
+function eggArt(c, size) {
+  return `<svg width="${size}" height="${size * 1.18}" viewBox="0 0 80 94" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="88" rx="22" ry="4" fill="#000" opacity=".25"/>
+    <path d="M40 6 C60 6 72 34 72 54 C72 74 58 86 40 86 C22 86 8 74 8 54 C8 34 20 6 40 6 Z"
+      fill="${c}" stroke="#2a1b3d" stroke-width="3.4"/>
+    <path d="M22 44 q9 -8 18 0 q9 8 18 0" stroke="#2a1b3d" stroke-width="2.6" fill="none" opacity=".55"/>
+    <path d="M24 62 q8 -7 16 0 q8 7 16 0" stroke="#2a1b3d" stroke-width="2.6" fill="none" opacity=".55"/>
+    <ellipse cx="30" cy="28" rx="7" ry="10" fill="#fff" opacity=".45" transform="rotate(-20 30 28)"/>
+  </svg>`;
+}
+
+function adoptScreen() {
+  document.getElementById("screen2").innerHTML = `
+    <p class="lead" style="text-align:center;max-width:620px;margin:0 auto">
+      Pick an egg and give it a name. Once it's yours it turns up in the <b>corner of every page</b> on this site.
+      Feed it once a day and it grows. Forget, and it gets sad — but it never goes away.</p>
+    <div class="eggs" id="eggs">
+      ${COLORS3.map(([c, n]) => `<div class="egg ${c === chosen ? "on" : ""}" data-c="${c}">${eggArt(c, 86)}<b>${n}</b></div>`).join("")}
+    </div>
+    <div class="row" style="justify-content:center;margin-top:16px">
+      <input class="nameline" id="petname" maxlength="14" placeholder="Name it…" spellcheck="false">
+    </div>
+    <div class="row" style="justify-content:center;margin-top:12px">
+      <button id="adopt">🥚 It's mine now</button>
+    </div>`;
+  document.getElementById("eggs").addEventListener("click", e => {
+    const el = e.target.closest(".egg"); if (!el) return;
+    chosen = el.dataset.c;
+    document.querySelectorAll(".egg").forEach(x => x.classList.toggle("on", x.dataset.c === chosen));
+    beep(600 + Math.random() * 200, .08, "triangle");
+  });
+  document.getElementById("adopt").onclick = () => {
+    const n = document.getElementById("petname").value.trim().slice(0, 14);
+    if (!n) { document.getElementById("petname").focus(); beep(220, .15); return; }
+    const P = { name: n, color: chosen, born: Date.now(), lastFed: new Date().toDateString(), feeds: 1 };
+    try { localStorage.setItem("noraPet", JSON.stringify(P)); } catch (e) {}
+    tune([523, 659, 784, 1047]);
+    petScreen(true);
+  };
+}
+
+function petScreen(justHatched) {
+  const P = get();
+  const age = Math.floor((Date.now() - P.born) / DAY);
+  const stageName = age >= 14 ? "enormous" : age >= 7 ? "big" : age >= 3 ? "little" : "baby";
+  const fedToday = P.lastFed === new Date().toDateString();
+  document.getElementById("screen2").innerHTML = `
+    <div class="status">
+      ${justHatched ? `<p style="color:var(--yellow);font-weight:800">🥚 …it just hatched. It thinks you're its mum.</p>` : ""}
+      <div style="display:flex;justify-content:center">${window.PET_ART ? window.PET_ART(150) : eggArt(P.color, 110)}</div>
+      <h2 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff;margin:6px 0 0">${P.name}</h2>
+      <p style="color:var(--dim)">${stageName} · lives in the corner of every page on this site</p>
+      <div class="rows2">
+        <div><b>${age}</b><span>days old</span></div>
+        <div><b>${P.feeds}</b><span>meals</span></div>
+        <div><b>${fedToday ? "✅" : "🍫"}</b><span>${fedToday ? "fed today" : "hungry"}</span></div>
+      </div>
+      <p class="lead" style="margin-top:12px">Go to any other page and look in the bottom left corner.
+        Tap ${P.name} to say hello or hand over some nougat.</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn" href="index.html">🔦 Go and find it</a>
+        <button class="ghost" id="rehome">💔 Let it go</button>
+      </div>
+    </div>`;
+  document.getElementById("rehome").onclick = () => {
+    if (!confirm(`Let ${P.name} go back to the Upside Down? You can't undo this.`)) return;
+    try { localStorage.removeItem("noraPet"); } catch (e) {}
+    beep(200, .4, "sine", .08);
+    location.reload();
+  };
+}
+
+get() ? petScreen(false) : adoptScreen();
+</script>
+<script src="pet.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
