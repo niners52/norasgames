@@ -71,14 +71,13 @@
 
 <main>
   <h1 class="title" style="font-size:clamp(1.7rem,6.4vw,3.2rem)">Print Shop</h1>
-  <p class="sub">Twelve things you can print out, all with your own stuff on them. 🖨️</p>
+  <p class="sub">Eleven things you can print out, all with your own stuff on them. 🖨️</p>
 
   <div class="picker2" id="picker"></div>
 
   <div class="bits">
     <input id="pname" maxlength="18" placeholder="Your name…" spellcheck="false">
     <select id="pmon"></select>
-    <select id="pdoll"></select>
     <button id="printbtn">🖨️ Print this</button>
   </div>
   <p class="tip" id="tip"></p>
@@ -97,7 +96,6 @@
 <script src="art.js"></script>
 <script src="art85.js"></script>
 <script src="monster-art.js"></script>
-<script src="dolls.js"></script>
 <script>
 "use strict";
 /* ---------- your stuff ---------- */
@@ -296,31 +294,6 @@ const SHEETS = {
         </div>`;
     } },
 
-  dolls: { e: "👗", n: "Dress-up dolls", tip: "Cut out the doll and the clothes. Fold the little white tabs over her shoulders and waist to hold each outfit on.", needsDoll: true,
-    build: (_m, key) => {
-      const k = key || "eleven";
-      const c = DOLLS.CAST[k];
-      return `<h2 style="text-align:center;margin:0 0 1mm">${c.name} — dress-up doll</h2>
-        <p style="text-align:center;font-size:8.5pt;color:#6b5a70;margin:0 0 3mm">
-          ✂ Cut out everything along the lines · fold the dashed tabs backwards · hook an outfit over the doll</p>
-        <div style="display:flex;gap:4mm;align-items:flex-start">
-          <div class="cut" style="width:62mm;padding:3mm;border-color:#7a1020">
-            <div style="text-align:center;font-weight:800;font-size:10pt;margin-bottom:1mm">${c.name}</div>
-            ${DOLLS.doll(k)}
-            <div style="margin-top:2mm;border-top:1.5px dashed #9b8fa6;padding-top:1.5mm;text-align:center;font-size:7pt;color:#6b5a70">
-              fold here and bend back so she stands up
-            </div>
-          </div>
-          <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3mm">
-            ${c.fits.map((f, i) => `<div class="cut" style="padding:2mm;border-color:#7a1020">
-              <div style="text-align:center;font-weight:800;font-size:8.5pt">${f.n}</div>
-              ${DOLLS.outfit(k, i)}
-            </div>`).join("")}
-          </div>
-        </div>
-        <p style="text-align:center;font-size:8pt;color:#6b5a70;margin-top:3mm">${who()}'s dolls · ${today}</p>`;
-    } },
-
   passport: { e: "🛂", n: "Hawkins passport", tip: "Eight little pages. Cut them out, stack them, staple the left edge — then tick a stamp every time you visit somewhere.",
     build: () => {
       const PLACES = [
@@ -432,9 +405,6 @@ document.getElementById("picker").innerHTML = Object.entries(SHEETS).map(([k, s]
   `<button data-k="${k}" class="${k === pick ? "on" : ""}"><span class="e">${s.e}</span>${s.n}</button>`).join("");
 document.getElementById("pname").value = NAME;
 const sel = document.getElementById("pmon");
-const dsel = document.getElementById("pdoll");
-dsel.innerHTML = DOLLS.names().map(k => `<option value="${k}">${DOLLS.CAST[k].name}</option>`).join("");
-dsel.addEventListener("change", () => render());
 sel.innerHTML = MONS.length
   ? MONS.map((m, i) => `<option value="${i}">${(m.name || "Unnamed").slice(0, 18)}</option>`).join("")
   : `<option>no saved monsters</option>`;
@@ -443,8 +413,7 @@ function render() {
   const s = SHEETS[pick];
   document.getElementById("tip").textContent = s.tip;
   sel.style.display = (pick === "poster") ? "" : "none";
-  dsel.style.display = (pick === "dolls") ? "" : "none";
-  document.getElementById("sheet").innerHTML = s.build(MONS[+sel.value] || MONS[0], dsel.value);
+  document.getElementById("sheet").innerHTML = s.build(MONS[+sel.value] || MONS[0]);
   document.querySelectorAll("#picker button").forEach(b => b.classList.toggle("on", b.dataset.k === pick));
 }
 document.getElementById("picker").addEventListener("click", e => {
