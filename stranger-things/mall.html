@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Starcourt Mall · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛍️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .mallwrap { max-width: 1020px; margin: 14px auto 0; border-radius: 18px; overflow: hidden;
+              border: 2px solid rgba(255, 90, 90, .4); box-shadow: 0 16px 46px rgba(0, 0, 0, .65); }
+  .mallwrap svg { display: block; width: 100%; height: auto; }
+  .shopg { cursor: pointer; }
+  .shopg:hover .frame { stroke: #fff; }
+  .panel6 { max-width: 760px; margin: 16px auto 0; border-radius: 18px; padding: clamp(16px, 4vw, 24px);
+            background: linear-gradient(160deg, rgba(32, 12, 40, .94), rgba(14, 6, 22, .96));
+            border: 1px solid rgba(255, 90, 90, .32); min-height: 150px; }
+  .panel6 h3 { font-family: "Noto Serif Display", Georgia, serif; color: #fff; margin: 0 0 4px; }
+  .panel6 .who2 { color: var(--yellow); font-weight: 800; font-size: .84rem; letter-spacing: 1px; }
+  .panel6 .line2 { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.05rem; line-height: 1.6;
+                   margin-top: 10px; color: #ffdede; }
+  .opts2 { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+  .opts2 button { font-size: .86rem; padding: 9px 13px; background: rgba(255, 255, 255, .08);
+                  border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+  .opts2 button.on { background: linear-gradient(135deg, #ff2020, #a60e2f); border-color: transparent; }
+  .keypad3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 240px; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="mall.html">🛍️ Starcourt Mall</a>
+    <a href="board.html">📌 Detective Board</a>
+    <a href="survive.html">Would You Survive?</a>
+    <a href="shop.html">🪙 Vending Machine</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="town.html">Walk Around</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Starcourt Mall</h1>
+  <p class="sub">Summer 1985. Everything is open, the air conditioning is freezing, and something is humming under the food court. 🛍️</p>
+
+  <div class="mallwrap"><svg id="mall" viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+  <section class="panel6" id="panel6">
+    <h3>Where do you want to go?</h3>
+    <p style="color:var(--dim)">Tap a shop. The one at the end with no sign is staff only.</p>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const SHOPS = [
+  { id: "scoops", n: "SCOOPS AHOY", c: "#4fb8d8", e: "🍨", x: 30 },
+  { id: "records", n: "RECORDS", c: "#d8508a", e: "💿", x: 190 },
+  { id: "clothes", n: "FASHION", c: "#f0b63c", e: "👕", x: 350 },
+  { id: "books", n: "BOOKS", c: "#6fae6f", e: "📚", x: 510 },
+  { id: "cinema", n: "CINEMA", c: "#9a6bd8", e: "🎬", x: 670 },
+  { id: "food", n: "FOOD COURT", c: "#e8743c", e: "🍕", x: 830 },
+];
+const mall = document.getElementById("mall");
+mall.innerHTML = `
+  <defs>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2434"/><stop offset="1" stop-color="#16121e"/></linearGradient>
+    <linearGradient id="glow3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff5fc8" stop-opacity=".35"/><stop offset="1" stop-color="#ff5fc8" stop-opacity="0"/></linearGradient>
+  </defs>
+  <rect width="1000" height="470" fill="#140e1c"/>
+  <rect y="330" width="1000" height="140" fill="url(#floor)"/>
+  ${Array.from({ length: 26 }, (_, i) => `<path d="M${i * 40} 330 L${i * 40 - 60} 470" stroke="rgba(255,255,255,.05)" stroke-width="2"/>`).join("")}
+  <rect width="1000" height="60" fill="#0d0916"/>
+  <text x="500" y="42" text-anchor="middle" font-family="Noto Serif Display, Georgia, serif" font-size="34"
+        fill="#ff5fc8" style="filter:drop-shadow(0 0 14px #ff5fc8)">STARCOURT</text>
+  ${SHOPS.map(s => `
+    <g class="shopg" data-id="${s.id}">
+      <rect class="frame" x="${s.x}" y="86" width="140" height="232" rx="8" fill="#1b1526" stroke="${s.c}" stroke-width="3"/>
+      <rect x="${s.x + 10}" y="96" width="120" height="34" rx="6" fill="${s.c}" opacity=".9"/>
+      <text x="${s.x + 70}" y="120" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="15"
+            fill="#160f1c">${s.n}</text>
+      <rect x="${s.x + 14}" y="146" width="112" height="120" rx="6" fill="#0d0a14"/>
+      <text x="${s.x + 70}" y="226" text-anchor="middle" font-size="54">${s.e}</text>
+      <rect x="${s.x + 46}" y="268" width="48" height="50" rx="4" fill="#241a30" stroke="${s.c}" stroke-width="2"/>
+      <ellipse cx="${s.x + 70}" cy="340" rx="80" ry="16" fill="url(#glow3)"/>
+    </g>`).join("")}
+  <g class="shopg" data-id="staff">
+    <rect class="frame" x="946" y="190" width="44" height="128" rx="4" fill="#15111c" stroke="#3a3348" stroke-width="3"/>
+    <circle cx="954" cy="256" r="4" fill="#6a6278"/>
+    <text x="968" y="258" text-anchor="middle" font-size="9" font-family="Nunito" fill="#8a8298"
+          transform="rotate(90 968 258)">STAFF ONLY</text>
+  </g>
+  ${Array.from({ length: 7 }, (_, i) => `<circle cx="${80 + i * 140}" cy="76" r="5" fill="#ffd9f0" opacity=".7"/>`).join("")}`;
+
+/* ---------- what each shop does ---------- */
+const P = document.getElementById("panel6");
+const say6 = html => { P.innerHTML = html; P.scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+const pick6 = a => a[Math.floor(Math.random() * a.length)];
+
+const FLAV = ["Vanilla", "Chocolate", "Strawberry", "Mint choc chip", "Banana", "Bubblegum", "Pistachio", "Rum raisin"];
+const TOPS = ["sprinkles", "a flake", "hot fudge", "nuts", "whipped cream", "a cherry", "more ice cream"];
+const STEVE = {
+  good: ["“Classic. Boring, but classic.”", "“Good choice. Don't tell Robin I said that.”", "“That's what I'd order.”"],
+  weird: ["“That is a crime against ice cream.”", "“You're paying extra for that. Emotionally.”",
+          "“Robin, come and look at what this kid ordered.”", "“I'm not judging. I am absolutely judging.”"],
+};
+function scoops() {
+  const a = pick6(FLAV), b = pick6(FLAV), t = pick6(TOPS);
+  const weird = (a === "Rum raisin" || b === "Rum raisin" || a === b || t === "more ice cream");
+  say6(`<div class="who2">🍨 SCOOPS AHOY · AHOY!</div>
+    <h3>Two scoops of ${a.toLowerCase()} and ${b.toLowerCase()}, with ${t}</h3>
+    <p class="line2">${pick6(weird ? STEVE.weird : STEVE.good)}</p>
+    <p style="color:var(--dim);margin-top:8px">A girl behind him is writing something in a little book and
+      muttering about a code.</p>
+    <div class="opts2"><button id="again6">🍨 Order another</button>
+      <a class="btn ghost" href="game-code.html">🔐 Ask about the code</a></div>`);
+  document.getElementById("again6").onclick = scoops;
+  tune([660, 880]);
+}
+
+const RECORDS = [
+  ["Running Up That Hill", "Kate Bush, 1985", "Four years later it saves Max's life. Nobody in this shop knows that yet."],
+  ["Should I Stay or Should I Go", "The Clash, 1982", "Jonathan played it for Will. Will sang it in the Upside Down."],
+  ["Africa", "Toto, 1982", "Everyone pretends they're not going to sing the chorus. Everyone sings the chorus."],
+  ["Time After Time", "Cyndi Lauper, 1983", "The slow one at the end of the disco."],
+  ["Master of Puppets", "Metallica, 1986", "Not out yet. Eddie will not shut up about it when it is."],
+  ["Never Ending Story", "Limahl, 1984", "Dustin and Suzie know every word. Everyone else has to listen."],
+  ["Material Girl", "Madonna, 1984", "Playing in this mall roughly every twenty minutes."],
+];
+function records() {
+  const r = pick6(RECORDS);
+  say6(`<div class="who2">💿 THE RECORD SHOP</div>
+    <h3>${r[0]}</h3>
+    <p style="color:var(--dim)">${r[1]}</p>
+    <p class="line2">${r[2]}</p>
+    <div class="opts2"><button id="again6">💿 Flip through another</button></div>`);
+  document.getElementById("again6").onclick = records;
+  beep(620, .1, "triangle");
+}
+
+const TOPSW = ["a denim jacket with too many badges", "a stripy polo buttoned to the top", "a neon windbreaker",
+  "dungarees", "a jumper with a lightning bolt on it", "a Hawkins High gym shirt", "a shirt with tiny sailboats"];
+const BOTS = ["high-waisted jeans", "corduroy flares", "neon shorts", "a pleated skirt", "tracksuit bottoms with poppers"];
+const EXTRA = ["a sweatband", "roller skates", "an enormous watch", "sunglasses indoors", "a walkie clipped to the belt",
+  "hair that took forty minutes"];
+function clothes() {
+  say6(`<div class="who2">👕 FASHION · SUMMER '85</div>
+    <h3>Today you are wearing</h3>
+    <p class="line2">${pick6(TOPSW)}, ${pick6(BOTS)}, and ${pick6(EXTRA)}.</p>
+    <p style="color:var(--dim);margin-top:8px">The changing room mirror is lit from above, which is cruel.</p>
+    <div class="opts2"><button id="again6">👕 Try something else</button>
+      <a class="btn ghost" href="hellfire-card.html">🤘 Put it on your card</a></div>`);
+  document.getElementById("again6").onclick = clothes;
+  beep(560, .09, "triangle");
+}
+
+const BOOKS = [
+  ["THE HOUSE THAT COUNTED", "“There were eleven rooms when they moved in. On Tuesday there were twelve.”"],
+  ["WHAT THE DOG SAW", "“The dog had been barking at the airing cupboard since March.”"],
+  ["SIGNALS", "“Every radio in the county picked it up. Only one person wrote it down.”"],
+  ["THE LONG HOLIDAY", "“Nobody at the caravan park could remember arriving.”"],
+  ["BELOW", "“The map showed four tunnels. The men who dug them only remembered three.”"],
+];
+function books() {
+  const b = pick6(BOOKS);
+  say6(`<div class="who2">📚 BOOKS · HORROR, 2 FOR 1</div>
+    <h3>${b[0]}</h3>
+    <p class="line2">${b[1]}</p>
+    <p style="color:var(--dim);margin-top:8px">The back cover is missing. Somebody has pencilled a phone number
+      inside the front: <b>555-1983</b>.</p>
+    <div class="opts2"><button id="again6">📚 Pick up another</button>
+      <a class="btn ghost" href="phone.html">☎️ Ring it</a></div>`);
+  document.getElementById("again6").onclick = books;
+  beep(500, .1, "triangle");
+}
+
+const FILMS = [["BACK TO THE FUTURE", "12:40 · 3:10 · 7:25"], ["THE GOONIES", "11:55 · 2:30 · 6:05"],
+  ["GHOSTBUSTERS", "1:15 · 5:40"], ["GREMLINS", "9:30 (late showing)"], ["THE NEVERENDING STORY", "11:00 · 1:45"]];
+function cinema() {
+  say6(`<div class="who2">🎬 STARCOURT CINEMA · NOW SHOWING</div>
+    <h3>Four screens, one broken</h3>
+    ${FILMS.map(f => `<p style="margin-top:6px"><b style="color:#fff">${f[0]}</b>
+      <span style="color:var(--dim)"> — ${f[1]}</span></p>`).join("")}
+    <p class="line2">Two of the kids snuck into the late showing of Gremlins last week and got chucked out.</p>
+    <p style="color:var(--dim);margin-top:6px">Screen 4 has been "closed for maintenance" since the mall opened.
+      Nobody has ever seen a maintenance person go in.</p>`);
+  beep(480, .12, "triangle");
+}
+
+function food() {
+  let pet = null;
+  try { pet = JSON.parse(localStorage.getItem("noraPet") || "null"); } catch (e) {}
+  const today = new Date().toDateString();
+  const fed = pet && pet.lastFed === today;
+  say6(`<div class="who2">🍕 FOOD COURT</div>
+    <h3>Hot dog on a stick, pizza by the slice, and a man asleep on a bench</h3>
+    <p class="line2">Underneath this floor there is a room with a very large machine in it.
+      You can feel it through your shoes.</p>
+    ${pet ? (fed
+      ? `<p style="color:#6fff9c;margin-top:8px">${pet.name} has already eaten today and is asleep under the table.</p>`
+      : `<p style="margin-top:8px">${pet.name} is looking at the pizza.</p>
+         <div class="opts2"><button id="feed6">🍕 Buy ${pet.name} a slice</button></div>`)
+      : `<p style="color:var(--dim);margin-top:8px">You haven't got a pet to feed yet.</p>
+         <div class="opts2"><a class="btn ghost" href="pet.html">🥚 Go and get one</a></div>`}
+    <div class="opts2" style="margin-top:10px"><a class="btn ghost" href="game-code.html">🔐 Put your ear to the floor</a></div>`);
+  const f = document.getElementById("feed6");
+  if (f) f.onclick = () => {
+    pet.lastFed = today; pet.feeds = (pet.feeds || 0) + 1;
+    try { localStorage.setItem("noraPet", JSON.stringify(pet)); } catch (e) {}
+    tune([660, 880, 1100]);
+    food();
+  };
+}
+
+let code3 = "";
+function staff() {
+  say6(`<div class="who2">🚪 STAFF ONLY</div>
+    <h3>A grey door with no handle</h3>
+    <p class="line2">There's a keypad where the handle should be. The paint around it is scratched,
+      like somebody has used it a lot and in a hurry.</p>
+    <div style="font-family:ui-monospace,Courier New,monospace;font-size:2rem;letter-spacing:10px;
+         color:#7dff9b;text-align:center;margin-top:10px" id="code3">____</div>
+    <div class="keypad3" id="kp3">${[1,2,3,4,5,6,7,8,9,"⌫",0,"✓"].map(k => `<button data-k="${k}">${k}</button>`).join("")}</div>
+    <p style="color:var(--dim);margin-top:8px;font-size:.88rem" id="staffmsg">
+      Four numbers. You've seen them somewhere before — on paper.</p>`);
+  const show6 = () => { document.getElementById("code3").textContent = (code3 + "____").slice(0, 4).split("").join(" "); };
+  document.getElementById("kp3").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    const k = b.dataset.k;
+    if (k === "⌫") { code3 = code3.slice(0, -1); return show6(); }
+    if (k === "✓") {
+      if (code3 === "1983") {
+        tune([392, 523, 659, 784]);
+        say6(`<div class="who2">🚪 THE DOOR IS OPEN</div>
+          <h3>Concrete stairs, going down a long way</h3>
+          <p class="line2">The air coming up is cold and smells of metal. Somewhere below, machinery is running,
+            and somebody is speaking Russian.</p>
+          <p style="color:var(--dim);margin-top:8px">This is the bit where a sensible person goes home.</p>
+          <div class="opts2" style="margin-top:10px">
+            <a class="btn" href="game-code.html">🔐 Go down and crack the transmission</a>
+            <a class="btn ghost" href="evidence.html">🗂️ Check the file first</a></div>`);
+        try { localStorage.setItem("stMallDoor", "1"); } catch (e) {}
+        return;
+      }
+      document.getElementById("staffmsg").textContent = "The keypad buzzes and goes red. Somebody down the corridor looks up.";
+      beep(170, .3, "sawtooth", .07);
+      code3 = ""; show6(); return;
+    }
+    if (code3.length < 4) { code3 += k; show6(); beep(520, .05, "square", .05); }
+  });
+  show6();
+  beep(300, .2, "sine", .06);
+}
+
+const DO = { scoops, records, clothes, books, cinema, food, staff };
+mall.addEventListener("click", e => {
+  const g = e.target.closest(".shopg"); if (!g) return;
+  code3 = "";
+  (DO[g.dataset.id] || (() => {}))();
+});
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
