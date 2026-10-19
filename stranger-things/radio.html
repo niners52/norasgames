@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build a Radio · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📻</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .bench { max-width: 860px; margin: 0 auto; border-radius: 20px; padding: 18px;
+           background: linear-gradient(170deg, #4a3a2a, #32271c 55%, #1d1711);
+           border: 3px solid #6b5438; box-shadow: 0 18px 50px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .1); }
+  .board2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+            background: #1b2a1f; border: 3px solid #0f1a12; border-radius: 14px; padding: 14px;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, .7); }
+  .socket { border-radius: 10px; min-height: 108px; padding: 8px; text-align: center; cursor: pointer;
+            background: rgba(255, 255, 255, .05); border: 2px dashed rgba(255, 255, 255, .25); }
+  .socket.full { border-style: solid; background: rgba(255, 255, 255, .09); }
+  .socket.right { border-color: #6fff9c; box-shadow: 0 0 18px rgba(110, 255, 156, .25); }
+  .socket.wrong { border-color: #ff5a5a; }
+  .socket .lbl { font-size: .68rem; letter-spacing: 1px; color: #bcd6c4; font-weight: 800; }
+  .socket .hint5 { font-size: .72rem; color: #8aa893; margin-top: 4px; line-height: 1.3; }
+  .socket .part { font-size: 2rem; display: block; margin-top: 6px; }
+  .socket .pname { font-size: .76rem; color: #fff; }
+  .tray2 { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 14px; }
+  .chip { border-radius: 12px; padding: 10px 12px; min-width: 104px; text-align: center; cursor: pointer;
+          background: rgba(255, 255, 255, .07); border: 2px solid rgba(255, 255, 255, .2); }
+  .chip.on { border-color: var(--yellow); box-shadow: 0 0 18px rgba(255, 213, 74, .3); }
+  .chip.used { opacity: .35; }
+  .chip span { font-size: 1.6rem; display: block; }
+  .chip b { font-size: .78rem; }
+  .meter2 { height: 16px; border-radius: 99px; background: rgba(0, 0, 0, .5); overflow: hidden; margin-top: 14px;
+            border: 1px solid rgba(255, 255, 255, .18); }
+  .meter2 div { height: 100%; width: 0; background: linear-gradient(90deg, #b3121a, #ffd54a, #6fff9c); transition: width .4s; }
+  .speaker2 { margin-top: 14px; border-radius: 12px; padding: 14px; min-height: 92px; background: #0a1409;
+              border: 2px solid #06100a; box-shadow: inset 0 0 26px rgba(0, 0, 0, .9);
+              font-family: ui-monospace, "Courier New", monospace; color: #7dff9b; line-height: 1.7; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="radio.html">📻 Build a Radio</a>
+    <a href="liedetector.html">📉 Lie Detector</a>
+    <a href="waiting.html">🪑 The Waiting Room</a>
+    <a href="mall.html">🛍️ Starcourt Mall</a>
+    <a href="board.html">📌 Detective Board</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Build a Radio</h1>
+  <p class="sub">Dustin's bench. Pick a part, then tap where it goes. Get all five right and something answers. 📻</p>
+
+  <section class="bench">
+    <div class="board2" id="board2"></div>
+    <div class="tray2" id="tray2"></div>
+    <div class="meter2"><div id="sig2"></div></div>
+    <p style="text-align:center;color:#cbbda4;font-weight:800;margin-top:6px" id="strength">Signal: nothing at all</p>
+    <div class="row" style="justify-content:center">
+      <button id="switchon">🔌 Switch it on</button>
+      <button class="ghost" id="reset7">↺ Take it apart</button>
+    </div>
+    <div class="speaker2" id="speaker2">The speaker is silent. Nothing is wired up yet.</div>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+/* five jobs, and the part that actually does each one */
+const SOCKETS = [
+  { id: "power", lbl: "POWER", hint: "Something has to push the electricity round.", want: "battery" },
+  { id: "tune", lbl: "TUNING", hint: "Picks one station out of all of them.", want: "coil" },
+  { id: "catch", lbl: "CATCHING", hint: "Grabs the signal out of the air. The longer the better.", want: "antenna" },
+  { id: "clean", lbl: "CLEANING", hint: "Turns the messy wave into something you can hear.", want: "diode" },
+  { id: "out", lbl: "OUT LOUD", hint: "Makes the air wobble so your ears notice.", want: "speaker" },
+];
+const PARTS = [
+  { id: "battery", e: "🔋", n: "Battery" },
+  { id: "coil", e: "🌀", n: "Tuning coil" },
+  { id: "antenna", e: "📡", n: "Aerial" },
+  { id: "diode", e: "💎", n: "Crystal diode" },
+  { id: "speaker", e: "🔊", n: "Speaker" },
+  { id: "toaster", e: "🍞", n: "Toaster element" },
+  { id: "spoon", e: "🥄", n: "A spoon" },
+];
+const WHY = {
+  toaster: "That's out of a toaster, and it is not helping.",
+  spoon: "Dustin: “A spoon is not a component. Put the spoon down.”",
+};
+
+let placed = {}, chosen = null, on = false;
+const boardEl = document.getElementById("board2"), trayEl = document.getElementById("tray2");
+
+function paint7() {
+  boardEl.innerHTML = SOCKETS.map(s => {
+    const p = placed[s.id];
+    const part = PARTS.find(x => x.id === p);
+    const state = !p ? "" : (on ? (p === s.want ? " full right" : " full wrong") : " full");
+    return `<div class="socket${state}" data-s="${s.id}">
+      <div class="lbl">${s.lbl}</div>
+      ${part ? `<span class="part">${part.e}</span><div class="pname">${part.n}</div>`
+             : `<div class="hint5">${s.hint}</div>`}
+    </div>`;
+  }).join("");
+  trayEl.innerHTML = PARTS.map(p => {
+    const used = Object.values(placed).indexOf(p.id) >= 0;
+    return `<div class="chip ${chosen === p.id ? "on" : ""} ${used ? "used" : ""}" data-p="${p.id}">
+      <span>${p.e}</span><b>${p.n}</b></div>`;
+  }).join("");
+  const right = SOCKETS.filter(s => placed[s.id] === s.want).length;
+  document.getElementById("sig2").style.width = (right / SOCKETS.length * 100) + "%";
+  const words = ["nothing at all", "a faint hiss", "crackling", "voices, far away", "almost clear", "LOCKED ON"];
+  document.getElementById("strength").textContent = "Signal: " + words[right];
+}
+boardEl.addEventListener("click", e => {
+  const s = e.target.closest(".socket"); if (!s) return;
+  const id = s.dataset.s;
+  if (!chosen) {
+    if (placed[id]) { delete placed[id]; on = false; beep(240, .08); paint7(); }
+    return;
+  }
+  Object.keys(placed).forEach(k => { if (placed[k] === chosen) delete placed[k]; });
+  placed[id] = chosen; chosen = null; on = false;
+  beep(540, .07, "triangle"); paint7();
+});
+trayEl.addEventListener("click", e => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  chosen = chosen === c.dataset.p ? null : c.dataset.p;
+  beep(620, .06, "triangle", .04); paint7();
+});
+document.getElementById("reset7").onclick = () => { placed = {}; chosen = null; on = false; paint7();
+  document.getElementById("speaker2").textContent = "You pull all the wires out. Dustin sighs."; };
+
+const sleep7 = ms => new Promise(r => setTimeout(r, ms));
+async function type7(el, text, speed) {
+  for (let i = 0; i < text.length; i++) { el.innerHTML += text[i]; if (i % 3 === 0) beep(600 + Math.random() * 200, .012, "square", .02); await sleep7(speed || 22); }
+  el.innerHTML += "<br>";
+}
+async function switchOn() {
+  on = true; paint7();
+  const sp = document.getElementById("speaker2");
+  sp.innerHTML = "";
+  const wrong = SOCKETS.filter(s => placed[s.id] && placed[s.id] !== s.want);
+  const empty = SOCKETS.filter(s => !placed[s.id]);
+  const right = SOCKETS.length - wrong.length - empty.length;
+
+  for (let i = 0; i < 14; i++) { beep(300 + Math.random() * 1600, .03, "square", .02 * (1 - right / 6)); await sleep7(60); }
+
+  if (empty.length) { await type7(sp, `…nothing. ${empty.length} socket${empty.length === 1 ? " is" : "s are"} still empty.`); return; }
+  if (wrong.length) {
+    await type7(sp, "…static. Something is wired wrong.");
+    for (const w of wrong) {
+      const p = placed[w.id];
+      await type7(sp, `• ${w.lbl}: ${WHY[p] || "that part can't do that job."}`);
+    }
+    beep(170, .3, "sawtooth", .06);
+    return;
+  }
+  /* all five right */
+  tune([392, 523, 659]);
+  await type7(sp, "…got it. The needle settles.");
+  await sleep7(500);
+  await type7(sp, "> HAWKINS AM 1983 — nothing but the shipping forecast.");
+  await sleep7(700);
+  await type7(sp, "> You turn the coil a quarter inch.");
+  await sleep7(600);
+  beep(70, 1.4, "sine", .08);
+  await type7(sp, "> …breathing.", 48);
+  await sleep7(900);
+  const name = (() => { try { const h = JSON.parse(localStorage.getItem("stHellfire") || "null"); return h && h.name ? h.name.toUpperCase() : "HELLO"; } catch (e) { return "HELLO"; } })();
+  await type7(sp, "> Then, slowly, in clicks:", 30);
+  for (const ch of name) { sp.innerHTML += `<span style="color:#ffd54a;font-size:1.3rem;letter-spacing:6px">${ch}</span>`; beep(240, .22, "square", .05); await sleep7(520); }
+  sp.innerHTML += "<br>";
+  await sleep7(600);
+  await type7(sp, "> The signal goes. The speaker hisses, politely, like it's sorry.");
+  try { localStorage.setItem("stRadio", "1"); } catch (e) {}
+  sp.innerHTML += `<div class="row" style="margin-top:10px">
+    <a class="btn" href="night.html">🕯️ Try it again after dark</a>
+    <a class="btn ghost" href="phone.html">☎️ Ring the scratched-out number</a></div>`;
+}
+document.getElementById("switchon").onclick = switchOn;
+paint7();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

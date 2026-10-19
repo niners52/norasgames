@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lie Detector · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📉</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .rig { max-width: 740px; margin: 0 auto; border-radius: 22px; padding: 20px;
+         background: linear-gradient(170deg, #3a3730, #262420 55%, #16150f);
+         border: 3px solid #5a564a; box-shadow: 0 20px 54px rgba(0, 0, 0, .7), inset 0 2px 0 rgba(255, 255, 255, .12); }
+  .paper3 { background: #f6f1e2; border-radius: 6px; padding: 8px; border: 2px solid #8a8370;
+            box-shadow: inset 0 0 22px rgba(120, 110, 80, .25); }
+  .paper3 canvas { display: block; width: 100%; height: 170px; }
+  .say5 { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .say5 input { flex: 1 1 240px; padding: 13px 15px; border-radius: 12px; font: inherit; font-weight: 700;
+                color: #efe9d8; background: rgba(10, 8, 6, .8); border: 2px solid #6a6456; }
+  .verdict2 { margin-top: 14px; border-radius: 14px; padding: 16px 18px; min-height: 90px;
+              background: rgba(10, 8, 6, .55); border: 1px solid #5a564a; }
+  .verdict2 .big2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.4rem, 6vw, 2.2rem);
+                    letter-spacing: 2px; }
+  .verdict2 .meant { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.05rem; color: #ffdede;
+                     margin-top: 10px; line-height: 1.6; }
+  .dials { display: flex; gap: 14px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+  .dial2 { width: 92px; text-align: center; }
+  .dial2 svg { display: block; width: 100%; }
+  .dial2 span { font-size: .66rem; letter-spacing: 1px; color: #b8b09a; font-weight: 800; }
+  .examples { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .examples button { font-size: .8rem; padding: 7px 12px; background: rgba(255, 255, 255, .08);
+                     border: 1px solid rgba(255, 255, 255, .2); box-shadow: none; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="liedetector.html">📉 Lie Detector</a>
+    <a href="radio.html">📻 Build a Radio</a>
+    <a href="waiting.html">🪑 The Waiting Room</a>
+    <a href="mall.html">🛍️ Starcourt Mall</a>
+    <a href="board.html">📌 Detective Board</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="phone.html">The Phone</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">The Lie Detector</h1>
+  <p class="sub">Hawkins Lab, 1984. Type something true. Or don't. 📉</p>
+
+  <section class="rig">
+    <div class="paper3"><canvas id="trace" width="900" height="340"></canvas></div>
+    <div class="dials" id="dials"></div>
+    <div class="say5">
+      <input id="stmt" maxlength="80" placeholder="I did all my homework." spellcheck="false">
+      <button id="test">▶ Test me</button>
+    </div>
+    <div class="examples" id="examples"></div>
+    <div class="verdict2" id="verdict2">
+      <span style="color:#b8b09a;font-weight:800;letter-spacing:2px;font-size:.78rem">SUBJECT READY</span>
+      <p style="color:#b8b09a;margin-top:6px">Put your finger on the screen and say something. The machine does the rest.</p>
+    </div>
+  </section>
+
+  <p class="lead" style="text-align:center;margin-top:14px;max-width:560px;margin-inline:auto">
+    This machine is not real and it cannot tell whether you're lying. It is, however, very confident.
+  </p>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+const cv2 = document.getElementById("trace"), x2 = cv2.getContext("2d");
+let trail = [], spiky = 0, running = false;
+
+function paper() {
+  x2.fillStyle = "#f6f1e2"; x2.fillRect(0, 0, cv2.width, cv2.height);
+  x2.strokeStyle = "rgba(160,120,90,.25)"; x2.lineWidth = 1;
+  for (let y = 20; y < cv2.height; y += 28) { x2.beginPath(); x2.moveTo(0, y); x2.lineTo(cv2.width, y); x2.stroke(); }
+  for (let x = 0; x < cv2.width; x += 28) { x2.beginPath(); x2.moveTo(x, 0); x2.lineTo(x, cv2.height); x2.stroke(); }
+}
+function drawTrail() {
+  paper();
+  x2.strokeStyle = "#b3121a"; x2.lineWidth = 3; x2.lineJoin = "round";
+  x2.beginPath();
+  trail.forEach((v, i) => { const px = i * (cv2.width / 220); i ? x2.lineTo(px, v) : x2.moveTo(px, v); });
+  x2.stroke();
+}
+function tick() {
+  if (!running) return;
+  const mid = cv2.height / 2;
+  const jitter = (Math.random() - .5) * (6 + spiky * 90);
+  const wave = Math.sin(trail.length / 7) * (8 + spiky * 26);
+  trail.push(Math.max(10, Math.min(cv2.height - 10, mid + wave + jitter)));
+  if (trail.length > 220) trail.shift();
+  drawTrail();
+  if (Math.random() < .08 + spiky * .3) beep(160 + Math.random() * 120 + spiky * 400, .03, "square", .02);
+  requestAnimationFrame(tick);
+}
+paper(); running = true; tick();
+
+/* the same sentence always gives the same reading */
+const hash2 = s => { let h = 2166136261; for (const c of s.toLowerCase().trim()) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return Math.abs(h); };
+
+const MEANT = [
+  "You believe that. That's not quite the same thing.",
+  "Mostly true, with one bit left out on purpose.",
+  "That's the version you tell grown-ups.",
+  "You've said this sentence before, and it worked that time.",
+  "True, but you're leaving out who else was there.",
+  "You're telling the truth and nobody's going to believe you. Again.",
+  "Not a lie. A hope.",
+  "You're covering for somebody. The machine approves.",
+  "That's what you were told. It isn't what happened.",
+  "You mean it right now. By Thursday you won't.",
+];
+const TOPICS = [
+  [/homework|school|maths|spelling|teacher/i, "The machine has also heard this about homework. Many times."],
+  [/sister|brother|mum|mom|dad|parent/i, "Family statement. Reliability historically poor."],
+  [/tidy|room|clean|washing/i, "Define 'tidy'. The machine has photographs."],
+  [/scared|afraid|frightened/i, "Elevated readings around the word 'scared'. That's allowed."],
+  [/demogorgon|monster|upside|vecna|gate/i, "Subject shows no stress discussing monsters. That's the worrying part."],
+  [/love|friend|best friend|belle/i, "Strongest clean reading on the chart. Whatever that was, you meant it."],
+  [/eggo|waffle|pizza|sweets|chocolate/i, "Food-related. The machine is also hungry."],
+];
+const examples = ["I did all my homework.", "I have never been in the woods at night.",
+  "I'm not scared of the dark.", "I tidied my room.", "I didn't take the last waffle."];
+document.getElementById("examples").innerHTML = examples.map(e => `<button data-e="${e}">${e}</button>`).join("");
+document.getElementById("examples").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.getElementById("stmt").value = b.dataset.e; run7();
+});
+
+function needle(label, v, col) {
+  const a = -Math.PI * .8 + v * Math.PI * .6;
+  return `<div class="dial2">
+    <svg viewBox="0 0 100 70">
+      <path d="M8 62 A46 46 0 0 1 92 62" fill="none" stroke="#8a8370" stroke-width="7"/>
+      <path d="M8 62 A46 46 0 0 1 92 62" fill="none" stroke="${col}" stroke-width="7"
+        stroke-dasharray="${(v * 132).toFixed(0)} 999"/>
+      <line x1="50" y1="62" x2="${(50 + Math.cos(a) * 36).toFixed(1)}" y2="${(62 + Math.sin(a) * 36).toFixed(1)}"
+        stroke="#241a12" stroke-width="3"/>
+      <circle cx="50" cy="62" r="5" fill="#241a12"/>
+    </svg><span>${label}</span></div>`;
+}
+function dials(h) {
+  const heart = .3 + ((h >> 3) % 70) / 100;
+  const sweat = .2 + ((h >> 7) % 75) / 100;
+  const voice = .25 + ((h >> 11) % 70) / 100;
+  document.getElementById("dials").innerHTML =
+    needle("PULSE", heart, "#b3121a") + needle("SWEAT", sweat, "#2f6fa8") + needle("VOICE", voice, "#2f8f6a");
+  return (heart + sweat + voice) / 3;
+}
+
+async function run7() {
+  const s = document.getElementById("stmt").value.trim();
+  if (!s) { document.getElementById("stmt").focus(); return; }
+  const v = document.getElementById("verdict2");
+  v.innerHTML = `<span style="color:#b8b09a;font-weight:800;letter-spacing:2px;font-size:.78rem">READING…</span>`;
+  spiky = .8;
+  tune([220, 180]);
+  await new Promise(r => setTimeout(r, 2200));
+  spiky = 0;
+
+  const h = hash2(s);
+  const avg = dials(h);
+  const score = (h % 100);
+  const band = score > 78 ? ["TRUE", "#2f8f6a", "The needle barely moved. Either that's true or you're frighteningly good at this."]
+    : score > 52 ? ["MOSTLY TRUE", "#7a9a3a", "Nearly clean. One small wobble, right at the end."]
+    : score > 26 ? ["SUSPICIOUS", "#d8a21e", "The machine isn't calling you a liar. It's raising an eyebrow."]
+    : ["TOTAL FABRICATION", "#b3121a", "The needle went off the paper. Brenner would like a word."];
+  const topic = TOPICS.find(t => t[0].test(s));
+  v.innerHTML = `
+    <span style="color:#b8b09a;font-weight:800;letter-spacing:2px;font-size:.78rem">RESULT</span>
+    <div class="big2" style="color:${band[1]}">${band[0]}</div>
+    <p style="color:#cfc7b4;margin-top:4px">${band[2]}</p>
+    <p class="meant">“${s}”<br><span style="color:#b8b09a">— ${MEANT[(h >> 5) % MEANT.length]}</span></p>
+    ${topic ? `<p style="color:#b8b09a;margin-top:8px;font-size:.9rem">📎 ${topic[1]}</p>` : ""}
+    <p style="color:#8a8370;margin-top:10px;font-size:.8rem">
+      Signed: Hawkins National Laboratory · reading ${(avg * 100).toFixed(0)}% · it will say exactly the same thing
+      if you type that sentence again, which is more than you can say for a real one.</p>`;
+  tune(score > 52 ? [523, 659] : [260, 200]);
+}
+document.getElementById("test").onclick = run7;
+document.getElementById("stmt").addEventListener("keydown", e => { if (e.key === "Enter") run7(); });
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

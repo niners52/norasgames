@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Waiting Room · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪑</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin: 0; min-height: 100vh; background: #cfc8b4; color: #241f1a;
+         font-family: Nunito, system-ui, sans-serif; overflow-x: hidden; transition: background 3s, filter 3s; }
+  body.late { background: #b9b3a0; }
+  body.later { background: #9a9586; filter: saturate(.8); }
+  body.latest { background: #6e6a60; filter: saturate(.5) contrast(1.05); }
+  body.worst { background: #3a3a38; filter: saturate(.25) contrast(1.15); }
+  .room { position: relative; max-width: 900px; margin: 0 auto; min-height: 100vh; padding: 18px 16px 90px; }
+  .room svg { display: block; width: 100%; height: auto; }
+  .sign { text-align: center; font-family: "Noto Serif Display", Georgia, serif; letter-spacing: 3px;
+          font-size: clamp(1rem, 3.4vw, 1.5rem); text-transform: uppercase; }
+  .sub2 { text-align: center; font-size: .86rem; color: #5a5146; margin-top: 4px; }
+  .clockrow { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 10px; }
+  .tickbox { font-family: ui-monospace, "Courier New", monospace; font-size: 1.1rem; color: #4a423a; }
+  .events { max-width: 640px; margin: 14px auto 0; }
+  .events p { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.02rem; line-height: 1.7;
+              margin: 0 0 10px; color: #2e2822; animation: fadein3 1.4s; }
+  body.latest .events p, body.worst .events p { color: #e6e2d8; }
+  body.latest .sign, body.worst .sign, body.latest .sub2, body.worst .sub2,
+  body.latest .tickbox, body.worst .tickbox { color: #e6e2d8; }
+  @keyframes fadein3 { from { opacity: 0; transform: translateY(8px); } }
+  .leave { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 10;
+           font: inherit; font-weight: 800; padding: 12px 22px; border-radius: 999px; border: 0; cursor: pointer;
+           background: #6b6256; color: #f3efe6; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+  .done2 { position: fixed; inset: 0; z-index: 20; display: none; flex-direction: column; align-items: center;
+           justify-content: center; text-align: center; gap: 12px; padding: 24px; background: rgba(12,10,8,.95); color: #f3efe6; }
+  .done2.show { display: flex; }
+  .done2 h2 { font-family: "Noto Serif Display", Georgia, serif; font-size: clamp(1.6rem, 7vw, 3rem); margin: 0; }
+  .done2 a, .done2 button { font: inherit; font-weight: 800; padding: 11px 20px; border-radius: 12px; border: 0;
+                            cursor: pointer; text-decoration: none; color: #fff; background: linear-gradient(135deg,#ff2020,#8d0d20); }
+  .done2 .ghost2 { background: rgba(255,255,255,.12); }
+</style>
+</head>
+<body>
+<div class="room">
+  <p class="sign" id="sign">Hawkins National Laboratory</p>
+  <p class="sub2" id="sub2">Please take a seat. You will be called.</p>
+  <div class="clockrow"><span class="tickbox" id="clock2">00:00</span></div>
+
+  <svg id="scene" viewBox="0 0 900 420" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <div class="events" id="events"></div>
+</div>
+
+<button class="leave" id="leave">Leave</button>
+
+<div class="done2" id="done2"></div>
+
+<script src="../profiles.js"></script>
+<script>
+"use strict";
+/* ---------- the room ---------- */
+const scene = document.getElementById("scene");
+function drawRoom(state) {
+  const chairOccupied = state >= 4;
+  scene.innerHTML = `
+    <rect width="900" height="420" fill="none"/>
+    <rect x="0" y="0" width="900" height="250" fill="#ded8c6"/>
+    <rect x="0" y="250" width="900" height="170" fill="#8e8574"/>
+    <rect x="0" y="244" width="900" height="10" fill="#6f6757"/>
+    ${Array.from({ length: 10 }, (_, i) => `<rect x="${i * 90}" y="250" width="88" height="170" fill="#978e7c" opacity="${i % 2 ? .35 : .15}"/>`).join("")}
+    <!-- door -->
+    <rect x="690" y="60" width="130" height="190" rx="4" fill="#9b8f78" stroke="#6f6757" stroke-width="4"/>
+    <circle cx="706" cy="160" r="6" fill="#5a5245"/>
+    <rect x="712" y="86" width="86" height="54" fill="${state >= 5 ? "#2b2b2b" : "#cfe2e8"}" stroke="#6f6757" stroke-width="3"/>
+    <text x="755" y="268" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="13" fill="#4a423a">DO NOT ENTER</text>
+    <!-- chairs -->
+    ${[60, 190, 320].map((x, i) => `
+      <g>
+        <rect x="${x}" y="196" width="104" height="18" rx="4" fill="#7a6e58"/>
+        <rect x="${x + 6}" y="214" width="12" height="54" fill="#5f5546"/>
+        <rect x="${x + 86}" y="214" width="12" height="54" fill="#5f5546"/>
+        <rect x="${x}" y="150" width="104" height="48" rx="6" fill="#8a7d64"/>
+      </g>`).join("")}
+    ${chairOccupied ? `
+      <g opacity="${state >= 5 ? ".95" : ".8"}">
+        <ellipse cx="242" cy="178" rx="26" ry="30" fill="#2e2a26"/>
+        <circle cx="242" cy="138" r="20" fill="#2e2a26"/>
+        ${state >= 6 ? `<circle cx="236" cy="136" r="3" fill="#ff3b3b"/><circle cx="249" cy="136" r="3" fill="#ff3b3b"/>` : ""}
+      </g>` : ""}
+    <!-- plant -->
+    <g transform="translate(600 150)">
+      <rect x="-22" y="76" width="44" height="40" rx="4" fill="#8a5a3a"/>
+      ${Array.from({ length: 7 }, (_, i) => {
+        const a = -Math.PI / 2 + (i - 3) * .36 + (state >= 3 ? .18 : 0);
+        return `<path d="M0 76 Q${Math.cos(a) * 30} ${76 + Math.sin(a) * 40} ${Math.cos(a) * 54} ${76 + Math.sin(a) * 62}"
+          stroke="#3f6b43" stroke-width="7" fill="none" stroke-linecap="round"/>`;
+      }).join("")}
+    </g>
+    <!-- clock on the wall -->
+    <g transform="translate(120 70)">
+      <circle r="34" fill="#efe9da" stroke="#6f6757" stroke-width="4"/>
+      <line x1="0" y1="0" x2="0" y2="-20" stroke="#2e2a26" stroke-width="3" transform="rotate(${state * 40})"/>
+      <line x1="0" y1="0" x2="14" y2="0" stroke="#2e2a26" stroke-width="2.4" transform="rotate(${state * 93})"/>
+      <circle r="3" fill="#2e2a26"/>
+    </g>
+    <!-- poster -->
+    <g transform="translate(420 72)">
+      <rect x="-54" y="-30" width="108" height="78" fill="#e8e2d0" stroke="#6f6757" stroke-width="3"/>
+      <text x="0" y="-8" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="12" fill="#b3121a">SAFETY FIRST</text>
+      <text x="0" y="12" text-anchor="middle" font-family="Nunito" font-size="9" fill="#4a423a">REPORT ANY</text>
+      <text x="0" y="26" text-anchor="middle" font-family="Nunito" font-size="9" fill="#4a423a">${state >= 2 ? "UNUSUAL BEHAVIOUR" : "SPILLS IMMEDIATELY"}</text>
+    </g>`;
+}
+
+/* ---------- sound ---------- */
+let ac2 = null;
+const A2 = () => (ac2 = ac2 || new (window.AudioContext || window.webkitAudioContext)());
+function tk(f, d, v, type) {
+  try { const a = A2(), o = a.createOscillator(), g = a.createGain();
+    o.type = type || "sine"; o.frequency.value = f; g.gain.value = v == null ? .05 : v;
+    g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d);
+    o.connect(g); g.connect(a.destination); o.start(); o.stop(a.currentTime + d);
+  } catch (e) {}
+}
+
+/* ---------- the long wait ---------- */
+const EVENTS = [
+  [8, "A clock you can't see is ticking somewhere behind the wall."],
+  [18, "Nobody has come through the door."],
+  [30, "The strip light above you buzzes, stops, and buzzes again."],
+  [45, "You notice the poster has changed. It definitely used to say spills."],
+  [62, "The plant has moved. Not much. Enough."],
+  [80, "Somewhere a long way off, a door closes."],
+  [100, "There is somebody sitting in the middle chair now. You didn't hear them come in."],
+  [125, "They haven't looked at you yet."],
+  [150, "The clock on the wall is going round faster than it should."],
+  [180, "The window in the door has gone dark."],
+  [210, "The person in the chair turns their head towards you. They have no face you can describe."],
+  [240, "They are not frightening. That's the part that's wrong."],
+  [275, "The ticking stops."],
+  [300, "Your name is called."],
+];
+let t0 = Date.now(), fired = 0, over = false, state = 0;
+let best = 0;
+try { best = +(localStorage.getItem("stWaitBest") || 0); } catch (e) {}
+
+function stateFor(s) { return s > 240 ? 6 : s > 180 ? 5 : s > 100 ? 4 : s > 62 ? 3 : s > 30 ? 2 : s > 8 ? 1 : 0; }
+function bodyClass(s) {
+  document.body.className = s > 240 ? "worst" : s > 180 ? "latest" : s > 100 ? "later" : s > 45 ? "late" : "";
+}
+drawRoom(0);
+
+const evBox = document.getElementById("events");
+setInterval(() => {
+  if (over) return;
+  const s = Math.floor((Date.now() - t0) / 1000);
+  const m = String(Math.floor(s / 60)).padStart(2, "0"), ss = String(s % 60).padStart(2, "0");
+  document.getElementById("clock2").textContent = `${m}:${ss}`;
+  const st = stateFor(s);
+  if (st !== state) { state = st; drawRoom(state); bodyClass(s); }
+  if (s % 4 === 0 && Math.random() < .5) tk(1400, .02, .012, "square");
+  while (fired < EVENTS.length && s >= EVENTS[fired][0]) {
+    const e = EVENTS[fired++];
+    const p = document.createElement("p");
+    p.textContent = e[1];
+    evBox.appendChild(p);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    tk(70 + Math.random() * 40, .5, .05);
+    if (e[0] === 300) finish(true, s);
+  }
+}, 1000);
+
+function finish(called, s) {
+  over = true;
+  if (s > best) { best = s; try { localStorage.setItem("stWaitBest", String(best)); } catch (e) {} }
+  const box = document.getElementById("done2");
+  box.classList.add("show");
+  const mins = Math.floor(s / 60), secs = s % 60;
+  box.innerHTML = called
+    ? `<div style="font-size:3rem">🚪</div>
+       <h2>They're ready for you</h2>
+       <p style="max-width:460px;color:#cfc7bc">You waited <b>${mins}m ${secs}s</b>. Almost nobody waits that long.
+          The door opens on its own, and the corridor behind it is much longer than the building.</p>
+       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+         <a href="night.html">🕯️ Go through</a>
+         <a class="ghost2" href="index.html">Go home instead</a>
+       </div>`
+    : `<div style="font-size:3rem">🪑</div>
+       <h2>You left</h2>
+       <p style="max-width:460px;color:#cfc7bc">You lasted <b>${mins}m ${secs}s</b>. Your best is
+         <b>${Math.floor(best / 60)}m ${best % 60}s</b>.<br>
+         ${s < 30 ? "Most people last about twenty seconds, to be fair."
+            : s < 120 ? "Something was just about to happen." : "You were nearly called in."}</p>
+       <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+         <button onclick="location.reload()">🪑 Sit back down</button>
+         <a class="ghost2" href="index.html">Leave properly</a>
+       </div>`;
+  tk(called ? 523 : 180, 1.2, .06);
+}
+document.getElementById("leave").onclick = () => finish(false, Math.floor((Date.now() - t0) / 1000));
+</script>
+</body>
+</html>
