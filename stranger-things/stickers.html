@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sticker Album · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏷️</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .albumtop { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+  .purse2 { background: rgba(255, 213, 74, .12); border: 2px solid var(--yellow); color: var(--yellow);
+            border-radius: 999px; padding: 8px 16px; font-weight: 800; }
+  .album { max-width: 900px; margin: 16px auto 0; border-radius: 18px; padding: 16px;
+           background: linear-gradient(170deg, #2b1d33, #170f1e); border: 3px solid #4a3357;
+           box-shadow: 0 16px 44px rgba(0, 0, 0, .6), inset 0 2px 0 rgba(255, 255, 255, .08); }
+  .pagehead { display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-weight: 800;
+              font-size: .8rem; letter-spacing: 1.4px; margin-bottom: 10px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+  .st { aspect-ratio: 3 / 4; border-radius: 12px; display: flex; flex-direction: column; align-items: center;
+        justify-content: center; text-align: center; padding: 6px; position: relative; overflow: hidden;
+        background: rgba(255, 255, 255, .04); border: 2px dashed rgba(255, 255, 255, .16); }
+  .st.have { border-style: solid; }
+  .st.c { background: linear-gradient(160deg, #3a3346, #241d2e); border-color: #6a5f7a; }
+  .st.r { background: linear-gradient(160deg, #3a2550, #22143a); border-color: #a66bff; }
+  .st.s { background: linear-gradient(160deg, #4a3a10, #2a1f08); border-color: #ffd54a; }
+  .st.s::after { content: ""; position: absolute; inset: -40%; background: linear-gradient(115deg,
+      transparent 40%, rgba(255, 255, 255, .5) 48%, transparent 56%); animation: sheen 3.2s linear infinite; }
+  @keyframes sheen { from { transform: translateX(-60%); } to { transform: translateX(60%); } }
+  .st .e3 { font-size: 2rem; }
+  .st b { font-size: .74rem; color: #fff; line-height: 1.15; margin-top: 4px; }
+  .st i { font-size: .62rem; color: var(--dim); font-style: normal; }
+  .st .dup { position: absolute; top: 4px; right: 6px; font-size: .68rem; font-weight: 800; color: var(--yellow); }
+  .st .num { position: absolute; top: 4px; left: 6px; font-size: .6rem; color: rgba(255,255,255,.4); font-weight: 800; }
+  .packbox { position: fixed; inset: 0; z-index: 999; display: none; align-items: center; justify-content: center;
+             background: rgba(6, 2, 10, .93); padding: 20px; }
+  .packbox.show { display: flex; }
+  .packinner { text-align: center; max-width: 640px; }
+  .pulled { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+  .pulled .st { width: 104px; animation: flipin .5s; }
+  @keyframes flipin { from { transform: rotateY(90deg) scale(.8); opacity: 0; } }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="stickers.html">🏷️ Sticker Album</a>
+    <a href="locker.html">🔒 The Locker</a>
+    <a href="shop.html">🪙 Vending Machine</a>
+    <a href="mall.html">🛍️ Starcourt Mall</a>
+    <a href="board.html">📌 Detective Board</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">Sticker Album</h1>
+  <p class="sub">Packs cost bulbs. Shinies are rare and everybody wants them. 🏷️</p>
+
+  <div class="albumtop">
+    <span class="purse2" id="purse3">0 bulbs</span>
+    <button id="buypack">🏷️ Buy a pack — 12 bulbs</button>
+    <button class="ghost" id="swap">♻️ Swap 3 doubles for a new one</button>
+  </div>
+  <p style="text-align:center;color:var(--dim);margin-top:8px" id="progress3"></p>
+
+  <section class="album">
+    <div class="pagehead"><span>HAWKINS COLLECTION 1985</span><span id="pagecount"></span></div>
+    <div class="grid3" id="grid3"></div>
+  </section>
+</main>
+
+<div class="packbox" id="packbox"><div class="packinner" id="packinner"></div></div>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script src="bulbs.js"></script>
+<script>
+"use strict";
+const SET = [
+  ["Eleven", "🧇", "s"], ["Mike", "🎲", "c"], ["Dustin", "📻", "c"], ["Lucas", "🎯", "c"], ["Will", "🎨", "c"],
+  ["Max", "🛹", "c"], ["Steve", "🏏", "c"], ["Robin", "🎺", "c"], ["Nancy", "📰", "c"], ["Jonathan", "📷", "c"],
+  ["Hopper", "🚔", "c"], ["Joyce", "💡", "c"], ["Erica", "🍨", "c"], ["Eddie", "🎸", "r"], ["Bob", "🤓", "r"],
+  ["Murray", "🕵️", "r"], ["Alexei", "🥤", "r"], ["Suzie", "📡", "r"],
+  ["The Demogorgon", "🌺", "r"], ["A Demodog", "🐕", "c"], ["The Mind Flayer", "🕷️", "r"],
+  ["A Demobat", "🦇", "c"], ["Vecna", "🕰️", "s"],
+  ["The bike", "🚲", "c"], ["The Eggo box", "🧇", "c"], ["The walkie", "📻", "c"], ["The nail bat", "⚾", "c"],
+  ["The d20", "🎲", "c"], ["The gate", "🌀", "s"], ["The alphabet wall", "🔤", "r"],
+];
+const COST = 12, PACK = 5;
+const RARITY = { c: "Common", r: "Rare", s: "Shiny" };
+const load7 = () => { try { return JSON.parse(localStorage.getItem("stStickers") || "{}"); } catch (e) { return {}; } };
+const save7 = o => { try { localStorage.setItem("stStickers", JSON.stringify(o)); } catch (e) {} };
+let own = load7();
+
+function roll7() {
+  const r = Math.random();
+  const want = r < .06 ? "s" : r < .3 ? "r" : "c";
+  const pool = SET.map((s, i) => [s, i]).filter(p => p[0][2] === want);
+  return pool[Math.floor(Math.random() * pool.length)][1];
+}
+function card7(i, big) {
+  const [n, e, rar] = SET[i];
+  const have = own[i] || 0;
+  return `<div class="st ${rar} ${have ? "have" : ""}" ${big ? 'style="width:104px"' : ""}>
+    <span class="num">#${String(i + 1).padStart(2, "0")}</span>
+    ${have > 1 ? `<span class="dup">×${have}</span>` : ""}
+    <span class="e3">${have || big ? e : "❔"}</span>
+    <b>${have || big ? n : "—"}</b>
+    <i>${RARITY[rar]}</i>
+  </div>`;
+}
+function paint8() {
+  document.getElementById("purse3").textContent = BULBS.left() + " bulbs";
+  document.getElementById("grid3").innerHTML = SET.map((_, i) => card7(i)).join("");
+  const got = SET.filter((_, i) => own[i]).length;
+  const dupes = Object.values(own).reduce((a, v) => a + Math.max(0, v - 1), 0);
+  document.getElementById("progress3").innerHTML =
+    `<b style="color:var(--yellow)">${got} of ${SET.length}</b> collected · ${dupes} double${dupes === 1 ? "" : "s"}`;
+  document.getElementById("pagecount").textContent = `${got}/${SET.length}`;
+  document.getElementById("buypack").disabled = BULBS.left() < COST;
+  document.getElementById("swap").disabled = dupes < 3 || got >= SET.length;
+}
+function openPack(ids, title) {
+  const box = document.getElementById("packbox");
+  box.classList.add("show");
+  document.getElementById("packinner").innerHTML = `
+    <h2 style="font-family:'Noto Serif Display',Georgia,serif;color:#fff">${title}</h2>
+    <div class="pulled" id="pulled"></div>
+    <div class="row" style="justify-content:center;margin-top:16px">
+      <button id="closepack">Stick them in</button>
+    </div>`;
+  const pulled = document.getElementById("pulled");
+  ids.forEach((id, n) => setTimeout(() => {
+    pulled.insertAdjacentHTML("beforeend", card7(id, true));
+    const rar = SET[id][2];
+    tune(rar === "s" ? [659, 880, 1100] : rar === "r" ? [620, 820] : [520]);
+  }, n * 480));
+  document.getElementById("closepack").onclick = () => { box.classList.remove("show"); paint8(); };
+}
+document.getElementById("buypack").onclick = () => {
+  if (!BULBS.spend(COST)) return;
+  const ids = Array.from({ length: PACK }, roll7);
+  ids.forEach(i => { own[i] = (own[i] || 0) + 1; });
+  save7(own);
+  const best = ids.some(i => SET[i][2] === "s") ? "A SHINY!" : ids.some(i => SET[i][2] === "r") ? "Not bad." : "Five stickers.";
+  openPack(ids, best);
+  if (SET.filter((_, i) => own[i]).length >= SET.length) {
+    try { localStorage.setItem("stStickersAll", "1"); } catch (e) {}
+  }
+};
+document.getElementById("swap").onclick = () => {
+  let dup = Object.keys(own).filter(k => own[k] > 1);
+  if (dup.length < 1) return;
+  let taken = 0;
+  while (taken < 3) {
+    dup = Object.keys(own).filter(k => own[k] > 1);
+    if (!dup.length) break;
+    const k = dup[0];
+    own[k]--; taken++;
+  }
+  const missing = SET.map((_, i) => i).filter(i => !own[i]);
+  if (missing.length) {
+    const got = missing[Math.floor(Math.random() * missing.length)];
+    own[got] = 1; save7(own);
+    openPack([got], "Swapped three doubles for this");
+  } else { save7(own); paint8(); }
+};
+paint8();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Locker · Stranger Things Fan Zone</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Display:wght@700;800&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .hall { max-width: 900px; margin: 14px auto 0; border-radius: 18px; overflow: hidden;
+          border: 2px solid rgba(255, 90, 90, .35); box-shadow: 0 16px 44px rgba(0, 0, 0, .6); }
+  .hall svg { display: block; width: 100%; height: auto; }
+  .dialwrap { max-width: 300px; margin: 14px auto 0; }
+  .dialwrap svg { display: block; width: 100%; height: auto; cursor: grab; touch-action: none; }
+  .readout2 { text-align: center; font-family: ui-monospace, "Courier New", monospace; font-size: 1.6rem;
+              letter-spacing: 6px; color: var(--yellow); min-height: 1.4em; }
+  .hintcard { max-width: 600px; margin: 12px auto 0; border-radius: 14px; padding: 14px 16px;
+              background: rgba(255, 213, 74, .1); border: 1px solid rgba(255, 213, 74, .35);
+              font-family: "Noto Serif Display", Georgia, serif; font-style: italic; color: #ffe9c4; }
+  .inside { max-width: 760px; margin: 18px auto 0; display: none; }
+  .inside.show { display: block; animation: fade4 .8s; }
+  @keyframes fade4 { from { opacity: 0; transform: translateY(14px); } }
+  .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+  .thing { border-radius: 14px; padding: 14px 10px; text-align: center; cursor: pointer;
+           background: linear-gradient(160deg, rgba(32, 12, 40, .92), rgba(14, 6, 22, .94));
+           border: 1px solid rgba(255, 90, 90, .28); transition: transform .16s, border-color .16s; }
+  .thing:hover { transform: translateY(-4px); border-color: var(--red); }
+  .thing.read { opacity: .55; border-color: #6fff9c; }
+  .thing span { font-size: 2rem; display: block; }
+  .thing b { font-size: .82rem; }
+  .readbox { border-radius: 16px; padding: 16px 18px; margin-top: 14px; min-height: 110px;
+             background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .16); }
+  .readbox .line3 { font-family: "Noto Serif Display", Georgia, serif; font-size: 1.05rem; line-height: 1.7; color: #ffdede; }
+</style>
+</head>
+<body>
+<div id="spores"></div>
+
+<header class="bar">
+  <a class="brand" href="index.html">🔦 Hawkins Fan Zone</a>
+  <nav class="links">
+    <a href="index.html">Home</a>
+    <a href="locker.html">🔒 The Locker</a>
+    <a href="stickers.html">🏷️ Sticker Album</a>
+    <a href="shop.html">🪙 Vending Machine</a>
+    <a href="mall.html">🛍️ Starcourt Mall</a>
+    <a href="board.html">📌 Detective Board</a>
+    <a href="night.html">🕯️ The Night</a>
+    <a href="print.html">Print Shop</a>
+    <a href="games.html">Mini Games</a>
+    <a href="badges.html">Trophies</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="title" style="font-size:clamp(1.6rem,6vw,3rem)">The Locker</h1>
+  <p class="sub">Hawkins Middle, corridor B. Locker 011 has been shut since November. 🔒</p>
+
+  <div class="hall"><svg id="lockers" viewBox="0 0 900 400" xmlns="http://www.w3.org/2000/svg"></svg></div>
+
+  <div id="lockpanel">
+    <div class="dialwrap"><svg id="dial3" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <p class="readout2" id="readout3">· · ·</p>
+    <div class="row" style="justify-content:center">
+      <button id="setnum">➕ Lock that number in</button>
+      <button class="ghost" id="clearnum">↺ Spin it back</button>
+    </div>
+    <div class="hintcard">
+      Scratched into the paint beside the dial, in biro:<br>
+      <b>“her number · the night it happened · the year”</b>
+    </div>
+  </div>
+
+  <section class="inside" id="inside">
+    <h2 class="section" style="text-align:center">🔓 It's open</h2>
+    <div class="shelf" id="shelf"></div>
+    <div class="readbox" id="readbox"><p style="color:var(--dim)">Pick something up.</p></div>
+  </section>
+</main>
+
+<footer>
+  Made with love by <strong>Nora</strong> · A fan site, not made by or connected to Netflix or the Duffer brothers.
+  <span class="secret-dot" style="opacity:.3;cursor:pointer;user-select:none" title="?">11</span>
+</footer>
+
+<script src="../profiles.js"></script>
+<script src="site.js"></script>
+<script src="tales85.js"></script>
+<script>
+"use strict";
+/* ---------- the corridor ---------- */
+document.getElementById("lockers").innerHTML = `
+  <rect width="900" height="400" fill="#17202a"/>
+  <rect y="300" width="900" height="100" fill="#20282f"/>
+  ${Array.from({ length: 9 }, (_, i) => {
+    const x = 20 + i * 98, is11 = i === 4;
+    return `<g>
+      <rect x="${x}" y="60" width="86" height="240" rx="5" fill="${is11 ? "#2f6f8a" : "#2a5f74"}"
+            stroke="#15323e" stroke-width="3"/>
+      <rect x="${x + 10}" y="76" width="66" height="10" rx="3" fill="#1b4252"/>
+      <rect x="${x + 10}" y="92" width="66" height="10" rx="3" fill="#1b4252"/>
+      <circle cx="${x + 43}" cy="170" r="13" fill="#cfd8dd" stroke="#15323e" stroke-width="3"/>
+      <rect x="${x + 36}" y="186" width="14" height="22" rx="3" fill="#15323e"/>
+      <text x="${x + 43}" y="286" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="13"
+            fill="${is11 ? "#ffd54a" : "#7fa6b5"}">0${i + 7}</text>
+      ${is11 ? `<rect x="${x - 4}" y="56" width="94" height="248" rx="6" fill="none" stroke="#ffd54a"
+                 stroke-width="3" stroke-dasharray="8 6"/>` : ""}
+    </g>`;
+  }).join("")}
+  <text x="450" y="36" text-anchor="middle" font-family="Nunito" font-weight="800" font-size="17" fill="#7fa6b5">
+    CORRIDOR B · HAWKINS MIDDLE SCHOOL</text>`;
+
+/* ---------- the dial ---------- */
+const CODE2 = [11, 6, 83];
+let angle = 0, entered = [], dragging = false, lastA = null;
+function drawDial(v) {
+  document.getElementById("dial3").innerHTML = `
+    <circle cx="150" cy="150" r="140" fill="#1b2228" stroke="#39464f" stroke-width="5"/>
+    <g transform="rotate(${-v * 3.6} 150 150)">
+      <circle cx="150" cy="150" r="124" fill="#cfd8dd" stroke="#8a9aa3" stroke-width="3"/>
+      ${Array.from({ length: 100 }, (_, i) => {
+        const a = (i / 100) * Math.PI * 2 - Math.PI / 2;
+        const long = i % 5 === 0;
+        return `<line x1="${(150 + Math.cos(a) * (long ? 104 : 112)).toFixed(1)}"
+          y1="${(150 + Math.sin(a) * (long ? 104 : 112)).toFixed(1)}"
+          x2="${(150 + Math.cos(a) * 120).toFixed(1)}" y2="${(150 + Math.sin(a) * 120).toFixed(1)}"
+          stroke="#39464f" stroke-width="${long ? 2.6 : 1.2}"/>` +
+          (i % 10 === 0 ? `<text x="${(150 + Math.cos(a) * 88).toFixed(1)}" y="${(150 + Math.sin(a) * 88 + 6).toFixed(1)}"
+            text-anchor="middle" font-size="16" font-family="Nunito" font-weight="800" fill="#2b3a42"
+            transform="rotate(${(i / 100) * 360} ${(150 + Math.cos(a) * 88).toFixed(1)} ${(150 + Math.sin(a) * 88).toFixed(1)})">${i}</text>` : "");
+      }).join("")}
+      <circle cx="150" cy="150" r="42" fill="#b7c2c8" stroke="#8a9aa3" stroke-width="3"/>
+    </g>
+    <polygon points="150,8 141,30 159,30" fill="#ffd54a"/>
+    <text x="150" y="160" text-anchor="middle" font-size="30" font-family="Noto Serif Display, Georgia, serif"
+          font-weight="800" fill="#2b3a42">${v}</text>`;
+}
+const cur = () => ((Math.round(angle) % 100) + 100) % 100;
+function setAngle(a) {
+  const before = cur();
+  angle = a;
+  if (cur() !== before) beep(900 + Math.random() * 160, .02, "square", .03);
+  drawDial(cur());
+}
+const dialEl = document.getElementById("dial3");
+function angFromEvent(e) {
+  const r = dialEl.getBoundingClientRect();
+  const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  return Math.atan2(dy, dx) * 180 / Math.PI;
+}
+dialEl.addEventListener("pointerdown", e => { dragging = true; lastA = angFromEvent(e); dialEl.setPointerCapture(e.pointerId); });
+dialEl.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const a = angFromEvent(e);
+  let d = a - lastA;
+  if (d > 180) d -= 360; if (d < -180) d += 360;
+  lastA = a;
+  setAngle(angle - d / 3.6);
+});
+addEventListener("pointerup", () => { dragging = false; });
+dialEl.addEventListener("click", e => {
+  if (Math.abs(e.movementX || 0) > 2) return;
+});
+
+function show7() {
+  document.getElementById("readout3").textContent =
+    (entered.concat(["·", "·", "·"]).slice(0, 3)).join(" · ");
+}
+document.getElementById("setnum").onclick = () => {
+  if (entered.length >= 3) return;
+  entered.push(cur());
+  beep(420, .12, "triangle");
+  show7();
+  if (entered.length === 3) check7();
+};
+document.getElementById("clearnum").onclick = () => { entered = []; show7(); beep(240, .1); };
+
+function check7() {
+  const ok = entered.every((v, i) => v === CODE2[i]);
+  setTimeout(() => {
+    if (ok) {
+      tune([392, 523, 659, 784]);
+      document.getElementById("lockpanel").style.display = "none";
+      document.getElementById("inside").classList.add("show");
+      try { localStorage.setItem("stLocker", "1"); } catch (e) {}
+      document.getElementById("inside").scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      beep(150, .4, "sawtooth", .07);
+      document.getElementById("readout3").textContent = "· · ·  (it doesn't open)";
+      entered = [];
+    }
+  }, 500);
+}
+
+/* ---------- what's inside ---------- */
+const THINGS = [
+  { id: "photo", e: "🖼️", n: "A photograph", t: `Four of them on a bike ramp, squinting into the sun.
+     Somebody has folded it so the fifth person is hidden round the back. When you unfold it, that corner is blank —
+     not torn, <i>blank</i>, like nobody was ever standing there.` },
+  { id: "note", e: "📝", n: "A folded note", t: `“Don't tell anyone where I'm going. If I'm not back by Friday, look
+     under the stairs at mine. I mean it this time. — W.”<br><br>The paper has been folded and unfolded so many times
+     the creases have gone soft.` },
+  { id: "walkie", e: "📻", n: "A dead walkie", t: `Channel 11. The battery is long gone, but when you press the
+     button there's a half-second of crackle before it dies — which shouldn't be possible with no battery in it.` },
+  { id: "book", e: "📕", n: "An overdue library book", t: `<b>A Child's Book of Strange Science</b>, due back 14 November 1983.
+     Forty-three years overdue. Somebody has pencilled a note by the chapter on dimensions:
+     <i>“ask Mr Clarke about the flea and the acrobat.”</i>` },
+  { id: "drawing", e: "🎨", n: "A drawing", t: `Done in felt tip, pressed hard. A house with every light on,
+     and standing in the garden, something tall with no face. Underneath, in careful letters:
+     <i>“it was in the garden for a long time before it came in.”</i>` },
+  { id: "gum", e: "🍬", n: "Half a packet of gum", t: `Two left. Hardened solid. The wrapper has a phone number on it
+     in biro: <b>555-1983</b>, and underneath, <i>“only rings at night”</i>.` },
+];
+let readCount = 0;
+document.getElementById("shelf").innerHTML = THINGS.map(t =>
+  `<div class="thing" data-id="${t.id}"><span>${t.e}</span><b>${t.n}</b></div>`).join("");
+document.getElementById("shelf").addEventListener("click", e => {
+  const el = e.target.closest(".thing"); if (!el) return;
+  const t = THINGS.find(x => x.id === el.dataset.id);
+  if (!el.classList.contains("read")) { el.classList.add("read"); readCount++; }
+  document.getElementById("readbox").innerHTML =
+    `<b style="color:var(--yellow)">${t.e} ${t.n}</b><p class="line3" style="margin-top:8px">${t.t}</p>`;
+  beep(520, .09, "triangle");
+  if (readCount >= THINGS.length) {
+    setTimeout(() => {
+      document.getElementById("readbox").innerHTML += `
+        <div style="margin-top:14px;border-top:1px dashed rgba(255,255,255,.2);padding-top:12px">
+          <b style="color:#ff9f9f">And right at the back, taped to the inside of the door:</b>
+          <p class="line3">A second photograph of the same four kids, taken from further away — from outside,
+          through the window. Nobody in Hawkins owns a camera that could take it from there.</p>
+          <div class="row" style="margin-top:10px">
+            <a class="btn" href="phone.html">☎️ Ring the number on the wrapper</a>
+            <a class="btn ghost" href="board.html">📌 Put it all on the board</a>
+          </div>
+        </div>`;
+      try { localStorage.setItem("stLockerAll", "1"); } catch (e) {}
+      tune([523, 659, 784, 1047]);
+    }, 700);
+  }
+});
+drawDial(0); show7();
+</script>
+<script src="pet.js"></script>
+<script src="detective.js"></script>
+<script src="../secret.js"></script>
+<script src="../eggs.js"></script>
+<script src="../cursor.js"></script>
+</body>
+</html>
